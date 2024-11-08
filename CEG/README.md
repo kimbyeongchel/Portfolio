@@ -21,4 +21,4 @@
 > - 클래스 다이어그램
 > <img src="https://github.com/user-attachments/assets/7a26bdc0-b0d8-411d-91ea-8e87ea8ad123" width="600" height="400">
 >
-> 
+> - 영상 https://www.youtube.com/watch?v=Y1M_zQ4SU7Y 
