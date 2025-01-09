@@ -20,3 +20,5 @@
 > - 플랫폼 : PC
 ## 3. 영상 및 기술
 > - 플레이는 Game 폴더의 LostRuins.zip 파일을 통해 플레이할 수 있습니다.
+> - 2분 시연 영상 : https://drive.google.com/file/d/169qa5i7a4x9qzwMlsXnY8VzoMYnaU15U/view?usp=sharing
+> - 테스팅 풀영상 : https://drive.google.com/file/d/1nzQzsq8DT3ueeiaOKH3v3s4UmExwdQyC/view?usp=sharing
