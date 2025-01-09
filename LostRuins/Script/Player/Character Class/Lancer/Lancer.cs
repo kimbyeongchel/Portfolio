@@ -102,7 +102,6 @@ public class Lancer : PlayerState
         }
     }
 
-    // 작업 중.... E, F를 제외한 공격 실행 중 다른 입력(점프 ,구르기, 움직임)이 들어오면 CoolDown 파트 스킵하고 애니메이션 전환
     protected virtual IEnumerator tryAttack()
     {
         isAttack = true;
