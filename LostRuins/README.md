@@ -1,12 +1,11 @@
 # [Unity] LostRuins
 
+> <img src="https://github.com/user-attachments/assets/ef0423dd-7cfe-42ba-891c-92a25652efcf" width = "600" height="400">
+
 ## 1. 소개
 > - 졸업 작품으로 제작한 게임
 > - 플레이어 관련만 스크립트 처리
 > - 루키 챌린저스 2기 참여
-
-<img src="https://github.com/user-attachments/assets/ef0423dd-7cfe-42ba-891c-92a25652efcf" width = "600" height="400">
-
 ## 2. 역할
 > | 이름 | 역할 |
 > |:---:|:---:|
