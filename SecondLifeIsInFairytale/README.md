@@ -1,5 +1,7 @@
 # [Unity] 두 번째 인생은 동화 속에서
 
+> <img src = "https://github.com/user-attachments/assets/3a95e36d-a3a2-4c9e-b7e5-5eb98ac646e9" width = "600">
+
 ## 1. 소개
 > - 소프트웨어 공학 과목을 통해 제작한 게임
 
@@ -18,5 +20,5 @@
 > - 개발 언어 : C#
 > - 플랫폼 : PC
 ## 3. 영상 및 기술
->
->
+> - 영상 : https://youtu.be/57bFWsdyekI?si=L8ZoqUPw-RCPfIyX
+> - 깃허브 : https://github.com/potatohun/SecondLifeIsInFairytale
