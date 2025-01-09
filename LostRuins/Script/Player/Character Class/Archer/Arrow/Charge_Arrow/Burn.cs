@@ -5,7 +5,7 @@ using UnityEngine;
 public class Burn : MonoBehaviour
 {
     public bool isBurning = false;
-    [SerializeField] private int damage;  // ??? ???? ???? ??????
+    [SerializeField] private int damage;
 
     private void Start()
     {
