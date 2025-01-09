@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class DebuffCircle : MonoBehaviour
 {
-    public ParticleSystem debuffShape; // 디버프 이펙트
+    public ParticleSystem debuffShape; 
     public float damageCoolTime;
     bool debuff = false;
 
