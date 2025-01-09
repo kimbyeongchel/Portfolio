@@ -1,9 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-/// <summary>
-/// 상속을 통해서 전체적인 직업마다 스킬 사용 선택해야 될듯 ( 현재는 힐러 )
-/// </summary>
+
 public abstract class EffectManager : MonoBehaviour, IEffect
 {
     [SerializeField] public ParticleSystem [] particle; // passive, attack, q, e, f ,hit
