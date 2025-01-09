@@ -1,6 +1,15 @@
 # [Unity] LostRuins
 
-> <img src="https://github.com/user-attachments/assets/ef0423dd-7cfe-42ba-891c-92a25652efcf" width = "600" height="400">
+<table>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/ef0423dd-7cfe-42ba-891c-92a25652efcf" width = "400"></td>
+    <td><img src="https://github.com/user-attachments/assets/c5f1fda6-362d-4e86-a7a0-c72c73abf27c" width = "400"></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/804bfb6e-bb2b-4aec-8bb8-a2123c3bed50" width="400"/></td>
+    <td><img src="https://github.com/user-attachments/assets/0415b179-1921-4d87-a612-1102f6926cec" width="400"/></td>
+  </tr>
+</table>
 
 ## 1. 소개
 > - 졸업 작품으로 제작한 게임
