@@ -7,29 +7,29 @@ using UnityEngine.UI;
 
 public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, IDamageable
 {
-    public int hp { get; set; } // Ã¼·Â
-    public int mp { get; set; } // ¸¶³ª
-    public float def { get; set; } // ¹æ¾î·Â 0~1 ¼Ò¼ö·Î ±¸¼º
-    public float atk { get; set; }// °ø°İ·Â 1À» ±âÁØÀ¸·Î ºĞÇÒ
-    public float ctr { get; set; }// Å©¸®Æ¼ÄÃ È®·ü 0~1 ¼Ò¼ö·Î ±¸¼º
-    public int shield; // ½¯µå
+    public int hp { get; set; } // ì²´ë ¥
+    public int mp { get; set; } // ë§ˆë‚˜
+    public float def { get; set; } // ë°©ì–´ë ¥ 0~1 ì†Œìˆ˜ë¡œ êµ¬ì„±
+    public float atk { get; set; }// ê³µê²©ë ¥ 1ì„ ê¸°ì¤€ìœ¼ë¡œ ë¶„í• 
+    public float ctr { get; set; }// í¬ë¦¬í‹°ì»¬ í™•ë¥  0~1 ì†Œìˆ˜ë¡œ êµ¬ì„±
+    public int shield; // ì‰´ë“œ
     public State stateObejct;
 
-    [Header("Skill_damage")] // passive, attack, q, e, f ¼ø¼­
-    public float[] s_damage; // µ¥¹ÌÁö
+    [Header("Skill_damage")] // passive, attack, q, e, f ìˆœì„œ
+    public float[] s_damage; // ë°ë¯¸ì§€
 
     [Header("BoolChecking")]
-    public bool isAttack; // °ø°İ »óÅÂ Ã¼Å©
-    public bool isDodge; // ±¸¸£±â »óÅÂ Ã¼Å©
-    public bool isGrounded; // ¶¥ÀÎÁö Ã¼Å©
-    public bool isJump; // Á¡ÇÁ »óÅÂ Ã¼Å© ( isGrounded·Î¸¸ °øÁß»óÅÂ Ã¼Å©½Ã µÎ¹øµÇ´Â ¿À·ù ÇØ°á )
-    public bool isDied; // »ç¸Á »óÅÂ Ã¼Å©
-    public bool isStop; // ¸ÖÆ¼ ³×Æ®¿öÅ· ½Ã ¿òÁ÷ÀÓ°ú È¸Àü Á¦¾î¿ë  º¯¼ö
+    public bool isAttack; // ê³µê²© ìƒíƒœ ì²´í¬
+    public bool isDodge; // êµ¬ë¥´ê¸° ìƒíƒœ ì²´í¬
+    public bool isGrounded; // ë•…ì¸ì§€ ì²´í¬
+    public bool isJump; // ì í”„ ìƒíƒœ ì²´í¬ ( isGroundedë¡œë§Œ ê³µì¤‘ìƒíƒœ ì²´í¬ì‹œ ë‘ë²ˆë˜ëŠ” ì˜¤ë¥˜ í•´ê²° )
+    public bool isDied; // ì‚¬ë§ ìƒíƒœ ì²´í¬
+    public bool isStop; // ë©€í‹° ë„¤íŠ¸ì›Œí‚¹ ì‹œ ì›€ì§ì„ê³¼ íšŒì „ ì œì–´ìš©  ë³€ìˆ˜
 
     [Header("GroundCheck")]
-    [SerializeField] protected float groundCheckRadius = 0.2f; // Ã¼Å© ¹üÀ§
-    [SerializeField] protected Vector3 groundCheckOffset; // Ã¼Å© ¹üÀ§ Áß½É
-    [SerializeField] protected LayerMask groundLayer; // ¶¥ÀÎÁö È®ÀÎÇÏ´Â Layer
+    [SerializeField] protected float groundCheckRadius = 0.2f; // ì²´í¬ ë²”ìœ„
+    [SerializeField] protected Vector3 groundCheckOffset; // ì²´í¬ ë²”ìœ„ ì¤‘ì‹¬
+    [SerializeField] protected LayerMask groundLayer; // ë•…ì¸ì§€ í™•ì¸í•˜ëŠ” Layer
 
     [Header("UI")]
     public Slider HP;
@@ -39,28 +39,28 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
     public TextMeshProUGUI mpText;
     [SerializeField] protected TextMeshProUGUI[] coolTime_Text;
     [SerializeField] protected Image[] skill_icons;
-    public float[] coolTime; // ÄğÅ¸ÀÓ ¸ğÀ½(passive, q, e, f, dodge) 
+    public float[] coolTime; // ì¿¨íƒ€ì„ ëª¨ìŒ(passive, q, e, f, dodge) 
     [SerializeField] protected GameObject skillTree;
 
     [Header("Movement")]
-    protected float rotationSpeed = 250f; // ¸¶¿ì½º °¨µµ
-    [SerializeField] protected float playerRotationSpeed = 500f; // ÇÃ·¹ÀÌ¾î È¸Àü ¼Óµµ
-    protected Quaternion targetRotation; // ´ÙÀ½À¸·Î ¹Ù¶óº¼ Å¸°Ù¹æÇâ
-    protected Vector3 velocity; // ¿òÁ÷ÀÓÀÇ ¹æÇâ ¹× Èû °áÁ¤
-    protected Vector3 setDir; // ±¸¸£±â ½Ã¿¡ ¹æÇâ °íÁ¤
-    protected Vector3 moveDir; // ÀÌµ¿ ¹æÇâ
+    protected float rotationSpeed = 250f; // ë§ˆìš°ìŠ¤ ê°ë„
+    [SerializeField] protected float playerRotationSpeed = 500f; // í”Œë ˆì´ì–´ íšŒì „ ì†ë„
+    protected Quaternion targetRotation; // ë‹¤ìŒìœ¼ë¡œ ë°”ë¼ë³¼ íƒ€ê²Ÿë°©í–¥
+    protected Vector3 velocity; // ì›€ì§ì„ì˜ ë°©í–¥ ë° í˜ ê²°ì •
+    protected Vector3 setDir; // êµ¬ë¥´ê¸° ì‹œì— ë°©í–¥ ê³ ì •
+    protected Vector3 moveDir; // ì´ë™ ë°©í–¥
     public float moveAmount { get; set; }
 
     [Header("Speed")]
-    [SerializeField] protected float jumpSpeed = 5f; // Á¡ÇÁÇÒ ¶§ °¡ÇØÁö´Â Èû
-    protected float sprintSpeed = 10f; // shift ´Ş¸®±â ¼Óµµ °áÁ¤
-    protected float moveSpeed = 5f; // ±âº» ¼Óµµ
-    protected float setSpeed; // ÃÖÁ¾ÀûÀ¸·Î °áÁ¤µÈ ¼Óµµ
+    [SerializeField] protected float jumpSpeed = 5f; // ì í”„í•  ë•Œ ê°€í•´ì§€ëŠ” í˜
+    protected float sprintSpeed = 10f; // shift ë‹¬ë¦¬ê¸° ì†ë„ ê²°ì •
+    protected float moveSpeed = 5f; // ê¸°ë³¸ ì†ë„
+    protected float setSpeed; // ìµœì¢…ì ìœ¼ë¡œ ê²°ì •ëœ ì†ë„
 
     [Header("Component")]
     protected Rigidbody rig;
     public Animator animator;
-    protected checkWall wallCheck; // º® Ã¼Å©, ÈÄ¿¡ °æ»ç¸éµµ Ã¼Å©ÇÒ ¿¹Á¤
+    protected checkWall wallCheck; // ë²½ ì²´í¬, í›„ì— ê²½ì‚¬ë©´ë„ ì²´í¬í•  ì˜ˆì •
     protected SoundManager soundControl;
     protected CapsuleCollider capsuleCollider;
 
@@ -98,8 +98,8 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
 
     #endregion
 
-    // ¿òÁ÷ÀÓ
-    public virtual void Move() // ´Ş¸®´Â ¼Óµµ¿Í moveAmount´Â º°°³ÀÇ º¯¼ö
+    // ì›€ì§ì„
+    public virtual void Move() // ë‹¬ë¦¬ëŠ” ì†ë„ì™€ moveAmountëŠ” ë³„ê°œì˜ ë³€ìˆ˜
     {
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
@@ -147,7 +147,7 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
     {
         soundControl.PlaySfx(SoundManager.Sfx.roll);
     }
-    public virtual void CameraRotation() // Ä«¸Ş¶ó È¸Àü Á¦¾î
+    public virtual void CameraRotation() // ì¹´ë©”ë¼ íšŒì „ ì œì–´
     {
         mousePointer = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
 
@@ -186,7 +186,7 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
         isDodge = false;
     }
 
-    public virtual void Jump() // Á¡ÇÁ Æ®¸®°Å ÀÛµ¿( °ø°İ Áß, ±¸¸£±â Áß, Á¡ÇÁ Áß ±İÁö )
+    public virtual void Jump() // ì í”„ íŠ¸ë¦¬ê±° ì‘ë™( ê³µê²© ì¤‘, êµ¬ë¥´ê¸° ì¤‘, ì í”„ ì¤‘ ê¸ˆì§€ )
     {
         if (Input.GetButtonDown("Jump") && !isDodge && !isAttack && !isJump && isGrounded)
         {
@@ -194,11 +194,11 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
             isJump = true;
         }
     }
-    public virtual void force_jump() // Á¡ÇÁ -> ¾Ö´Ï¸ŞÀÌ¼Ç ÇÔ¼ö·Î Àû¿ë
+    public virtual void force_jump() // ì í”„ -> ì• ë‹ˆë©”ì´ì…˜ í•¨ìˆ˜ë¡œ ì ìš©
     {
         rig.AddForce(Vector3.up * jumpSpeed, ForceMode.Impulse);
     }
-    public void GroundCheck() // °øÁß »óÅÂ Ã¼Å© ¹× °øÁß¿¡¼­ÀÇ ¼Óµµ ¼³Á¤
+    public void GroundCheck() // ê³µì¤‘ ìƒíƒœ ì²´í¬ ë° ê³µì¤‘ì—ì„œì˜ ì†ë„ ì„¤ì •
     {
         isGrounded = Physics.CheckSphere(transform.TransformPoint(groundCheckOffset), groundCheckRadius, groundLayer);
         animator.SetBool("isGrounded", isGrounded);
@@ -247,25 +247,25 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
     }
     #endregion
 
-    // ½ºÅ³
+    // ìŠ¤í‚¬
     public abstract void passive();
     public abstract void attack();
     public abstract void skill_q();
     public abstract void skill_e();
     public abstract void skill_f();
 
-    // µ¥¹ÌÁö °ü·Ã
-    public virtual int set_damage(int num) // °ø°İ µ¥¹ÌÁö »êÃâ
+    // ë°ë¯¸ì§€ ê´€ë ¨
+    public virtual int set_damage(int num) // ê³µê²© ë°ë¯¸ì§€ ì‚°ì¶œ
     {
         int r_damage = 0;
         r_damage = Mathf.FloorToInt(s_damage[num] * atk);
-        r_damage = Random.Range(r_damage - 5, r_damage + 5); // »çÀÌ °£°İ 10
+        r_damage = Random.Range(r_damage - 5, r_damage + 5); // ì‚¬ì´ ê°„ê²© 10
 
 
 
-        if (Random.Range(0f, 1f) < ctr) // Å©¸®Æ¼ÄÃ È®·ü
+        if (Random.Range(0f, 1f) < ctr) // í¬ë¦¬í‹°ì»¬ í™•ë¥ 
         {
-            //Å©¸®Æ¼ÄÃ
+            //í¬ë¦¬í‹°ì»¬
             r_damage = Mathf.FloorToInt(r_damage * 1.7f);
         }
         return r_damage;
@@ -294,7 +294,7 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
             hp += 30;
     }
     /// <summary>
-    /// ÇÇÇØ ÀÔ±â. ex) def = 0.3ÀÌ¸é µ¥¹ÌÁö 30ÆÛ °¨¼Ò
+    /// í”¼í•´ ì…ê¸°. ex) def = 0.3ì´ë©´ ë°ë¯¸ì§€ 30í¼ ê°ì†Œ
     /// </summary>
     /// <param name="damage"></param>
     public virtual void TakeDamage(int damage)
@@ -325,8 +325,8 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
         }
     }
 
-    // ±âÅ¸ ±â´É
-    protected virtual void init_setting() // ÃÊ±â ¼¼ÆÃ. Å¬·¡½º¸¶´Ù ½ºÅÈ¼³Á¤ ÇÊ¿ä
+    // ê¸°íƒ€ ê¸°ëŠ¥
+    protected virtual void init_setting() // ì´ˆê¸° ì„¸íŒ…. í´ë˜ìŠ¤ë§ˆë‹¤ ìŠ¤íƒ¯ì„¤ì • í•„ìš”
     {
         isAttack = false;
         isDodge = false;
@@ -366,16 +366,16 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
     }
-    public virtual void attack_playerRotation() // Àü»ç ¹× ±ÙÁ¢°ø°İÀÇ °æ¿ì ÇØ´ç ( °ø°İ ½Ã ´Ù¸¥ ¹æÇâÀ¸·Î È¸Àü ±İÁö )
+    public virtual void attack_playerRotation() // ì „ì‚¬ ë° ê·¼ì ‘ê³µê²©ì˜ ê²½ìš° í•´ë‹¹ ( ê³µê²© ì‹œ ë‹¤ë¥¸ ë°©í–¥ìœ¼ë¡œ íšŒì „ ê¸ˆì§€ )
     {
         if (!isAttack)
             transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, playerRotationSpeed * Time.deltaTime);
     }
-    protected void FreezeRotation() // ÀÚµ¿È¸Àü ¹æÁö
+    protected void FreezeRotation() // ìë™íšŒì „ ë°©ì§€
     {
         rig.angularVelocity = Vector3.zero;
     }
-    protected virtual void sync_state() // HP, MP »ó½Ã µ¿±âÈ­
+    protected virtual void sync_state() // HP, MP ìƒì‹œ ë™ê¸°í™”
     {
         HP.value = hp;
         if (Shield.value > 0)
@@ -386,11 +386,11 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
         MP.value = mp;
         mpText.text = mp + "/100";
     }
-    protected virtual void set_speed() // ¼Óµµ ¼³Á¤
+    protected virtual void set_speed() // ì†ë„ ì„¤ì •
     {
-        setSpeed = Input.GetKey(KeyCode.LeftShift) ? (isJump ? moveSpeed : sprintSpeed) : moveSpeed; // ´Ş¸®±â
+        setSpeed = Input.GetKey(KeyCode.LeftShift) ? (isJump ? moveSpeed : sprintSpeed) : moveSpeed; // ë‹¬ë¦¬ê¸°
     }
-    protected virtual void skill_tree() // ½ºÅ³Æ®¸®
+    protected virtual void skill_tree() // ìŠ¤í‚¬íŠ¸ë¦¬
     {
         if (Input.GetKeyDown(KeyCode.K))
         {
@@ -409,26 +409,26 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
         }
 
     }
-    public virtual IEnumerator ui_coolTime(int index, float coolTime) // ÄğÅ¸ÀÓ UI¿¡ °è»ê
+    public virtual IEnumerator ui_coolTime(int index, float coolTime) // ì¿¨íƒ€ì„ UIì— ê³„ì‚°
     {
-        float cooldownDuration = coolTime; // Áö¼Ó½Ã°£
-        float cooldownTimer = 0f; // Å¸ÀÌ¸Ó
+        float cooldownDuration = coolTime; // ì§€ì†ì‹œê°„
+        float cooldownTimer = 0f; // íƒ€ì´ë¨¸
 
-        coolTime_Text[index].enabled = true; // ÅØ½ºÆ® Å°±â
-        skill_icons[index].color = new Color(0.35f, 0.35f, 0.35f); // ½ºÅ³ ¾ÆÀÌÄÜ »ö º¯°æ
+        coolTime_Text[index].enabled = true; // í…ìŠ¤íŠ¸ í‚¤ê¸°
+        skill_icons[index].color = new Color(0.35f, 0.35f, 0.35f); // ìŠ¤í‚¬ ì•„ì´ì½˜ ìƒ‰ ë³€ê²½
 
         while (cooldownTimer < cooldownDuration)
         {
-            // ÄğÅ¸ÀÓ ½Ã°£ °»½Å
+            // ì¿¨íƒ€ì„ ì‹œê°„ ê°±ì‹ 
             cooldownTimer += Time.deltaTime;
 
-            // UI¿¡ ÄğÅ¸ÀÓ Ç¥½Ã
+            // UIì— ì¿¨íƒ€ì„ í‘œì‹œ
             if ((cooldownDuration - cooldownTimer) >= 0)
                 coolTime_Text[index].text = (cooldownDuration - cooldownTimer).ToString("F1");
             else
                 break;
 
-            yield return null; // ÇÑ ÇÁ·¹ÀÓ ´ë±â
+            yield return null; // í•œ í”„ë ˆì„ ëŒ€ê¸°
         }
         skill_icons[index].color = Color.white;
         coolTime_Text[index].enabled = false;
@@ -441,7 +441,7 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
         }
     }
 
-    protected virtual void OnEnable() // ±âº» ½ºÅÈ ¼³Á¤
+    protected virtual void OnEnable() // ê¸°ë³¸ ìŠ¤íƒ¯ ì„¤ì •
     {
         rig = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
@@ -484,7 +484,7 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
     protected virtual void FixedUpdate()
     {
         FreezeRotation();
-        if (isDied || isStop || isAttack || skillTree.activeSelf) // ¿òÁ÷ÀÓ Á¦¾î
+        if (isDied || isStop || isAttack || skillTree.activeSelf) // ì›€ì§ì„ ì œì–´
             return;
         rig.MovePosition(transform.position + velocity * Time.fixedDeltaTime);
     }
@@ -499,38 +499,9 @@ public abstract class PlayerState : MonoBehaviour, IUnitStats, IMove, ISkill, ID
             if ((transform.position.y > collision.transform.position.y) && angle < 90 && animator.GetCurrentAnimatorStateInfo(0).IsName("InAir") && rig.velocity.y < 0 )
             {
                 Vector3 position = transform.position;
-                position.y = Mathf.Lerp(position.y, collision.transform.position.y - 0.5f, Time.deltaTime * 3f); // ¼­¼­È÷ ³»·Á¿À°Ô ¼³Á¤
+                position.y = Mathf.Lerp(position.y, collision.transform.position.y - 0.5f, Time.deltaTime * 3f); // ì„œì„œíˆ ë‚´ë ¤ì˜¤ê²Œ ì„¤ì •
                 transform.position = position;
             }
         }
     }
-
-    #region RPC Method
-
-    [PunRPC]
-    protected void RPCTrigger(string name)
-    {
-        animator.SetTrigger(name);
-    }
-
-    [PunRPC]
-    protected void IsDie(bool _isDie)
-    {
-        isDied = _isDie;
-        if (isDied)
-        {
-            GameManager.Instance.playerCnt--;
-        }
-    }
-
-    [PunRPC]
-    protected void RemoveCamera(int viewID)
-    {
-        PhotonView pv = PhotonView.Find(viewID);
-        PlayerState player = pv.GetComponent<PlayerState>();
-
-        GameManager.Instance.playerCameraList.Remove(player.camPos);
-    }
-
-    #endregion
 }
