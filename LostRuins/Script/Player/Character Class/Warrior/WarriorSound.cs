@@ -2,12 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// ¿ö¸®¾î »ç¿îµå ÀÛµ¿ ½ºÅ©¸³Æ®.
-/// attack => ÈÖµÎ¸£´Â »ç¿îµå 2°³
-/// hit -> 2°³(monster), 2°³(wall), 1°³(q), 1°³(e), 1°³(f)
-/// q ¹ß»ı »ç¿îµå 1°³, e ¹ß»ı »ç¿îµå 1°³, f ¹ß»ı »ç¿îµå 2°³ ( ÁÖÀ§ ¿ø, °ø°£ °¡¸£±â )
-/// </summary>
 public class WarriorSound : SoundManager
 {
     public int skillNum;
@@ -45,7 +39,7 @@ public class WarriorSound : SoundManager
     }
 
     /// <summary>
-    /// ½ºÅ³ ¼³Á¤¿¡ µû¸¥ hit »ç¿îµå ¼³Á¤
+    /// ìŠ¤í‚¬ ì„¤ì •ì— ë”°ë¥¸ hit ì‚¬ìš´ë“œ ì„¤ì •
     /// </summary>
     /// <param name="skillNum"></param>
     /// <returns></returns>
