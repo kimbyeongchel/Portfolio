@@ -22,5 +22,6 @@
 > - 플랫폼 : PC
 ## 4. 영상 및 기술
 > - 게임은 Game 폴더 내의 .zip 파일을 통해 .exe 를 실행하면 됩니다.
+> - 몬스터 소개 영상 : https://drive.google.com/file/d/1kDO2I9WI3oDlTIK_1Xm4c_GddjHDo-gZ/view?usp=sharing
 > - 풀영상 : https://youtu.be/57bFWsdyekI?si=L8ZoqUPw-RCPfIyX
 > - 깃허브 : https://github.com/potatohun/SecondLifeIsInFairytale
