@@ -28,7 +28,7 @@
 > - 개발 도구 : Unity
 > - 개발 언어 : C#
 > - 플랫폼 : PC
-## 3. 영상 및 기술
+## 4. 영상 및 기술
 > - 플레이는 Game 폴더의 LostRuins.zip 파일을 통해 플레이할 수 있습니다.
 > - 설명 PPT : https://docs.google.com/presentation/d/157vF9WH9u43tE_7wf7SnHnzSVcMaNaGA/edit?usp=sharing&ouid=107828005522689506458&rtpof=true&sd=true
 > - 2분 시연 영상 : https://drive.google.com/file/d/169qa5i7a4x9qzwMlsXnY8VzoMYnaU15U/view?usp=sharing
