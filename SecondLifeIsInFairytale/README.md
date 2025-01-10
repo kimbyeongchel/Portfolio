@@ -21,5 +21,6 @@
 > - 개발 언어 : C#
 > - 플랫폼 : PC
 ## 3. 영상 및 기술
+> - 게임은 Game 폴더 내의 .zip 파일을 통해 .exe 를 실행하면 됩니다.
 > - 영상 : https://youtu.be/57bFWsdyekI?si=L8ZoqUPw-RCPfIyX
 > - 깃허브 : https://github.com/potatohun/SecondLifeIsInFairytale
