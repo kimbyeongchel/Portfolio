@@ -1,0 +1,58 @@
+name: LostRuins Redesign
+
+on:
+  push:
+    paths:
+      - 'LostRuins/Redesign/**'
+      - '.github/workflows/lostruins-redesign.yml'
+  pull_request:
+    paths:
+      - 'LostRuins/Redesign/**'
+      - '.github/workflows/lostruins-redesign.yml'
+
+jobs:
+  build-test:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: LostRuins/Redesign
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mono (C# tests)
+        run: sudo apt-get update && sudo apt-get install -y mono-mcs mono-runtime
+
+      - name: Build server (warnings as errors)
+        run: |
+          cmake -S server -B server/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build server/build -j
+
+      - name: Unit tests + server/bot smoke test
+        run: ctest --test-dir server/build --output-on-failure
+
+      - name: Sanitizer build (ASan + UBSan) and tests
+        run: |
+          cmake -S server -B server/build-asan -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLR_SANITIZE=ON
+          cmake --build server/build-asan -j
+          ctest --test-dir server/build-asan --output-on-failure
+
+      - name: C++ <-> C# parity
+        run: |
+          mkdir -p parity && cd parity
+          ../server/build/lr_parity gen inputs.txt states.txt
+          ../server/build/lr_parity snap snapshot.bin
+          mcs -nologo -warnaserror+ -out:ParityTest.exe ../client-unity/Shared/*.cs ../client-unity/Client/*.cs ../client-unity/Tests/ParityTest.cs
+          mono ParityTest.exe .
+          ../server/build/lr_parity input input.bin
+
+      - name: Unity scripts type check (API stub)
+        run: mcs -nologo -nowarn:649 -warnaserror+ -target:library -out:typecheck.dll client-unity/Tests/Stub/UnityStub.cs client-unity/Shared/*.cs client-unity/Client/*.cs client-unity/Unity/*.cs
+
+      - name: clang-tidy (report)
+        continue-on-error: true
+        run: |
+          if command -v clang-tidy >/dev/null; then
+            clang-tidy -p server/build --quiet server/src/game/world.cpp server/src/server/game_server.cpp server/src/server/main.cpp server/tests/unit_tests.cpp
+          else
+            echo "clang-tidy not installed on this runner, skipped"
+          fi

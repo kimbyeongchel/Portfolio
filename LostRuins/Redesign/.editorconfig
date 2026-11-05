@@ -1,0 +1,16 @@
+# 모든 소스는 UTF-8 + LF. (원본 LostRuins는 CP949와 UTF-8이 섞여 한글 주석이 깨졌음: 1편 F11)
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{h,cpp}]
+indent_style = space
+indent_size = 2
+
+[*.cs]
+indent_style = space
+indent_size = 4
