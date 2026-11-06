@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LostRuins 재설계 문서</title>
+<style>
+:root{--bg:#f3f5f7;--surface:#fff;--ink:#13171b;--ink-2:#47505a;--line:#dce1e6;--accent:#2b55c9;color-scheme:light}
+@media (prefers-color-scheme: dark){:root{--bg:#111417;--surface:#1a1e23;--ink:#e8ecf0;--ink-2:#a9b2bb;--line:#2c333a;--accent:#7c9cf2;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+main{max-width:44rem;margin:0 auto;padding:48px 16px}
+h1{font-size:1.7rem;margin:0 0 8px}
+p{color:var(--ink-2);margin:0 0 24px}
+a.card{display:block;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:12px}
+a.card:hover,a.card:focus-visible{border-color:var(--accent)}
+a.card b{display:block;font-size:1.05rem;color:var(--accent)}
+a.card span{color:var(--ink-2);font-size:.92rem}
+.small{font-size:.88rem}
+.small a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <h1>LostRuins 재설계 문서</h1>
+  <p>졸업 작품 LostRuins의 플레이어·멀티플레이 구조를 C++ 권위 서버와 Unity 클라이언트로 다시 설계한 기록입니다.</p>
+  <a class="card" href="redesign.html"><b>2편 · 재설계서</b><span>무엇이 가장 크게 바뀌는지, 구조와 클래스 다이어그램, 전체 소스, 측정값</span></a>
+  <a class="card" href="guide.html"><b>3편 · 해설서</b><span>서버 개념을 비유·애니메이션·시뮬레이션으로 설명, 재검증 기록, 코드 한 줄씩 해설</span></a>
+  <a class="card" href="classes.html"><b>4편 · 직업 재설계</b><span>전사·궁수·창술사·힐러 코드, 원본에서 찾은 버그, 스킬 타임라인, 테스트, 고민 노트</span></a>
+  <p class="small">1편(기술 포스트모템)은 팀원 코드 인용이 있어 공개하지 않았습니다. 소스 코드와 테스트는 <a href="https://github.com/kimbyeongchel/Portfolio/tree/main/LostRuins/Redesign">GitHub 저장소</a>에 있습니다.</p>
+</main>
+</body>
+</html>
