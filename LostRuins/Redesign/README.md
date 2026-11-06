@@ -6,7 +6,7 @@
 
 ## 문서
 
-**[문서 목차 바로 열기](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/)** · 아래 링크를 누르면 브라우저에서 바로 열립니다.
+**[문서 목차 바로 열기](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/index.html)** · 아래 링크를 누르면 브라우저에서 바로 열립니다.
 
 | 문서 | 내용 |
 |---|---|
