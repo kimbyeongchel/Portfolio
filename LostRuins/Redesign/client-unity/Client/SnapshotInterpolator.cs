@@ -24,6 +24,9 @@ namespace LostRuins.Client
         double clockTick;          // 로컬에서 흘러가는 서버 틱 추정치
         bool started;
 
+        public double RenderTick { get; private set; } = double.NegativeInfinity;   // 지금 화면에 그리는 서버 틱 (이벤트 표시 시각에 사용)
+        public int NewestTick { get { return newestTick; } }
+
         public SnapshotInterpolator(float delayTicks = 3f) { this.delayTicks = delayTicks; }
 
         public void Add(int serverTick, List<EntityState> entities)
@@ -49,6 +52,7 @@ namespace LostRuins.Client
             if (frames.Count == 0) return;
             clockTick += deltaSeconds * Rules.TickRate;
             double renderTick = clockTick - delayTicks;
+            RenderTick = renderTick;
 
             int i = frames.Count - 1;
             while (i > 0 && frames[i - 1].Tick > renderTick) --i;

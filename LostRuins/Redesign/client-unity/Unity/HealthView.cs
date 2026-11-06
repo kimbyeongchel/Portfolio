@@ -13,10 +13,14 @@ namespace LostRuins.Client
         [SerializeField] Image fill;
         [SerializeField] int maxHp = 100;
 
+        [SerializeField] Image shieldFill;   // 체력 바 위에 겹쳐 그리는 실드 (창술사 Q)
+
         public void Set(int hp)
         {
             label.SetText("{0}/100", hp);
             fill.fillAmount = (float)hp / maxHp;
         }
+
+        public void SetShield(int shield) { shieldFill.fillAmount = Mathf.Clamp(shield, 0, maxHp) / (float)maxHp; }
     }
 }

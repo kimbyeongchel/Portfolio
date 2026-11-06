@@ -89,14 +89,17 @@ namespace LostRuins.Shared
     }
 
     public enum PacketType : byte { Connect = 1, Accept = 2, Input = 3, Snapshot = 4 }
-    public enum EntityKind : byte { Player = 0, Monster = 1, Projectile = 2 }
-    public enum EventType : byte { Hit = 1, Death = 2 }
+    public enum EntityKind : byte { Player = 0, Monster = 1, Projectile = 2, Zone = 3 }
+    // 3비트. Hit/Heal/Shield의 Damage = 양, Block = 막아낸 피해
+    public enum EventType : byte { Hit = 1, Death = 2, Heal = 3, Shield = 4, Buff = 5, Block = 6 }
 
     public struct Header { public PacketType Type; public ushort Seq, Ack; public uint AckBits; }
 
     public struct EntityState
     {
         public ushort Id; public EntityKind Kind; public float X, Y, Z; public byte Yaw, Action; public ushort Hp;
+        public byte Cls;     // 직업 (투사체·장판은 쏜 사람의 직업)
+        public byte Skill;   // 0 = 없음, 1 + 슬롯×3 + 콤보 단계 → 원격 애니메이션, 투사체 모양
     }
 
     public struct GameEvent
@@ -108,7 +111,10 @@ namespace LostRuins.Shared
     {
         public ushort ServerTick, LastInputSeq;
         public MoveState Local;
+        public AbilityState Ability;       // 내 스킬 상태 (쿨타임·콤보·충전도 예측하므로 함께 비교)
         public ushort LocalHp;
+        public byte LocalShield;
+        public byte LocalFlags;            // 1 = 버프 중, 2 = 패시브 준비됨
         public readonly List<EntityState> Entities = new List<EntityState>(64);
         public readonly List<GameEvent> Events = new List<GameEvent>(32);
     }
@@ -154,25 +160,53 @@ namespace LostRuins.Shared
             return s;
         }
 
+        public static AbilityState ReadAbility(BitReader r)
+        {
+            var a = AbilityState.Idle();
+            a.Slot = (byte)r.ReadBits(3); a.Phase = (byte)r.ReadBits(3); a.Tick = r.ReadU8(); a.Step = (byte)r.ReadBits(2);
+            a.Queued = (byte)r.ReadBits(1); a.Charge = r.ReadU8();
+            a.LastX = r.ReadI8(); a.LastZ = r.ReadI8(); a.DashX = r.ReadI8(); a.DashZ = r.ReadI8();
+            a.Cd0 = (ushort)r.ReadBits(10); a.Cd1 = (ushort)r.ReadBits(10); a.Cd2 = (ushort)r.ReadBits(10);
+            a.Cd3 = (ushort)r.ReadBits(10); a.Cd4 = (ushort)r.ReadBits(10);
+            if ((a.Slot >= Abilities.SlotCount && a.Slot != Abilities.NoSlot) || a.Phase > Abilities.PhaseRecovery || a.Step > 2)
+            {
+                r.Ok = false;                                  // 표 범위를 넘는 값 → 패킷째 버림
+                a = AbilityState.Idle();
+            }
+            return a;
+        }
+
+        public static void WriteConnect(BitWriter w, ClassId cls) { w.WriteBits((uint)cls, 2); }
+
+        public struct Accept { public ushort PlayerId, ServerTick; public ClassId Cls; public MoveState Spawn; }
+
+        public static Accept ReadAccept(BitReader r)
+        {
+            Accept a;
+            a.PlayerId = r.ReadU16(); a.ServerTick = r.ReadU16(); a.Cls = (ClassId)r.ReadBits(2);
+            a.Spawn = ReadMoveState(r);
+            return a;
+        }
+
         // into를 재사용한다 (리스트를 비우고 다시 채움)
         public static void ReadSnapshot(BitReader r, Snapshot into)
         {
             into.Entities.Clear();
             into.Events.Clear();
             into.ServerTick = r.ReadU16(); into.LastInputSeq = r.ReadU16();
-            into.Local = ReadMoveState(r); into.LocalHp = (ushort)r.ReadBits(10);
+            into.Local = ReadMoveState(r); into.Ability = ReadAbility(r);
+            into.LocalHp = (ushort)r.ReadBits(10); into.LocalShield = r.ReadU8(); into.LocalFlags = (byte)r.ReadBits(2);
             int n = r.ReadU8();
             for (int i = 0; i < n && r.Ok; ++i)
             {
                 EntityState e;
                 e.Id = r.ReadU16();
-                uint kind = r.ReadBits(2);
-                if (kind > 2) r.Ok = false;
-                e.Kind = (EntityKind)(kind > 2 ? 0 : kind);
+                e.Kind = (EntityKind)r.ReadBits(2);                 // 2비트 = 0~3 전부 유효
                 e.X = r.ReadQuantized(WorldMin, WorldMax, 16);
                 e.Z = r.ReadQuantized(WorldMin, WorldMax, 16);
                 e.Y = r.ReadQuantized(0.0f, HeightMax, 12);
                 e.Yaw = r.ReadU8(); e.Action = (byte)r.ReadBits(3); e.Hp = (ushort)r.ReadBits(10);
+                e.Cls = (byte)r.ReadBits(2); e.Skill = (byte)r.ReadBits(4);
                 into.Entities.Add(e);
             }
             int m = (int)r.ReadBits(6);
@@ -181,9 +215,10 @@ namespace LostRuins.Shared
             {
                 GameEvent ev;
                 ev.Id = r.ReadU16();
-                uint type = r.ReadBits(2);
-                if (type < 1 || type > 2) r.Ok = false;
-                ev.Type = (type < 1 || type > 2) ? EventType.Hit : (EventType)type;
+                uint type = r.ReadBits(3);
+                bool valid = type >= 1 && type <= 6;
+                if (!valid) r.Ok = false;
+                ev.Type = valid ? (EventType)type : EventType.Hit;
                 ev.Source = r.ReadU16(); ev.Target = r.ReadU16(); ev.Damage = (ushort)r.ReadBits(12); ev.Crit = (byte)r.ReadBits(1);
                 ev.X = r.ReadQuantized(WorldMin, WorldMax, 16);
                 ev.Z = r.ReadQuantized(WorldMin, WorldMax, 16);

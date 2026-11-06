@@ -1,8 +1,10 @@
-// 내 캐릭터: 입력 즉시 움직이고(예측), 서버 결과가 오면 비교해서 다르면 되감아 다시 계산(재조정).
+// 내 캐릭터: 입력 즉시 움직이고 스킬을 휘두르고(예측), 서버 결과가 오면 비교해서 다르면 되감아 다시 계산(재조정).
 // Unity 의존성 없음 → 서버 프로토타입의 봇(loadtest.cpp)과 같은 알고리즘을 C#으로 옮긴 것.
 //
 // 비유: 내비게이션. GPS 신호(서버)가 1초마다 오더라도, 화면 속 차는 속도와 방향으로 미리 움직인다(예측).
 // 신호가 오면 "그 시각에 내가 있다고 생각한 위치"와 비교하고, 다르면 그 시각부터 다시 계산한다(재조정).
+// 스킬도 같다: 버튼을 누른 틱에 바로 휘두르는 애니메이션이 나가고, 쿨타임·콤보 단계도 서버와 같은 규칙으로 센다.
+// 단, "맞았는지·몇 데미지인지"는 예측하지 않는다 (서버 이벤트로만 표시 → 헛맞춤 연출이 없음).
 using System.Collections.Generic;
 using LostRuins.Shared;
 
@@ -12,25 +14,35 @@ namespace LostRuins.Client
     {
         const int History = 256;                 // 256틱 = 8.5초 분량. 65536이 256으로 나눠떨어져 번호 순환에도 안전
         readonly InputCmd[] inputs = new InputCmd[History];
-        readonly MoveState[] after = new MoveState[History];   // 각 입력을 적용한 "직후" 내 상태
+        readonly MoveState[] after = new MoveState[History];       // 각 입력을 적용한 "직후" 내 상태
+        readonly AbilityState[] abilityAfter = new AbilityState[History];
         readonly Level level;
+        readonly ClassTiming timing;
         ushort seq;
         uint sent;
         bool dead;
 
         public MoveState State;                  // 지금 화면에 그릴 내 상태
+        public AbilityState Ability = AbilityState.Idle();
+        public AbilityResult LastResult;         // 이번 틱 결과 (애니메이션·HUD가 읽음)
         public int Corrections { get; private set; }
         public float LastCorrectionMeters { get; private set; }
 
-        public LocalPlayerPredictor(Level level, MoveState spawn) { this.level = level; State = spawn; }
+        public LocalPlayerPredictor(Level level, MoveState spawn, ClassId cls)
+        {
+            this.level = level;
+            State = spawn;
+            timing = Abilities.Timing(cls);
+        }
 
         // 고정 틱마다 1번. 반환값을 기록하고, RecentInputs로 서버에 보낸다.
         public InputCmd Predict(sbyte moveX, sbyte moveZ, ushort yaw, Buttons buttons)
         {
             var cmd = new InputCmd { Seq = ++seq, MoveX = moveX, MoveZ = moveZ, Yaw = yaw, Buttons = (byte)buttons };
-            if (!dead) Movement.Step(ref State, cmd, level);
+            if (!dead) LastResult = Abilities.SimStep(ref State, ref Ability, timing, cmd, level);
             inputs[cmd.Seq % History] = cmd;
             after[cmd.Seq % History] = State;
+            abilityAfter[cmd.Seq % History] = Ability;
             sent++;
             return cmd;
         }
@@ -43,25 +55,30 @@ namespace LostRuins.Client
             for (int back = count - 1; back >= 0; --back) into.Add(inputs[(ushort)(seq - back) % History]);
         }
 
-        public void Reconcile(ushort lastInputSeq, MoveState server, ushort hp)
+        public void Reconcile(ushort lastInputSeq, MoveState server, AbilityState serverAbility, ushort hp)
         {
             if (lastInputSeq == 0 || (ushort)(seq - lastInputSeq) >= History - 1) return;   // 너무 옛날 결과
             bool respawned = dead && hp > 0;
             dead = hp == 0;
-            if (!dead && !respawned && after[lastInputSeq % History].BitwiseEquals(server)) return;   // 대부분 여기서 끝
+            int k0 = lastInputSeq % History;
+            if (!dead && !respawned && after[k0].BitwiseEquals(server) && abilityAfter[k0].SameAs(serverAbility)) return;   // 대부분 여기서 끝
 
             if (!dead && !respawned)
             {
-                var mine = after[lastInputSeq % History];
+                var mine = after[k0];
                 float dx = mine.Px - server.Px, dy = mine.Py - server.Py, dz = mine.Pz - server.Pz;
                 LastCorrectionMeters = (float)System.Math.Sqrt(dx * dx + dy * dy + dz * dz);
                 Corrections++;
             }
-            State = server;                                                         // 서버 결과로 되감고
+            State = server;                                                          // 서버 결과로 되감고
+            Ability = serverAbility;
+            after[k0] = State;                                                       // 기준점도 서버 값으로
+            abilityAfter[k0] = Ability;
             for (ushort k = (ushort)(lastInputSeq + 1); k != (ushort)(seq + 1); ++k)
             {
-                if (!dead) Movement.Step(ref State, inputs[k % History], level);   // 확인 안 된 입력을 다시 적용
+                if (!dead) LastResult = Abilities.SimStep(ref State, ref Ability, timing, inputs[k % History], level);   // 확인 안 된 입력 다시 적용
                 after[k % History] = State;
+                abilityAfter[k % History] = Ability;
             }
         }
     }

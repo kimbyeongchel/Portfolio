@@ -15,10 +15,14 @@ namespace LostRuins.Client
         Vector3 origin;
         float age;
 
-        public void Show(int damage, bool crit, Vector3 pos, ObjectPool<DamageNumber> pool)
+        public void Show(int damage, bool crit, Vector3 pos, ObjectPool<DamageNumber> pool) { Show(damage, crit ? "{0}!" : "{0}", Color.white, pos, pool); }
+
+        // format 예: "{0}", "+{0}" (회복), "({0})" (실드). 문자열 조합 대신 포맷 + 숫자 → 할당 없음 (F9)
+        public void Show(int value, string format, Color color, Vector3 pos, ObjectPool<DamageNumber> pool)
         {
             owner = pool; origin = pos; age = 0f;
-            label.SetText(crit ? "{0}!" : "{0}", damage);            // 할당 없는 TMP API (F9)
+            label.color = color;
+            label.SetText(format, value);
             transform.position = pos;
         }
 

@@ -8,14 +8,17 @@
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
+#include <string>
 #include <thread>
 #include <vector>
 
 #include "../src/server/game_server.h"
 
+using lr::AbilityState;
 using lr::Address;
 using lr::BitReader;
 using lr::BitWriter;
+using lr::ClassId;
 using lr::Header;
 using lr::InputCmd;
 using lr::MoveState;
@@ -35,7 +38,8 @@ struct Scenario {
 
 struct BotResult {
   uint64_t bytesOut = 0, bytesIn = 0, packetsOut = 0, packetsIn = 0, droppedOut = 0, droppedIn = 0;
-  uint64_t comparisons = 0, exact = 0, corrections = 0, events = 0, dupEvents = 0, ownHits = 0, respawns = 0;
+  uint64_t comparisons = 0, exact = 0, corrections = 0, abilityOnly = 0, events = 0, dupEvents = 0, ownHits = 0,
+           respawns = 0;
   float maxCorrection = 0;
   std::vector<float> confirmMs;
 };
@@ -61,8 +65,13 @@ struct Delayed {
 
 class Bot {
  public:
-  Bot(const Scenario& sc, uint16_t serverPort, uint64_t seed, float phase)
-      : emu_(sc, seed), server_(Address::Loopback(serverPort)), phase_(phase), level_(lr::DefaultLevel()) {
+  Bot(const Scenario& sc, uint16_t serverPort, uint64_t seed, float phase, ClassId cls)
+      : emu_(sc, seed),
+        server_(Address::Loopback(serverPort)),
+        phase_(phase),
+        level_(lr::DefaultLevel()),
+        cls_(cls),
+        timing_(&lr::TimingOf(cls)) {
     sock_.Open(0);
   }
 
@@ -104,6 +113,7 @@ class Bot {
   void SendConnect() {
     BitWriter w;
     WriteHeader(w, NewHeader(PacketType::kConnect));
+    lr::WriteConnect(w, cls_);
     SendRaw(w);
   }
 
@@ -125,15 +135,14 @@ class Bot {
     if ((t / 90) % 2 != 0) in.buttons |= lr::kSprint;
     if (t % 51 == 0) in.buttons |= lr::kJump;
     if (t % 93 == 5) in.buttons |= lr::kDodge;
-    if (t % 18 == 0) in.buttons |= lr::kAttack;
-    if (t % 330 == 7) in.buttons |= lr::kSkillQ;
-    if (t % 180 == 11) in.buttons |= lr::kSkillE;
+    in.buttons |= PickSkillButtons(t);
     in.yaw = AimAtNearestMonster();
 
-    if (!dead_) lr::Step(pred_, in, level_);  // 서버를 기다리지 않고 즉시 이동 (입력 지연 0틱)
+    if (!dead_) lr::SimStep(pred_, ab_, *timing_, in, level_);  // 서버를 기다리지 않고 즉시 (입력 지연 0틱)
     const size_t k = in.seq % kHist;
     hist_[k] = in;
     after_[k] = pred_;
+    abAfter_[k] = ab_;
     sentAt_[k] = Clock::now();
     sent_++;
 
@@ -144,6 +153,35 @@ class Bot {
     WriteHeader(w, NewHeader(PacketType::kInput));
     WriteInputs(w, recent_);
     SendRaw(w);
+  }
+
+  // 사람처럼: 동작이 끝난 뒤에 다음 스킬을 누른다. 기본 공격과 F는 "누르고 있다가 떼기"
+  uint8_t PickSkillButtons(uint32_t t) {
+    uint8_t b = 0;
+    if (holdLeft_ == 0 && ab_.slot == lr::kNoSlot) {
+      if (t >= nextF_) {
+        hold_ = lr::kSkillF;
+        holdLeft_ = 27;  // 0.9초 충전 (궁수 F 최소 0.5초). 다른 직업은 첫 틱에 바로 발동
+        nextF_ = t + 480;
+      } else if (t >= nextQ_) {
+        b = lr::kSkillQ;
+        nextQ_ = t + 330;
+      } else if (t >= nextE_) {
+        b = lr::kSkillE;
+        nextE_ = t + 180;
+      } else if (cls_ == ClassId::kLancer && t % 60 == 30) {
+        b = lr::kAim;  // 창술사 우클릭 = 방패 치기
+      } else if (t % 4 == 0) {
+        hold_ = lr::kAttack;
+        holdLeft_ = 14;  // 궁수는 충전 후 발사, 나머지는 첫 틱에 공격
+      }
+    }
+    if (holdLeft_ > 0) {
+      b |= hold_;
+      --holdLeft_;
+    }
+    if (ab_.slot == lr::kSlotBasic && ab_.phase == lr::kPhaseRecovery && t % 2 == 0) b |= lr::kAttack;  // 전사 콤보
+    return b;
   }
 
   uint16_t AimAtNearestMonster() const {
@@ -200,9 +238,10 @@ class Bot {
     if (!r.Ok()) return;
     acks_.OnReceived(h.seq);
     if (h.type == PacketType::kAccept) {
-      playerId_ = r.ReadU16();
-      (void)r.ReadU16();
-      pred_ = lr::ReadMoveState(r);
+      const lr::Accept a = lr::ReadAccept(r);
+      if (!r.Ok()) return;
+      playerId_ = a.playerId;
+      pred_ = a.spawn;
       accepted_ = true;
       return;
     }
@@ -238,10 +277,13 @@ class Bot {
     if (!dead_ && !respawned) {
       const MoveState& mine = after_[n % kHist];
       result.comparisons++;
-      if (lr::BitwiseEqual(mine, s.local)) {
+      const bool moveSame = lr::BitwiseEqual(mine, s.local);
+      const bool abilitySame = lr::AbilityEqual(abAfter_[n % kHist], s.ability);
+      if (moveSame && abilitySame) {
         result.exact++;
         return;
       }
+      if (moveSame) result.abilityOnly++;  // 위치는 같은데 쿨타임·콤보만 다름
       const float dx = mine.px - s.local.px;
       const float dy = mine.py - s.local.py;
       const float dz = mine.pz - s.local.pz;
@@ -251,9 +293,13 @@ class Bot {
       result.respawns++;  // 부활은 서버가 정하는 순간이동 → 보정으로 세지 않음
     }
     pred_ = s.local;  // 서버 상태로 되감고
+    ab_ = s.ability;
+    after_[n % kHist] = pred_;  // 기준점도 서버 값으로 (같은 n의 스냅샷이 또 와도 옛 예측과 비교하지 않게)
+    abAfter_[n % kHist] = ab_;
     for (auto k = static_cast<uint16_t>(n + 1); k != static_cast<uint16_t>(seq_ + 1); ++k) {
-      if (!dead_) lr::Step(pred_, hist_[k % kHist], level_);  // 아직 확인 안 된 입력을 다시 적용
+      if (!dead_) lr::SimStep(pred_, ab_, *timing_, hist_[k % kHist], level_);  // 확인 안 된 입력을 다시 적용
       after_[k % kHist] = pred_;
+      abAfter_[k % kHist] = ab_;
     }
   }
 
@@ -263,6 +309,8 @@ class Bot {
   Address server_;
   float phase_;
   lr::Level level_;
+  ClassId cls_;
+  const lr::ClassTiming* timing_;
   std::vector<Delayed> outQ_, inQ_;
   lr::AckTracker acks_;
   lr::EventDedup dedup_;
@@ -272,9 +320,13 @@ class Bot {
   uint32_t sent_ = 0;
   bool accepted_ = false, haveSnap_ = false, confirmedAny_ = false, dead_ = false;
   uint32_t tick_ = 0;
+  uint32_t nextF_ = 90, nextQ_ = 30, nextE_ = 60, holdLeft_ = 0;
+  uint8_t hold_ = 0;
   MoveState pred_;
+  AbilityState ab_;
   InputCmd hist_[kHist];
   MoveState after_[kHist];
+  AbilityState abAfter_[kHist];
   Clock::time_point sentAt_[kHist];
 };
 
@@ -303,6 +355,7 @@ int main(int argc, char** argv) {
       {"rtt200_loss5", 100, 10, 0.05F, 1, 12},
       {"local_200mon", 0, 0, 0.0F, 1, 200},
   };
+  int scenarioIndex = 0;
   for (const auto& sc : scenarios) {
     lr::ServerConfig cfg;
     cfg.monsters = sc.monsters;
@@ -318,7 +371,8 @@ int main(int argc, char** argv) {
     std::vector<std::unique_ptr<Bot>> bots;
     bots.reserve(lr::kMaxClients);
     for (int i = 0; i < lr::kMaxClients; ++i) {
-      bots.push_back(std::make_unique<Bot>(sc, server.Port(), 1000 + i, static_cast<float>(i) * 2.1F));
+      const auto cls = static_cast<ClassId>((i + scenarioIndex) % lr::kClassCount);  // 시나리오마다 직업 조합을 돌림
+      bots.push_back(std::make_unique<Bot>(sc, server.Port(), 1000 + i, static_cast<float>(i) * 2.1F, cls));
     }
     std::vector<std::thread> bt;
     bt.reserve(bots.size());
@@ -342,6 +396,7 @@ int main(int argc, char** argv) {
       sum.comparisons += r.comparisons;
       sum.exact += r.exact;
       sum.corrections += r.corrections;
+      sum.abilityOnly += r.abilityOnly;
       sum.events += r.events;
       sum.dupEvents += r.dupEvents;
       sum.ownHits += r.ownHits;
@@ -350,6 +405,11 @@ int main(int argc, char** argv) {
       confirm.insert(confirm.end(), r.confirmMs.begin(), r.confirmMs.end());
     }
     const auto& ws = server.GetWorld().stats;
+    std::string classes;
+    for (int i = 0; i < lr::kMaxClients; ++i) {
+      if (i > 0) classes += ',';
+      classes += lr::ClassOf(static_cast<ClassId>((i + scenarioIndex) % lr::kClassCount)).name;
+    }
     const double n = lr::kMaxClients;
     const auto u = [](uint64_t v) { return static_cast<unsigned long long>(v); };
     const auto dv = [](uint64_t v) { return static_cast<double>(v); };
@@ -360,22 +420,25 @@ int main(int argc, char** argv) {
         "1f,"
         "\"avg_snapshot_bytes\":%.1f,\"avg_input_bytes\":%.1f,\"max_packet_bytes\":%zu,\"entities_culled\":%llu,"
         "\"room_packets_per_s\":%.0f,"
-        "\"pred_comparisons\":%llu,\"pred_exact\":%llu,\"pred_corrections\":%llu,\"max_correction_m\":%.3f,"
+        "\"pred_comparisons\":%llu,\"pred_exact\":%llu,\"pred_corrections\":%llu,\"ability_only\":%llu,"
+        "\"max_correction_m\":%.3f,"
         "\"confirm_ms_p50\":%.0f,\"confirm_ms_p95\":%.0f,"
         "\"events\":%llu,\"dup_events_ignored\":%llu,\"own_hits\":%llu,"
         "\"server_shots\":%llu,\"server_hits\":%llu,\"server_kills\":%llu,\"repeated_inputs\":%llu,"
-        "\"player_downs\":%llu,\"respawns\":%llu,\"dropped_out\":%llu,\"dropped_in\":%llu}\n",
+        "\"player_downs\":%llu,\"respawns\":%llu,\"dropped_out\":%llu,\"dropped_in\":%llu,"
+        "\"heals\":%llu,\"blocks\":%llu,\"classes\":\"%s\"}\n",
         sc.name, sc.inputBuffer, sc.monsters, seconds, u(ss.ticks), Avg(ss.tickMicros),
         static_cast<double>(Pct(ss.tickMicros, 0.99F)), dv(sum.bytesOut) / n / seconds, dv(sum.bytesIn) / n / seconds,
         dv(sum.packetsOut) / n / seconds, dv(sum.packetsIn) / n / seconds,
         sum.packetsIn != 0 ? dv(sum.bytesIn) / dv(sum.packetsIn) : 0.0,
         sum.packetsOut != 0 ? dv(sum.bytesOut) / dv(sum.packetsOut) : 0.0, ss.maxPacketBytes, u(ss.entitiesCulled),
         dv(ss.packetsIn + ss.packetsOut) / seconds, u(sum.comparisons), u(sum.exact), u(sum.corrections),
-        static_cast<double>(sum.maxCorrection), static_cast<double>(Pct(confirm, 0.5F)),
+        u(sum.abilityOnly), static_cast<double>(sum.maxCorrection), static_cast<double>(Pct(confirm, 0.5F)),
         static_cast<double>(Pct(confirm, 0.95F)), u(sum.events), u(sum.dupEvents), u(sum.ownHits), u(ws.shots),
         u(ws.hits), u(ws.kills), u(ws.repeatedInputs), u(ws.playerDowns), u(sum.respawns), u(sum.droppedOut),
-        u(sum.droppedIn));
+        u(sum.droppedIn), u(ws.heals), u(ws.blocks), classes.c_str());
     std::fflush(stdout);
+    ++scenarioIndex;
   }
   return 0;
 }

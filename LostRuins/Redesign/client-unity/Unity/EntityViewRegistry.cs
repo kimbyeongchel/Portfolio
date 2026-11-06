@@ -9,7 +9,8 @@ namespace LostRuins.Client
 {
     public sealed class EntityViewRegistry : MonoBehaviour
     {
-        [SerializeField] EntityView playerPrefab, monsterPrefab, projectilePrefab;
+        [SerializeField] EntityView playerPrefab, monsterPrefab, projectilePrefab, zonePrefab;
+        [SerializeField] ClassVisuals[] classVisuals = new ClassVisuals[4];   // 전사, 궁수, 창술사, 힐러 순
         readonly Dictionary<ushort, EntityView> live = new Dictionary<ushort, EntityView>();
         readonly HashSet<ushort> seen = new HashSet<ushort>();
         readonly List<ushort> gone = new List<ushort>();
@@ -17,7 +18,7 @@ namespace LostRuins.Client
 
         void Awake()
         {
-            pools = new[] { MakePool(playerPrefab), MakePool(monsterPrefab), MakePool(projectilePrefab) };
+            pools = new[] { MakePool(playerPrefab), MakePool(monsterPrefab), MakePool(projectilePrefab), MakePool(zonePrefab) };
         }
 
         ObjectPool<EntityView> MakePool(EntityView prefab)
@@ -36,7 +37,7 @@ namespace LostRuins.Client
                 EntityView v;
                 if (!live.TryGetValue(s.Id, out v))
                 {
-                    v = pools[(int)s.Kind].Get(); v.Kind = s.Kind; live.Add(s.Id, v); v.Snap(s);
+                    v = pools[(int)s.Kind].Get(); v.Kind = s.Kind; v.Bind(classVisuals); live.Add(s.Id, v); v.Snap(s);
                 }
                 v.Apply(s);
             }

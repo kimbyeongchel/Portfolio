@@ -1,9 +1,3 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>LostRuins 재설계서</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -250,8 +244,6 @@ footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);font-si
 :root[data-theme="dark"]{--str:#f0a46e;--num:#5fd0a8;--ty:#c79bf0}
 </style>
 
-</head>
-<body>
 <div class="wrap">
 <header class="top">
   <div class="eyebrow">기술 포스트모템 2편 · 재설계 · C++ 권위 서버</div>
@@ -259,7 +251,7 @@ footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);font-si
   <p class="lede">1편에서 진단한 문제를 실제 코드로 다시 설계했습니다. C++ 게임 서버와 Unity 클라이언트 코드를 직접 작성해 컴파일하고, 봇 3명을 붙여 지연·손실 환경에서 측정했습니다. 무엇이 가장 크게 바뀌는지, 클래스 구조가 어떻게 달라지는지, 전체 소스, 측정값, 그리고 8개월 안에 만들려면 어떤 순서였어야 했는지를 정리했습니다. 이 판은 현업 기준 재검증(3편 15장, 17건 수정)을 반영한 최종본입니다.</p>
   <div class="meta">
     <span><b>서버</b> C++20 · UDP · 30Hz 고정 틱</span><span><b>클라이언트</b> Unity C#</span><span><b>공유 규칙</b> 이동 Step(), 패킷 형식</span>
-    <span><b>측정</b> Linux 컨테이너 · 루프백 UDP + 지연·손실 에뮬레이션</span><span><b>1편</b> LostRuins 기술 포스트모템 (저장소 밖 비공개 문서)</span><span><b>3편</b> <a href="guide.html">LostRuins 해설서</a> (쉬운 설명 · 코드 해설)</span>
+    <span><b>측정</b> Linux 컨테이너 · 루프백 UDP + 지연·손실 에뮬레이션</span><span><b>1편</b> <a href="https://claude.ai/artifact/Su8MPkTj3SBDtMdJKL4VXk">LostRuins 기술 포스트모템</a></span><span><b>3편</b> <a href="https://claude.ai/artifact/NCeE9T3fKkVjqwTBFDytQU">LostRuins 해설서</a> (쉬운 설명 · 코드 해설)</span><span><b>4편</b> <a href="https://claude.ai/artifact/WCzcu9ishc1gU4BDZstJzo">LostRuins 직업 재설계</a> (직업 코드 · 고민 노트. 직업 추가로 패킷 크기가 바뀌었습니다)</span>
   </div>
 </header>
 
@@ -861,6 +853,3 @@ mono ParityTest.exe .                  <span class="cm"># ALL PASS</span>
   })();
 })();
 </script>
-
-</body>
-</html>

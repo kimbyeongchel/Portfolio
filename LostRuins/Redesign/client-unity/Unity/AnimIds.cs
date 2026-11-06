@@ -13,5 +13,7 @@ namespace LostRuins.Client
         public static readonly int Action = Animator.StringToHash("action");
         public static readonly int Grounded = Animator.StringToHash("isGrounded");
         public static readonly int Dodging = Animator.StringToHash("dodging");
+        public static readonly int Charging = Animator.StringToHash("charging");      // 궁수 활시위 당기기
+        public static readonly int SkillSpeed = Animator.StringToHash("skillSpeed");  // 스킬 상태의 Speed Multiplier
     }
 }

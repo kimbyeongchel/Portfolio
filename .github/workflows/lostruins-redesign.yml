@@ -40,10 +40,10 @@ jobs:
         run: |
           mkdir -p parity && cd parity
           ../server/build/lr_parity gen inputs.txt states.txt
-          ../server/build/lr_parity snap snapshot.bin
+          ../server/build/lr_parity snap snapshot.bin accept.bin
           mcs -nologo -warnaserror+ -out:ParityTest.exe ../client-unity/Shared/*.cs ../client-unity/Client/*.cs ../client-unity/Tests/ParityTest.cs
           mono ParityTest.exe .
-          ../server/build/lr_parity input input.bin
+          ../server/build/lr_parity input input.bin connect.bin
 
       - name: Unity scripts type check (API stub)
         run: mcs -nologo -nowarn:649 -warnaserror+ -target:library -out:typecheck.dll client-unity/Tests/Stub/UnityStub.cs client-unity/Shared/*.cs client-unity/Client/*.cs client-unity/Unity/*.cs

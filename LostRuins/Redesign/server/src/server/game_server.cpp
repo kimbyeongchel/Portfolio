@@ -51,13 +51,18 @@ void GameServer::Handle(const Address& from, const uint8_t* data, size_t len) {
   Conn* c = Find(from);
 
   if (h.type == PacketType::kConnect) {
+    const ClassId cls = ReadConnect(r);
+    if (!r.Ok()) {
+      stats_.rejected++;
+      return;
+    }
     if (c == nullptr) {
       for (auto& slot : conns_) {
         if (slot.active) continue;
         slot = Conn{};
         slot.active = true;
         slot.addr = from;
-        slot.playerId = world_.AddPlayer();
+        slot.playerId = world_.AddPlayer(cls);
         c = &slot;
         if (cfg_.log) std::fprintf(stderr, "[server] player %u joined\n", c->playerId);
         break;
@@ -131,7 +136,10 @@ void GameServer::BuildSnapshot(Conn& c, const Player& p) {
   snap_.serverTick = static_cast<uint16_t>(world_.Tick());
   snap_.lastInputSeq = p.lastSeq;
   snap_.local = p.mv;
+  snap_.ability = p.ab;
   snap_.localHp = static_cast<uint16_t>(p.hp);
+  snap_.localShield = static_cast<uint8_t>(std::clamp(p.shield, 0, 255));
+  snap_.localFlags = static_cast<uint8_t>((p.buffTicks > 0 ? 1 : 0) | (world_.PassiveReady(p) ? 2 : 0));
   c.events.Collect(h.seq, kMaxEventsPerPacket, snap_.events);
 
   const size_t budgetBits = kMaxPacketBytes * 8 - kHeaderBits - kSnapshotFixedBits - snap_.events.size() * kEventBits;
@@ -168,10 +176,14 @@ void GameServer::SendAccept(Conn& c) {
   h.ack = c.acks.Ack();
   h.ackBits = c.acks.Bits();
   WriteHeader(writer_, h);
-  writer_.WriteU16(c.playerId);
-  writer_.WriteU16(static_cast<uint16_t>(world_.Tick()));
-  const Player* p = world_.FindPlayer(c.playerId);
-  WriteMoveState(writer_, p != nullptr ? p->mv : MoveState{});  // 스폰 위치를 알려줘야 클라가 같은 출발점에서 예측
+  Accept a;
+  a.playerId = c.playerId;
+  a.serverTick = static_cast<uint16_t>(world_.Tick());
+  if (const Player* p = world_.FindPlayer(c.playerId)) {
+    a.cls = p->cls;
+    a.spawn = p->mv;  // 스폰 위치를 알려줘야 클라가 같은 출발점에서 예측
+  }
+  WriteAccept(writer_, a);
   Send(c);
 }
 

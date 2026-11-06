@@ -1,4 +1,4 @@
-// 네트워크 없이 시뮬레이션 1틱 비용만 잰다. 플레이어 3명 + 몬스터 수를 늘려 가며 9000틱(5분) 실행.
+// 네트워크 없이 시뮬레이션 1틱 비용만 잰다. 플레이어 3명(전사·궁수·힐러) + 몬스터 수를 늘려 가며 9000틱(5분) 실행.
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -10,8 +10,8 @@
 int main() {
   for (const int monsters : {12, 50, 200, 1000}) {
     lr::World w(7, monsters, /*inputBufferTicks=*/0);
-    uint16_t ids[3];
-    for (auto& id : ids) id = w.AddPlayer();
+    const uint16_t ids[3] = {w.AddPlayer(lr::ClassId::kWarrior), w.AddPlayer(lr::ClassId::kArcher),
+                             w.AddPlayer(lr::ClassId::kHealer)};
     std::vector<float> us;
     us.reserve(9000);
     std::vector<lr::EntityState> entities;
@@ -26,9 +26,10 @@ int main() {
         in.moveX = static_cast<int8_t>(std::lround(std::cos(a) * 127));
         in.moveZ = static_cast<int8_t>(std::lround(std::sin(a) * 127));
         in.yaw = static_cast<uint16_t>(t * 97 + static_cast<uint32_t>(i) * 20000);
-        if (t % 18 == 0) in.buttons |= lr::kAttack;
+        if (t % 24 < 14) in.buttons |= lr::kAttack;
         if (t % 180 == 11) in.buttons |= lr::kSkillE;
         if (t % 330 == 7) in.buttons |= lr::kSkillQ;
+        if (t % 480 >= 13 && t % 480 < 40) in.buttons |= lr::kSkillF;
         w.PushInput(ids[i], in);
       }
       const auto t0 = std::chrono::steady_clock::now();

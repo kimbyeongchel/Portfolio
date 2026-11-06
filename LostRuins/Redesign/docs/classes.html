@@ -1,0 +1,1082 @@
+<title>LostRuins 직업 재설계</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+
+/* Layout: one reading column (~46rem) with wide figures; each finding is a "case file" — header strip, evidence, cause, fix, result table, verification. */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#eceff3; --ink:#13171b; --ink-2:#47505a; --muted:#79828c;
+  --line:#dce1e6; --line-strong:#c2c9d0; --accent:#2b55c9; --accent-soft:#e6ecfb;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --crit:#d03b3b; --serious:#ec835a; --warn:#fab219; --good:#0ca30c; --good-ink:#006300;
+  --code-bg:#eef1f5; --code-ink:#1d252c; --cm:#68727d; --hl:rgba(208,59,59,.11); --hl-good:rgba(12,163,12,.10);
+  --f-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", "D2Coding", ui-monospace, SFMono-Regular, Menlo, Consolas, "IBM Plex Sans KR", monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1114; --surface:#161a1e; --surface-2:#1d2227; --ink:#e7ebee; --ink-2:#b3bcc4; --muted:#87909a;
+    --line:#2a3037; --line-strong:#3b434c; --accent:#86a4f3; --accent-soft:#1c2541;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+    --good-ink:#3fc23f; --code-bg:#11151a; --code-ink:#dde4ea; --cm:#7f8a96; --hl:rgba(230,103,103,.16); --hl-good:rgba(12,163,12,.16);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1114; --surface:#161a1e; --surface-2:#1d2227; --ink:#e7ebee; --ink-2:#b3bcc4; --muted:#87909a;
+  --line:#2a3037; --line-strong:#3b434c; --accent:#86a4f3; --accent-soft:#1c2541;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --good-ink:#3fc23f; --code-bg:#11151a; --code-ink:#dde4ea; --cm:#7f8a96; --hl:rgba(230,103,103,.16); --hl-good:rgba(12,163,12,.16);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.72;word-break:keep-all;overflow-wrap:anywhere;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 72px}
+.wrap{max-width:62rem;margin:0 auto}
+.col{max-width:46rem}
+h1,h2,h3{text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:clamp(2rem,4.6vw,3.1rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.55rem;font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.22rem;font-weight:700}
+p{margin:0}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible,button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+:not(pre)>code{background:var(--surface-2);padding:.08em .35em;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.ink2{color:var(--ink-2)}
+.stack{display:flex;flex-direction:column;gap:1rem}
+.stack-lg{display:flex;flex-direction:column;gap:1.6rem}
+
+/* header */
+header.top{padding-block:56px 36px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:18px}
+.lede{font-size:1.08rem;color:var(--ink-2);max-width:44rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--f-mono);font-size:.8rem;color:var(--ink-2)}
+.meta span b{color:var(--ink);font-weight:500}
+
+/* evidence badges */
+.ev{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-mono);font-size:.72rem;line-height:1;padding:4px 7px;border-radius:4px;white-space:nowrap;vertical-align:.12em;color:var(--ink-2);border:1px solid var(--line-strong)}
+.ev-fact{background:var(--surface-2);border-color:transparent;color:var(--ink)}
+.ev-calc{border-style:solid}
+.ev-sim{border-style:dotted;border-width:1.5px}
+.ev-est{border-style:dashed;border-width:1.5px;color:var(--ink-2)}
+.legend-ev{display:grid;grid-template-columns:repeat(auto-fit,minmax(13.5rem,1fr));gap:10px 22px;font-size:.88rem;color:var(--ink-2)}
+.legend-ev div{display:flex;gap:10px;align-items:baseline}
+.note{border-left:3px solid var(--line-strong);padding:2px 0 2px 14px;color:var(--ink-2);font-size:.93rem}
+
+/* severity */
+.sev{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;white-space:nowrap}
+.sev svg{width:12px;height:12px;flex:none}
+.sev-crit svg{fill:var(--crit)} .sev-serious svg{fill:var(--serious)} .sev-warn svg{fill:var(--warn)} .sev-low svg{fill:var(--muted)}
+
+section.part{padding-block:56px 8px;display:flex;flex-direction:column;gap:22px}
+section.part>h2{display:flex;gap:14px;align-items:baseline}
+section.part>h2 .num{font-family:var(--f-mono);font-size:.95rem;color:var(--muted);font-weight:500}
+
+/* key figures */
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(12.5rem,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.fig{background:var(--surface);padding:18px 18px 16px;display:flex;flex-direction:column;gap:6px}
+.fig .v{font-size:2.1rem;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.fig .v small{font-size:1rem;font-weight:500;color:var(--ink-2);margin-left:2px}
+.fig .l{font-size:.9rem;color:var(--ink-2);line-height:1.5}
+.fig .ref{margin-top:auto;padding-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-weight:600;font-size:.78rem;color:var(--muted);letter-spacing:.02em;background:var(--surface-2)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:.84rem;white-space:nowrap}
+td .mono{white-space:nowrap}
+.idx td:first-child{font-family:var(--f-mono);font-weight:600}
+.idx a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line-strong)}
+.idx a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+table.res{min-width:34rem}
+table.idx{min-width:38rem}
+.res td:nth-child(2){color:var(--ink-2)}
+.res td:nth-child(3){font-weight:600}
+.res td:nth-child(2),.res td:nth-child(3){font-family:var(--f-mono);font-size:.84rem}
+.bar-cell{display:flex;align-items:center;gap:8px}
+.bar-cell i{display:block;height:8px;border-radius:0 3px 3px 0;background:var(--s1)}
+
+/* finding card */
+article.f{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:26px clamp(16px,3.4vw,34px) 28px;display:flex;flex-direction:column;gap:22px;scroll-margin-top:16px}
+.f-head{display:flex;flex-direction:column;gap:10px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.f-id{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.f-id .id{font-family:var(--f-mono);font-weight:600;font-size:.9rem;padding:3px 8px;border-radius:4px;background:var(--ink);color:var(--surface)}
+.f-id .cost{font-size:.8rem;color:var(--muted)}
+.symptom{font-size:1rem;color:var(--ink-2)}
+.symptom b{color:var(--ink);font-weight:600}
+.blk{display:flex;flex-direction:column;gap:10px;min-width:0}
+.blk>h4{margin:0;font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;font-family:var(--f-mono);font-weight:600;color:var(--muted);display:flex;gap:10px;align-items:center}
+.blk>h4::after{content:"";flex:1;height:1px;background:var(--line)}
+.blk p,.blk li{color:var(--ink)}
+.blk ul,.blk ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr));gap:22px}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);border-radius:var(--r);padding:14px 16px;overflow-x:auto;font-family:var(--f-mono);font-size:.8rem;line-height:1.62;tab-size:4;word-break:normal;overflow-wrap:normal;white-space:pre}
+pre .cm{color:var(--cm)}
+pre mark{background:var(--hl);color:inherit;border-radius:2px;padding:0 2px}
+pre mark.ok{background:var(--hl-good)}
+pre .file{display:block;color:var(--muted);font-size:.74rem;margin-bottom:6px}
+.verify{font-size:.9rem;color:var(--ink-2);background:var(--surface-2);border-radius:var(--r);padding:12px 14px}
+.verify b{color:var(--ink);font-weight:600}
+
+/* figures & charts */
+figure{margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+figcaption{font-size:.86rem;color:var(--ink-2);line-height:1.6}
+figcaption b{color:var(--ink)}
+.chart{width:100%;min-height:40px;position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:var(--f-body);font-size:12px;fill:var(--ink-2)}
+.chart .tick{fill:var(--muted);font-family:var(--f-mono);font-size:11px}
+.chart .val{fill:var(--ink);font-family:var(--f-mono);font-size:11.5px;font-weight:500}
+.chart .val-in{fill:#fff;font-family:var(--f-mono);font-size:11px;font-weight:500}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .axis{stroke:var(--line-strong);stroke-width:1}
+.chart [data-tip]{cursor:default}
+.keys{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.82rem;color:var(--ink-2)}
+.keys span{display:inline-flex;align-items:center;gap:6px}
+.keys i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.keys i.ln{height:3px;border-radius:2px;width:16px}
+.keys i.ring{width:12px;height:12px;border-radius:50%;background:transparent!important;border:2px solid var(--ink)}
+.diagram{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:14px}
+.diagram svg{display:block;width:100%;min-width:640px;height:auto;color:var(--ink)}
+.diagram svg text{font-family:var(--f-body);fill:currentColor}
+.diagram svg .m{font-family:var(--f-mono)}
+.diagram svg .sub{fill:var(--muted)}
+
+/* sims */
+.sim{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.sim canvas{display:block;width:100%;background:var(--surface)}
+.sim-bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 12px;border-top:1px solid var(--line);background:var(--surface-2);font-size:.85rem}
+.sim-bar .grow{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:6px;overflow:hidden}
+.seg button{all:unset;cursor:pointer;padding:5px 11px;font-size:.82rem;color:var(--ink-2);background:var(--surface)}
+.seg button+button{border-left:1px solid var(--line-strong)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.btn{all:unset;cursor:pointer;padding:6px 13px;border-radius:6px;font-size:.84rem;font-weight:600;background:var(--accent);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-strong);font-weight:500}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:1px;background:var(--line);border-top:1px solid var(--line)}
+.readout div{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.readout .k{font-size:.76rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.readout .k i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.readout .x{font-family:var(--f-mono);font-size:1.05rem;font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{accent-color:var(--accent);width:min(220px,100%)}
+label.rng{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* state grid */
+.toggles{display:flex;flex-wrap:wrap;gap:6px}
+.toggles button{all:unset;cursor:pointer;font-family:var(--f-mono);font-size:.8rem;padding:5px 10px;border-radius:5px;border:1px solid var(--line-strong);color:var(--ink-2);background:var(--surface)}
+.toggles button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.cells{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;max-width:34rem}
+.cells span{aspect-ratio:1;border-radius:3px;background:var(--surface-2);border:1px solid var(--line)}
+.cells span.ok{background:var(--s1);border-color:transparent;opacity:.85}
+.cells span.cur{outline:2px solid var(--ink);outline-offset:1px}
+.state-msg{font-size:.92rem;min-height:1.6em}
+.state-msg b.bad{color:var(--crit)} .state-msg b.okk{color:var(--good-ink)}
+
+.good-list li::marker{color:var(--good)}
+.tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--surface);font-size:.8rem;line-height:1.45;padding:7px 9px;border-radius:5px;max-width:240px;opacity:0;transform:translateY(4px);transition:opacity .12s, transform .12s}
+.tip.on{opacity:1;transform:none}
+.tip b{font-family:var(--f-mono);font-weight:600}
+footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);font-size:.84rem;color:var(--muted)}
+@media (max-width:560px){
+  body{font-size:15.5px}
+  .fig .v{font-size:1.8rem}
+  article.f{border-radius:8px}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+
+/* part 2 additions */
+.ev-meas{background:var(--accent-soft);border-color:transparent;color:var(--ink)}
+.ev-test{background:var(--hl-good);border-color:transparent;color:var(--ink)}
+.rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;counter-reset:r}
+.rank li{display:grid;grid-template-columns:2.2rem 1fr;gap:4px 12px;align-items:start}
+.rank li::before{counter-increment:r;content:counter(r);grid-row:span 2;font-family:var(--f-mono);font-weight:600;font-size:1.05rem;width:2.2rem;height:2.2rem;border-radius:6px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--surface)}
+.rank b{font-size:1.05rem}
+.rank p{color:var(--ink-2)}
+.dg{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px}
+.dg svg{display:block;width:100%;min-width:700px;height:auto;color:var(--ink)}
+.dg svg text{font-family:var(--f-body);fill:currentColor}
+.dg svg .m{font-family:var(--f-mono)}
+.dg svg .sub{fill:var(--muted)}
+.bits{display:flex;flex-direction:column;gap:14px}
+.bitrow{display:flex;flex-direction:column;gap:6px}
+.bitrow .t{display:flex;justify-content:space-between;gap:12px;font-size:.86rem;flex-wrap:wrap}
+.bitrow .t b{font-weight:600}
+.bitbar{display:flex;height:28px;border-radius:5px;overflow:hidden;gap:2px;background:var(--surface)}
+.bitbar span{display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.7rem;color:#fff;white-space:nowrap;overflow:hidden;min-width:4px}
+.src{display:grid;grid-template-columns:minmax(13rem,17rem) 1fr;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;min-height:34rem}
+.src nav{border-right:1px solid var(--line);background:var(--surface-2);overflow:auto;max-height:46rem;padding:8px 0}
+.src nav h5{margin:10px 14px 4px;font-family:var(--f-mono);font-size:.7rem;letter-spacing:.06em;color:var(--muted);font-weight:600;text-transform:uppercase}
+.src nav button{all:unset;cursor:pointer;display:flex;justify-content:space-between;gap:8px;width:calc(100% - 28px);padding:5px 14px;font-family:var(--f-mono);font-size:.78rem;color:var(--ink-2)}
+.src nav button:hover{background:var(--surface)}
+.src nav button[aria-current="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
+.src nav button i{font-style:normal;color:var(--muted);font-weight:400}
+.src .pane{display:flex;flex-direction:column;min-width:0}
+.src .phead{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font-size:.84rem}
+.src .phead .path{font-family:var(--f-mono);font-weight:600}
+.src .phead .note{color:var(--ink-2)}
+.src pre{border-radius:0;max-height:44rem;overflow:auto;margin:0;flex:1;counter-reset:ln;padding:12px 0}
+.src pre .ln{display:block;padding:0 16px 0 0}
+.src pre .ln::before{counter-increment:ln;content:counter(ln);display:inline-block;width:3.2em;padding-right:1em;text-align:right;color:var(--muted);opacity:.7;user-select:none}
+.src pre .kw{color:var(--accent)}
+.src pre .st{color:var(--str)}
+.src pre .nu{color:var(--num)}
+.src pre .ty{color:var(--ty)}
+.src select{display:none;margin:10px 14px;font:inherit;font-family:var(--f-mono);font-size:.82rem;padding:6px 8px;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+@media (max-width:760px){
+  .src{grid-template-columns:1fr}
+  .src nav{display:none}
+  .src select{display:block}
+}
+.road td:first-child{font-family:var(--f-mono);white-space:nowrap}
+.road td:nth-child(3){color:var(--ink-2)}
+.cmd{display:flex;flex-direction:column;gap:8px}
+:root{--str:#a3480f;--num:#0a7a5a;--ty:#7a3fb0}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--str:#f0a46e;--num:#5fd0a8;--ty:#c79bf0}}
+:root[data-theme="dark"]{--str:#f0a46e;--num:#5fd0a8;--ty:#c79bf0}
+
+/* part 3 additions */
+.toc{display:flex;flex-wrap:wrap;gap:6px 8px}
+.toc a{font-size:.84rem;text-decoration:none;color:var(--ink-2);border:1px solid var(--line-strong);border-radius:999px;padding:4px 11px;background:var(--surface)}
+.toc a:hover{color:var(--accent);border-color:var(--accent)}
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(15.5rem,1fr));gap:12px}
+.gloss div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.gloss b{font-size:1rem}
+.gloss .en{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.gloss .like{font-size:.86rem;color:var(--ink-2)}
+.gloss .like::before{content:"비유  ";font-family:var(--f-mono);font-size:.7rem;color:var(--accent);letter-spacing:.04em}
+article.c{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:24px clamp(16px,3.4vw,32px) 26px;display:flex;flex-direction:column;gap:18px;scroll-margin-top:16px}
+.c-head{display:flex;flex-direction:column;gap:8px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.c-head .tag{font-family:var(--f-mono);font-size:.74rem;color:var(--muted);letter-spacing:.05em}
+.c-head .one{font-size:1.02rem;color:var(--ink-2)}
+.c-head .one b{color:var(--ink)}
+.analogy{display:grid;grid-template-columns:3.2rem 1fr;gap:12px;align-items:start;background:var(--accent-soft);border-radius:var(--r);padding:14px 16px}
+.analogy svg{width:3.2rem;height:3.2rem;color:var(--accent)}
+.analogy p{color:var(--ink)}
+.analogy p b{font-weight:600}
+.why table td:first-child{font-weight:600;white-space:nowrap}
+.why tr.pick td{background:var(--hl-good)}
+.oneline{font-size:.92rem;border-left:3px solid var(--accent);padding:4px 0 4px 12px;color:var(--ink)}
+.oneline::before{content:"한 문장으로  ";font-family:var(--f-mono);font-size:.72rem;color:var(--accent)}
+.story{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.story .stage{min-width:0;border-right:1px solid var(--line)}
+.story .stage svg{display:block;width:100%;height:auto;color:var(--ink)}
+.story .stage svg text{font-family:var(--f-body);fill:currentColor}
+.story .say{padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.story .say .n{font-family:var(--f-mono);font-size:.76rem;color:var(--muted)}
+.story .say h4{margin:0;font-size:1.08rem}
+.story .say .t{font-family:var(--f-mono);font-size:.78rem;color:var(--accent)}
+.story .say .code{font-family:var(--f-mono);font-size:.76rem;color:var(--ink-2);background:var(--surface-2);padding:6px 8px;border-radius:5px}
+.story .ctrl{grid-column:1/-1;display:flex;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--line);background:var(--surface-2);flex-wrap:wrap}
+.story .dots{display:flex;gap:4px;flex-wrap:wrap}
+.story .dots button{all:unset;cursor:pointer;width:22px;height:22px;border-radius:5px;font-family:var(--f-mono);font-size:.68rem;display:flex;align-items:center;justify-content:center;border:1px solid var(--line-strong);color:var(--ink-2);background:var(--surface)}
+.story .dots button[aria-current="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+@media (max-width:820px){.story{grid-template-columns:1fr}.story .stage{border-right:0;border-bottom:1px solid var(--line)}}
+.review{display:flex;flex-direction:column;gap:12px}
+.rv{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.rv summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:2.4rem 1fr auto;gap:10px;align-items:center;padding:12px 14px}
+.rv summary::-webkit-details-marker{display:none}
+.rv summary .k{font-family:var(--f-mono);font-weight:600;font-size:.82rem;color:var(--muted)}
+.rv summary .h{font-weight:600}
+.rv summary .s{font-size:.78rem}
+.rv[open] summary{border-bottom:1px solid var(--line);background:var(--surface-2)}
+.rv .body{padding:14px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:14px}
+.rv .body div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.rv .body h5{margin:0;font-size:.72rem;font-family:var(--f-mono);letter-spacing:.07em;color:var(--muted);font-weight:600}
+.rv .body p{font-size:.9rem}
+.walk{display:grid;grid-template-columns:minmax(12rem,15rem) minmax(0,1fr) minmax(15rem,21rem);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface);min-height:36rem}
+.walk nav{background:var(--surface-2);border-right:1px solid var(--line);overflow:auto;max-height:46rem;padding:6px 0}
+.walk nav h5{margin:10px 12px 4px;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.06em;color:var(--muted);font-weight:600;text-transform:uppercase}
+.walk nav button{all:unset;cursor:pointer;display:flex;gap:8px;width:calc(100% - 24px);padding:5px 12px;font-family:var(--f-mono);font-size:.76rem;color:var(--ink-2)}
+.walk nav button i{font-style:normal;color:var(--accent);min-width:1.2em}
+.walk nav button[aria-current="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
+.walk .code{min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--line)}
+.walk .code .ph{padding:9px 12px;border-bottom:1px solid var(--line);font-family:var(--f-mono);font-size:.8rem;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.walk pre{border-radius:0;margin:0;max-height:44rem;overflow:auto;padding:10px 0;flex:1}
+.walk pre .ln{display:block;padding:0 14px 0 0}
+.walk pre .ln::before{content:attr(data-n);display:inline-block;width:3.1em;padding-right:1em;text-align:right;color:var(--muted);opacity:.7;user-select:none}
+.walk pre .ln.on{background:var(--hl-good)}
+.walk pre .kw{color:var(--accent)} .walk pre .st{color:var(--str)} .walk pre .nu{color:var(--num)} .walk pre .ty{color:var(--ty)}
+.walk .notes{overflow:auto;max-height:46rem;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.walk .notes .role{font-size:.86rem;color:var(--ink-2);padding:4px 4px 8px;border-bottom:1px solid var(--line)}
+.walk .notes button{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:6px}
+.walk .notes button b{font-size:.88rem}
+.walk .notes button span{font-size:.84rem;color:var(--ink-2);line-height:1.6}
+.walk .notes button[aria-current="true"]{border-color:var(--good);box-shadow:inset 3px 0 0 var(--good)}
+.walk select{display:none;margin:10px 12px;font:inherit;font-family:var(--f-mono);font-size:.82rem;padding:6px 8px;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+@media (max-width:980px){.walk{grid-template-columns:1fr}.walk nav{display:none}.walk select{display:block}.walk .code{border-right:0;border-bottom:1px solid var(--line)}.walk .notes{max-height:none}}
+.qz{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:1px;background:var(--line);border-top:1px solid var(--line)}
+.qz div{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.qz .k{font-size:.74rem;color:var(--muted)} .qz .x{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.ackrow{display:flex;gap:3px;flex-wrap:wrap;padding:14px 12px 4px}
+.ackrow span{width:20px;height:26px;border-radius:4px;border:1px solid var(--line-strong);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.62rem;color:var(--muted);background:var(--surface)}
+.ackrow span.on{background:var(--s1);border-color:transparent;color:#fff}
+.ackrow span.latest{background:var(--ink);color:var(--surface);border-color:var(--ink);width:auto;padding:0 6px}
+.ackrow span.miss{background:var(--surface-2);border-style:dashed}
+.det{font-family:var(--f-mono);font-size:.84rem;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;padding:14px;align-items:baseline}
+.det b{font-weight:600}
+.cmpbtns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* part 4 additions */
+/* Layout: 1~3편과 같은 읽기 칼럼. 직업 탭 안에서 "원본 → 재설계 표 → 코드 → 테스트" 순서가 반복된다. */
+:root{--phase-charge:#7a3fb0;--phase-wind:#eda100;--phase-act:#d03b3b;--phase-rec:#9aa4ae;--phase-cancel:#0ca30c}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--phase-charge:#c79bf0;--phase-wind:#f2b84b;--phase-act:#f06b6b;--phase-rec:#6c7782;--phase-cancel:#4fd04f}}
+:root[data-theme="dark"]{--phase-charge:#c79bf0;--phase-wind:#f2b84b;--phase-act:#f06b6b;--phase-rec:#6c7782;--phase-cancel:#4fd04f}
+.cb{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface);min-width:0}
+.cb .ph{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;padding:7px 12px;border-bottom:1px solid var(--line);font-family:var(--f-mono);font-size:.76rem;color:var(--ink-2);background:var(--surface-2)}
+.cb .ph b{color:var(--ink);font-weight:600}
+.cb pre{margin:0;border-radius:0;max-height:34rem;overflow:auto;padding:8px 0;font-size:.78rem}
+.cb pre .ln{display:block;padding:0 14px 0 0}
+.cb pre .ln::before{content:attr(data-n);display:inline-block;width:3.2em;padding-right:1em;text-align:right;color:var(--muted);opacity:.7;user-select:none}
+.cb pre .ln.on{background:var(--hl-good)}
+.cb pre .ln.bad{background:var(--hl)}
+.cb pre .kw{color:var(--accent)} .cb pre .st{color:var(--str)} .cb pre .nu{color:var(--num)} .cb pre .ty{color:var(--ty)}
+.cb .cap{padding:8px 12px;border-top:1px solid var(--line);font-size:.84rem;color:var(--ink-2)}
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:14px;align-items:start}
+.pair>*{min-width:0}
+.vd{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap;border:1px solid}
+.vd-ok{color:var(--good-ink);border-color:var(--good);background:var(--hl-good)}
+.vd-half{color:var(--ink);border-color:var(--warn);background:color-mix(in srgb,var(--warn) 16%,transparent)}
+.vd-turn{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.tl-wrap{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.tl-ctrl{display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center;padding:12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.tl-ctrl .lbl{font-size:.74rem;font-family:var(--f-mono);color:var(--muted);letter-spacing:.04em}
+.tl-svg{overflow-x:auto}
+.tl-svg svg{display:block;min-width:640px;width:100%;height:auto;color:var(--ink)}
+.tl-svg svg text{font-family:var(--f-body);fill:currentColor}
+.tl-svg svg .mono{font-family:var(--f-mono)}
+#tl .seg{flex-wrap:wrap}
+#tl .seg button{white-space:nowrap}
+.tl-read{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,13rem),1fr));background:var(--surface);border-top:1px solid var(--line)}
+.tl-read div{padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.tl-read .k{font-size:.74rem;color:var(--muted)}
+.tl-read .x{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums;font-size:.9rem}
+.tl-read .x small{font-weight:400;color:var(--ink-2)}
+.tl-say{padding:12px 14px;border-top:1px solid var(--line);font-size:.9rem;color:var(--ink-2)}
+.legend4{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.78rem;color:var(--ink-2)}
+.legend4 i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.ctabs{display:flex;gap:6px;flex-wrap:wrap}
+.ctabs button{all:unset;cursor:pointer;padding:8px 16px;border-radius:999px;border:1px solid var(--line-strong);font-weight:600;font-size:.92rem;color:var(--ink-2);background:var(--surface)}
+.ctabs button[aria-selected="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.ctabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cpanel{display:flex;flex-direction:column;gap:22px}
+.keys4{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:10px}
+.keys4 div{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;background:var(--surface);display:flex;flex-direction:column;gap:4px;min-width:0}
+.keys4 b{font-size:.92rem}
+.keys4 .kk{font-family:var(--f-mono);font-size:.72rem;color:var(--accent);letter-spacing:.04em}
+.keys4 p{font-size:.86rem;color:var(--ink-2)}
+.bugs{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.bugs li{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;border:1px solid var(--line);border-left:3px solid var(--crit);border-radius:var(--r);padding:10px 12px;background:var(--surface)}
+.bugs li.q{border-left-color:var(--warn)}
+.bugs li b{grid-column:2}
+.bugs li .t{grid-row:1/3;font-family:var(--f-mono);font-size:.7rem;color:var(--muted);padding-top:3px;white-space:nowrap}
+.bugs li p{grid-column:2;font-size:.88rem;color:var(--ink-2)}
+.dmg td.num{font-variant-numeric:tabular-nums}
+.dmg td small{color:var(--muted)}
+.ph-chip{display:inline-block;width:.8em;height:.8em;border-radius:2px;vertical-align:-1px}
+.flowline{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:8px;counter-reset:fl}
+.flowline div{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;background:var(--surface);display:flex;flex-direction:column;gap:3px;min-width:0}
+.flowline div::before{counter-increment:fl;content:counter(fl);font-family:var(--f-mono);font-size:.7rem;color:var(--muted)}
+.flowline b{font-size:.9rem}
+.flowline span{font-size:.82rem;color:var(--ink-2)}
+.flowline code{font-size:.74rem}
+.notes4{display:flex;flex-direction:column;gap:10px}
+.notes4 .rv summary{grid-template-columns:2.4rem 1fr auto}
+.notes4 .rv .body{grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr))}
+.notes4 .quote{font-size:.9rem;color:var(--ink);border-left:3px solid var(--line-strong);padding-left:10px}
+.jit svg{display:block;width:100%;height:auto;color:var(--ink)}
+.jit svg text{font-family:var(--f-body);fill:currentColor}
+.small{font-size:.84rem}
+.chk{color:var(--good-ink);font-weight:600}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">기술 포스트모템 4편 · 직업 코드 재설계 · 고민 노트</div>
+  <h1>LostRuins 직업 재설계</h1>
+  <p class="lede">전사·궁수·창술사·힐러 네 직업의 코드를 어떻게 다시 짰는지 보여 줍니다. 원본이 실제로 하던 일과 그 안에서 찾은 버그를 먼저 확인하고, 재설계한 표와 코드, 그 동작을 고정한 테스트를 차례로 봅니다. 마지막 장에는 그동안 이야기한 고민들을 하나씩 정리해 답을 달았습니다.</p>
+  <div class="meta">
+    <span><b>1편</b> <a href="https://claude.ai/artifact/Su8MPkTj3SBDtMdJKL4VXk">LostRuins 기술 포스트모템</a></span>
+    <span><b>2편</b> <a href="https://claude.ai/artifact/Gy5xGonVaNQBfmZx7nZTg6">LostRuins 재설계서</a></span>
+    <span><b>3편</b> <a href="https://claude.ai/artifact/NCeE9T3fKkVjqwTBFDytQU">LostRuins 해설서</a></span>
+    <span><b>코드</b> Portfolio / LostRuins / Redesign (lostruins-redesign 브랜치)</span>
+  </div>
+  <nav class="toc" aria-label="목차">
+    <a href="#s-read">00 읽는 법</a><a href="#s-sum">01 요약</a><a href="#s-shape">02 구조</a><a href="#s-life">03 스킬 한 번의 일생</a>
+    <a href="#s-class">04 직업별 코드</a><a href="#s-engine">05 공통 엔진</a><a href="#s-client">06 Unity 쪽</a><a href="#s-wire">07 통신</a>
+    <a href="#s-verify">08 검증</a><a href="#s-notes">09 고민 노트</a><a href="#s-left">10 남은 것</a>
+  </nav>
+</header>
+
+<section class="part" id="s-read" aria-labelledby="h-read">
+  <h2 id="h-read"><span class="num">00</span>이렇게 읽으세요</h2>
+  <div class="col stack">
+    <p>가장 궁금한 것이 직업 코드라면 <a href="#s-class">04장</a>부터 보셔도 됩니다. 탭을 고르면 그 직업의 원본 동작, 원본에서 찾은 문제, 재설계한 표, 실제 코드, 그 동작을 지키는 테스트가 한 화면에 나옵니다. 03장의 타임라인은 그 표의 숫자가 화면에서 어떻게 보이는지 움직여 보여 줍니다.</p>
+    <p>모든 숫자에 출처를 붙였습니다. <span class="ev ev-meas">실측</span>은 이 분석 환경에서 프로토타입을 돌려 잰 값, <span class="ev ev-test">테스트 통과</span>는 자동 테스트가 확인한 동작, <span class="ev ev-fact">코드 확인</span>은 원본 스크립트·프리팹에서 직접 읽은 값, <span class="ev ev-calc">계산</span>은 표의 숫자로 계산한 값, <span class="ev ev-sim">시뮬레이션</span>은 이 페이지 안에서 가정을 두고 돌린 값입니다. Unity 안에서 실행해 본 값은 없습니다.</p>
+    <p class="note">원본 코드 인용은 본인이 작성한 스크립트(병철 폴더)에서만 했습니다. 팀원 코드는 인용하지 않았습니다.</p>
+  </div>
+</section>
+
+<section class="part" id="s-sum" aria-labelledby="h-sum">
+  <h2 id="h-sum"><span class="num">01</span>요약</h2>
+  <div class="figs" id="figs"></div>
+  <div class="col stack">
+    <p><b>가장 크게 바뀐 점은 직업이 클래스가 아니라 "표 한 줄"이 된 것입니다.</b> 원본은 <code>PlayerState</code>를 상속한 직업 클래스 네 개가 각자 코루틴으로 스킬을 돌렸고, 멀티플레이를 위해 그 클래스를 다시 상속한 <code>Multi*</code> 네 개가 메서드를 통째로 복사했습니다. 재설계에서는 스킬이 하는 일을 다섯 가지 부품(근접 판정, 투사체, 지원, 이동 규칙, 패시브)으로 나누고, 직업은 그 부품을 어떤 숫자로 조합하는지만 적습니다.</p>
+    <p><b>두 번째는 "언제 휘두르나"와 "맞았나"를 나눈 것입니다.</b> 선딜·판정·후딜·쿨타임·콤보·충전 같은 타이밍은 C++과 C#이 한 줄씩 같은 코드로 계산해서, 내 화면은 누르는 순간 반응하고(예측) 서버와 어긋나지 않습니다. 데미지·명중·회복·버프는 서버만 계산하고 결과를 이벤트로 보냅니다.</p>
+    <p><b>원본을 다시 읽다가 버그 여섯 개와 기획 확인이 필요한 값 네 개를 새로 찾았습니다.</b> 멀티용 전사 프리팹의 패시브 수치가 0이라 멀티에서는 전사 패시브가 아무 효과가 없었고, 전사에게는 힐러 버프의 공격·방어 증가가 다음 프레임에 지워졌습니다. 04장의 직업별 탭에 근거 코드와 함께 정리했고, 재설계에서는 각각을 테스트로 고정했습니다.</p>
+  </div>
+</section>
+
+<section class="part" id="s-shape" aria-labelledby="h-shape">
+  <h2 id="h-shape"><span class="num">02</span>구조가 어떻게 바뀌나</h2>
+  <div class="col"><p>왼쪽이 원본, 오른쪽이 재설계입니다. 원본은 기능을 상속으로 덧붙였기 때문에 직업 하나를 고치려면 직업 클래스, 그 직업의 Multi 클래스, 화살·창·마법 같은 보조 스크립트, 프리팹 수치를 함께 고쳐야 했습니다. 재설계에서 직업마다 다른 것은 표 두 줄(타이밍 표, 효과 표)과 연출 에셋 하나뿐입니다.</p></div>
+  <figure class="dg" id="shape-fig"></figure>
+  <div class="tbl-wrap why">
+    <table>
+      <caption class="muted small" style="caption-side:bottom;text-align:left;padding-top:6px">현업에서 쓰는 세 가지 방법 비교. 초록 줄이 고른 방법입니다.</caption>
+      <thead><tr><th>방법</th><th>직업 추가할 때</th><th>서버와 클라가 같은 규칙을 쓰기</th><th>테스트</th><th>단점</th></tr></thead>
+      <tbody>
+        <tr><td>상속 (원본)</td><td>클래스 1개 + Multi 1개 + 보조 스크립트 + 프리팹</td><td>어려움. 규칙이 MonoBehaviour와 코루틴 안에 있음</td><td>Unity 씬 없이는 불가능</td><td>부모 기능 "일부만" 쓰려면 복사하게 됨 (1편 F8)</td></tr>
+        <tr><td>스킬별 컴포넌트</td><td>스킬 스크립트 조합</td><td>컴포넌트가 Unity 객체라 서버로 옮기기 어려움</td><td>PlayMode 테스트</td><td>스킬 사이 순서·취소 규칙이 흩어짐</td></tr>
+        <tr class="pick"><td>데이터 표 + 효과 부품 (재설계)</td><td>표 한 줄 + 연출 에셋</td><td>C++·C#이 같은 표와 같은 함수를 씀</td><td>순수 함수라 밀리초 단위 단위 테스트</td><td>표에 없는 특이한 스킬은 부품을 새로 만들어야 함</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="part" id="s-life" aria-labelledby="h-life">
+  <h2 id="h-life"><span class="num">03</span>스킬 한 번의 일생</h2>
+  <div class="col stack">
+    <p>스킬 하나는 네 구간을 지납니다. <span class="ph-chip" style="background:var(--phase-wind)"></span> <b>선딜</b>(누른 뒤 판정이 나오기 전), <span class="ph-chip" style="background:var(--phase-act)"></span> <b>판정</b>(이 동안 맞을 수 있음), <span class="ph-chip" style="background:var(--phase-rec)"></span> <b>후딜</b>(다음 행동을 못 함), <span class="ph-chip" style="background:var(--phase-cancel)"></span> <b>캔슬 구간</b>(후딜이지만 이동·구르기로 끊을 수 있음). 충전 스킬은 앞에 <span class="ph-chip" style="background:var(--phase-charge)"></span> <b>충전</b>이 붙습니다. 격투 게임에서 "프레임 데이터"라고 부르는 바로 그 표입니다.</p>
+    <p>아래 세 줄은 같은 스킬을 세 곳에서 본 모습입니다. 내 화면은 누르는 순간 시작하고(예측), 서버는 입력이 도착한 뒤 같은 틱 수로 계산하고, 동료 화면은 서버 결과를 받아 100ms 늦게 그립니다. 데미지 숫자는 서버 판정이 돌아와야 뜨므로 내 화면에서는 휘두른 것보다 RTT만큼 늦게 보입니다.</p>
+  </div>
+  <div class="tl-wrap" id="tl">
+    <div class="tl-ctrl">
+      <span class="lbl">직업</span><div class="seg" id="tl-cls" role="group" aria-label="직업"></div>
+      <span class="lbl">스킬</span><div class="seg" id="tl-skill" role="group" aria-label="스킬"></div>
+      <span class="lbl">왕복 지연</span><div class="seg" id="tl-rtt" role="group" aria-label="왕복 지연"></div>
+      <button class="btn" id="tl-play" type="button">재생</button>
+      <label class="rng"><input type="checkbox" id="tl-slow"> ¼배속</label>
+    </div>
+    <div class="tl-svg" id="tl-svg"></div>
+    <div class="tl-read" id="tl-read"></div>
+    <p class="tl-say" id="tl-say" aria-live="polite"></p>
+  </div>
+  <div class="legend4" style="margin-top:8px">
+    <span><i style="background:var(--phase-charge)"></i>충전</span><span><i style="background:var(--phase-wind)"></i>선딜</span><span><i style="background:var(--phase-act)"></i>판정</span><span><i style="background:var(--phase-rec)"></i>후딜</span><span><i style="background:var(--phase-cancel)"></i>캔슬 가능</span><span><i style="background:var(--ink)"></i>타격 순간(다단 히트)</span><span><i style="background:var(--s1)"></i>데미지 숫자 표시</span>
+  </div>
+
+  <h3 style="margin-top:28px">원본은 판정 시점이 왜 흔들렸나</h3>
+  <div class="pair">
+    <div class="stack">
+      <p>원본은 판정 시점을 애니메이션 진행률로 기다렸습니다. 매 프레임 <code>timer += Time.deltaTime</code>을 더하고 <code>timer / anim.length</code>가 <code>impactStartTime</code>을 넘는 프레임에 칼 콜라이더를 켰습니다. 그래서 판정이 나오는 순간이 프레임 길이에 따라 달라지고, 멀티에서는 세 사람의 컴퓨터가 각자 다른 순간에 판정했습니다.</p>
+      <p>재설계는 반대로 갑니다. 판정 틱은 표가 정하고(예: 전사 1타 = 누른 뒤 5틱째), 애니메이션 재생 속도를 그 틱에 맞춥니다. 판정은 서버 한 곳에서만 하므로 화면마다 다를 일이 없습니다.</p>
+      <p class="note">오른쪽 그래프는 <span class="ev ev-sim">시뮬레이션</span>입니다. 전사 1타(타격 지점 0.15, 클립 1초 가정)를 프레임 시간이 ±20% 흔들리고 3% 확률로 40ms 끊기는 상황에서 2,000번 돌렸습니다.</p>
+    </div>
+    <div class="cb" id="c-oWarriorWait"></div>
+  </div>
+  <figure class="jit" id="jit"></figure>
+</section>
+
+<section class="part" id="s-class" aria-labelledby="h-class">
+  <h2 id="h-class"><span class="num">04</span>직업별 코드</h2>
+  <div class="col"><p>탭을 고르세요. 순서는 원본이 하던 일 → 원본에서 찾은 문제 → 재설계 표와 데미지 → 실제 코드 → 그 동작을 고정한 테스트 → 왜 이렇게 했는가입니다.</p></div>
+  <div class="ctabs" role="tablist" id="ctabs"></div>
+  <div class="cpanel" id="cpanel" role="tabpanel"></div>
+</section>
+
+<section class="part" id="s-engine" aria-labelledby="h-engine">
+  <h2 id="h-engine"><span class="num">05</span>네 직업이 함께 쓰는 엔진</h2>
+  <div class="col stack">
+    <p>직업 표를 읽어서 실제로 움직이는 코드는 네 직업이 함께 씁니다. 원본에서 직업마다 따로 있던 코루틴과 bool 변수들이 아래 함수 몇 개로 바뀌었습니다.</p>
+  </div>
+  <div class="flowline">
+    <div><b>입력</b><span>버튼 8개 = 1바이트</span><code>InputCmd.buttons</code></div>
+    <div><b>스킬 타이밍</b><span>클라·서버가 같은 코드</span><code>StepAbility</code></div>
+    <div><b>이동</b><span>스킬이 준 규칙대로</span><code>Step(…, MoveMods)</code></div>
+    <div><b>효과 적용</b><span>서버만</span><code>ApplyAction</code></div>
+    <div><b>결과 전송</b><span>이벤트·스냅샷</span><code>Emit / BuildSnapshot</code></div>
+  </div>
+  <h3>스킬 타이밍: 상태 하나가 bool 여러 개를 대신한다</h3>
+  <div class="col"><p>원본의 <code>isAttack</code>, <code>attackState</code>, <code>isCombo</code>, <code>comboCount</code>, <code>skillNum</code>, 코루틴 안의 <code>timer</code>가 하던 일을 <code>AbilityState</code>의 <code>slot</code>·<code>phase</code>·<code>tick</code>·<code>step</code>이 대신합니다. 가능한 조합이 정해져 있어서 "공격 중이면서 구르는 중" 같은 말이 안 되는 상태가 생기지 않습니다.</p></div>
+  <div class="pair"><div class="cb" id="c-AbilityState"></div><div class="cb" id="c-SimStep"></div></div>
+  <div class="cb" id="c-StepAbility"></div>
+  <h3>이동: 스킬은 속도를 건드리지 않고 규칙만 넘긴다</h3>
+  <div class="col"><p>궁수 조준 감속은 원본에서 <code>Dealer.set_speed</code> 오버라이드였고, 공격 중 정지는 직업마다 <code>velocity = Vector3.zero</code>를 직접 썼습니다. 재설계에서는 스킬이 <code>MoveMods</code>(잠금·감속·돌진)만 정하고, 실제 이동은 <code>Step</code> 한 곳에서만 일어납니다. 1편 F8에서 이야기한 "부모 Move의 일부만 쓰고 싶어서 복사한 문제"의 답이 이것입니다.</p></div>
+  <div class="pair"><div class="cb" id="c-MoveMods"></div><div class="cb" id="c-StepMoveRule"></div></div>
+  <h3>효과: 판정 창, 투사체, 지원</h3>
+  <div class="col"><p>서버는 판정 구간의 매 틱마다 그 스킬의 효과 표를 읽습니다. 근접 판정은 정해진 틱 범위 동안 매 틱 검사하되 같은 대상은 한 번만 맞히고, 데미지는 대상마다·타마다 따로 굴립니다. 투사체와 지원 효과는 판정 첫 틱에 한 번 나갑니다.</p></div>
+  <div class="pair"><div class="cb" id="c-ApplyAction"></div><div class="cb" id="c-Activate"></div></div>
+  <div class="cb" id="c-ApplyHit"></div>
+  <h3>수치: 빼서 되돌리지 않고 매번 다시 계산한다</h3>
+  <div class="col"><p>원본 버프는 "8초 뒤에 0.1을 빼는" 방식이었습니다. 그 사이에 다른 코드가 수치를 다시 쓰면 기준이 틀어집니다. 재설계는 버프의 남은 틱만 저장하고, 공격력은 쓸 때마다 기본값 + 패시브 + 버프로 계산합니다. 피해를 받는 순서도 한 함수에 적었습니다.</p></div>
+  <div class="pair"><div class="cb" id="c-StatsOf"></div><div class="cb" id="c-TickStatus"></div></div>
+  <div class="pair"><div class="cb" id="c-DamagePlayer"></div><div class="cb" id="c-RollDamage"></div></div>
+</section>
+
+<section class="part" id="s-client" aria-labelledby="h-client">
+  <h2 id="h-client"><span class="num">06</span>Unity 쪽에서 바뀌는 것</h2>
+  <div class="col stack">
+    <p>Unity 스크립트는 규칙을 계산하지 않습니다. 예측기가 만든 스킬 상태를 받아 애니메이션을 틀고, 서버 이벤트를 받아 숫자와 이펙트를 그립니다. 연출 데이터는 <code>ClassVisuals</code> 에셋에 따로 두어, 애니메이션을 바꿔도 규칙 코드는 그대로입니다.</p>
+    <p><b>리타이밍</b>은 현업 액션 게임에서 흔히 쓰는 방법입니다. 클립의 타격 지점까지 걸리는 시간을 표의 선딜 시간으로 나눈 값으로 재생 속도를 맞추면, 칼이 닿는 그림이 정확히 판정 틱에 나옵니다. 예를 들어 0.9초짜리 전사 1타 클립의 타격 지점이 0.15라면 0.135초 ÷ 5틱(0.167초) = 0.81배속으로 재생합니다.</p>
+  </div>
+  <div class="pair"><div class="cb" id="c-csPlayback"></div><div class="cb" id="c-csOnTick"></div></div>
+  <div class="pair"><div class="cb" id="c-csRemote"></div><div class="cb" id="c-csSkillBar"></div></div>
+  <h3>C#에서만 생기는 함정</h3>
+  <div class="col"><p><code>AbilityState</code>는 struct입니다. 쿨타임을 <code>ushort[]</code> 배열로 두면 struct를 복사해도 배열은 같은 것을 가리켜서, 예측 기록 256칸이 모두 같은 쿨타임을 공유하게 됩니다. 재조정이 조용히 틀리는 종류의 버그라서 쿨타임을 필드 다섯 개로 풀어 두었습니다.</p></div>
+  <div class="pair"><div class="cb" id="c-csAbilityState"></div><div class="cb" id="c-csReconcile"></div></div>
+</section>
+
+<section class="part" id="s-wire" aria-labelledby="h-wire">
+  <h2 id="h-wire"><span class="num">07</span>통신에서 바뀐 것</h2>
+  <div class="col"><p>직업이 생기면서 패킷에 직업 번호, 스킬 코드, 내 스킬 상태, 새 이벤트 종류가 들어갔습니다. 엔티티 하나가 6비트 늘었지만 평균 스냅샷은 여전히 250바이트 안팎입니다.</p></div>
+  <div class="tbl-wrap"><table id="wire-tbl"></table></div>
+</section>
+
+<section class="part" id="s-verify" aria-labelledby="h-verify">
+  <h2 id="h-verify"><span class="num">08</span>검증</h2>
+  <div class="col stack">
+    <p><b>테스트.</b> 서버 단위 테스트가 20개에서 37개로 늘었습니다(검사 107개, 전부 통과 <span class="ev ev-test">테스트 통과</span>). 새 테스트 17개는 아래 목록과 같고, 이름이 곧 지켜야 하는 규칙입니다. AddressSanitizer·UBSan 빌드에서도 같은 결과입니다.</p>
+    <p><b>C++과 C#의 일치.</b> 직업 네 개를 각각 3,000틱씩, 무작위 이동·점프·구르기·짧게 누르기·길게 누르기(충전)를 섞어 돌리고 이동 14개 + 스킬 15개 필드를 비트 단위로 비교했습니다. 12,000틱 모두 같았습니다 <span class="ev ev-test">테스트 통과</span>. 이 중 스킬 사용 중인 틱이 5,699개, 충전 중 877개, 콤보 2·3타 295개라서 실제로 스킬 경로를 지나갔습니다.</p>
+    <p><b>부하 테스트.</b> 실제 UDP로 서버 1개와 봇 3명(직업 조합을 시나리오마다 바꿈)을 20초씩 돌렸습니다 <span class="ev ev-meas">실측</span>. "예측 일치"는 내가 예측한 상태가 서버 결과와 비트까지 같았던 비율입니다.</p>
+  </div>
+  <div class="tbl-wrap"><table id="load-tbl"></table></div>
+  <article class="c" id="respawn-story">
+    <div class="c-head"><span class="tag">측정하다 찾은 버그</span><span class="one"><b>200마리 시나리오에서 4.3m 보정이 한 번 나왔습니다.</b> 부활 직후 서버가 새 입력을 기다리지 않고 옛 입력을 부활 위치에 반복해서 생긴 일이었습니다.</span></div>
+    <div class="col stack">
+      <p>순서는 이렇습니다. 서버가 플레이어를 부활시킨 다음 틱에 큐에 입력이 없으면, 마지막 입력을 다시 적용하면서 번호는 옛 번호 그대로 둡니다. 클라는 그 번호에 대해 저장해 둔 예측(죽어 있던 자리)과 서버 결과(부활 위치에서 한 걸음)를 비교하니 4m가 어긋난 것으로 셌습니다.</p>
+      <p>고친 방법은 두 가지입니다. 서버는 부활 직후에도 처음 접속할 때처럼 입력 버퍼가 다시 찰 때까지 기다리고, 클라는 되감을 때 그 번호의 기준값도 서버 값으로 덮어씁니다. 고친 뒤 같은 시나리오에서 보정은 0번입니다. 이 상황은 <code>World_RespawnWaitsForFreshInputInsteadOfRepeating</code> 테스트로 고정했습니다.</p>
+    </div>
+    <div class="cb" id="c-tRespawn"></div>
+  </article>
+  <h3>새 테스트 17개</h3>
+  <div class="tbl-wrap"><table id="test-tbl"></table></div>
+  <h3>틱 비용</h3>
+  <div class="col"><p>네트워크를 빼고 시뮬레이션 1틱만 잰 값입니다 <span class="ev ev-meas">실측</span>. 플레이어 3명(전사·궁수·힐러)이 스킬을 계속 쓰는 상태입니다. 30Hz 한 틱의 예산은 33,333µs입니다.</p></div>
+  <div class="tbl-wrap"><table id="bench-tbl"></table></div>
+</section>
+
+<section class="part" id="s-notes" aria-labelledby="h-notes">
+  <h2 id="h-notes"><span class="num">09</span>고민 노트</h2>
+  <div class="col stack">
+    <p>그동안 이야기하면서 나온 고민을 하나씩 정리했습니다. 각 항목은 당시 고민 → 판정 → 현업 기준의 답 → 이 재설계에서 어디에 반영됐는가 순서입니다. 판정은 세 가지입니다. <span class="vd vd-ok">맞음</span>은 그 방향이 옳았다는 뜻, <span class="vd vd-half">절반</span>은 문제를 정확히 봤지만 해법이 다른 곳에 있다는 뜻, <span class="vd vd-turn">방향 수정</span>은 현업에서는 다른 길로 푼다는 뜻입니다.</p>
+  </div>
+  <div class="notes4" id="notes4"></div>
+</section>
+
+<section class="part" id="s-left" aria-labelledby="h-left">
+  <h2 id="h-left"><span class="num">10</span>남은 것과 한계</h2>
+  <div class="col stack">
+    <p><b>Unity에서 실행해 보지 않았습니다.</b> Unity 스크립트는 실제 Unity API와 같은 시그니처로 만든 스텁에 대고 타입 검사만 통과시켰습니다. 애니메이터 파라미터(<code>skillSpeed</code>, <code>charging</code>)와 <code>ClassVisuals</code> 에셋은 Unity 프로젝트에서 만들어 연결해야 합니다.</p>
+    <p><b>프레임 값은 설계값입니다.</b> 원본 에셋에는 비율만 있고 클립 길이가 없어서 모든 클립을 1초로 가정하고 틱으로 바꿨습니다. 실제 클립 길이를 읽어 표를 한 번 보정해야 합니다. 궁수는 원본에 AnimationState가 없어 전부 새로 정한 값입니다.</p>
+    <p><b>기획 확인이 필요한 값</b>은 코드에 <code>[원본 확인 필요]</code>로 표시했습니다. 창술사 강화 공격이 일반 공격보다 약한 것(60 대 65), 전사 패시브 0.07과 0 중 어느 쪽이 의도였는지, 번개검을 무작위 대상에서 가장 가까운 대상으로 바꾼 것, 화상과 저주를 중첩 대신 갱신으로 바꾼 것입니다.</p>
+    <p><b>설계만 하고 구현하지 않은 것</b>은 컷신 동기화(서버가 "틱 N에 시작" 이벤트를 보내고 각 클라가 같은 서버 틱에 재생), 발 IK, 몬스터의 다양한 패턴입니다.</p>
+    <p><b>이 코드는 제가 작성했습니다.</b> 면접에서 설명하려면 직접 다시 짜 보는 과정이 필요합니다. 추천 순서는 <code>abilities.h</code>의 <code>StepAbility</code>를 보지 않고 다시 쓴 뒤 <code>Ability_*</code> 테스트 여섯 개를 통과시키고, 그다음 <code>ApplyHit</code>을 다시 쓰고 <code>World_*</code> 테스트를 통과시키는 것입니다. 테스트가 정답지 역할을 합니다.</p>
+  </div>
+</section>
+
+<footer class="muted small">LostRuins 기술 포스트모템 4편. 숫자는 이 분석 환경(Linux, GCC 13, Release)에서 잰 값이며 실제 인터넷과 Unity에서 잰 값이 아닙니다.</footer>
+</div>
+
+<script>
+const DATA = {"classes": [{"name": "Warrior", "hp": 100, "atk": 1.5, "def": 0.2, "crit": 0.4, "damage": [30, 30, 50, 90, 0], "passive": 1, "passiveTicks": 0, "passiveDmg": 0, "rage": 0.07, "rightClickIsSkill": false, "skills": [{"slot": "basic", "button": 8, "cooldown": 0, "steps": 3, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 1, "castSpeed": 0.0, "dash": 0.0, "ground": false, "frames": [{"w": 5, "a": 1, "r": 24, "c": 15, "hits": [{"from": 1, "to": 1, "shape": "arc", "range": 2.5, "angle": 60, "fwd": 0.0, "dmg": 0}], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}, {"w": 5, "a": 1, "r": 24, "c": 14, "hits": [{"from": 1, "to": 1, "shape": "arc", "range": 2.5, "angle": 60, "fwd": 0.0, "dmg": 0}], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}, {"w": 3, "a": 5, "r": 22, "c": 15, "hits": [{"from": 1, "to": 5, "shape": "arc", "range": 2.8, "angle": 75, "fwd": 0.0, "dmg": 0}], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "alt", "button": 0, "cooldown": 0, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 0, "castSpeed": 0.0, "dash": 0.0, "ground": false, "frames": [{"w": 0, "a": 0, "r": 0, "c": 0, "hits": [], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "q", "button": 32, "cooldown": 210, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 1, "castSpeed": 2.5, "dash": 0.0, "ground": false, "frames": [{"w": 7, "a": 1, "r": 22, "c": 15, "hits": [], "shot": {"count": 1, "dmg": 1, "spread": 0, "speed": 15, "speedMax": 15, "ttl": 30, "homingAfter": 1, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "e", "button": 64, "cooldown": 150, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 1, "castSpeed": 2.5, "dash": 0.0, "ground": true, "frames": [{"w": 9, "a": 3, "r": 18, "c": 14, "hits": [{"from": 1, "to": 3, "shape": "circle", "range": 3.0, "angle": 0, "fwd": 0.0, "dmg": 2}], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "f", "button": 128, "cooldown": 450, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 1, "castSpeed": 2.5, "dash": 0.0, "ground": true, "frames": [{"w": 14, "a": 1, "r": 15, "c": 11, "hits": [{"from": 1, "to": 1, "shape": "arc", "range": 3.0, "angle": 45, "fwd": 0.0, "dmg": 3}, {"from": 1, "to": 1, "shape": "circle", "range": 11.0, "angle": 0, "fwd": 0.0, "dmg": 3}], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}]}, {"name": "Archer", "hp": 100, "atk": 1.7, "def": 0.1, "crit": 0.4, "damage": [47, 35, 30, 42, 30], "passive": 2, "passiveTicks": 0, "passiveDmg": 0, "rage": 0.0, "rightClickIsSkill": false, "skills": [{"slot": "basic", "button": 8, "cooldown": 30, "steps": 1, "chargeMin": 12, "chargeMax": 24, "chargeSpeed": 2.0, "move": 0, "castSpeed": 0.0, "dash": 0.0, "ground": false, "frames": [{"w": 0, "a": 1, "r": 6, "c": 0, "hits": [], "shot": {"count": 1, "dmg": 1, "spread": 0, "speed": 50, "speedMax": 70, "ttl": 90, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "alt", "button": 0, "cooldown": 0, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 0, "castSpeed": 0.0, "dash": 0.0, "ground": false, "frames": [{"w": 0, "a": 0, "r": 0, "c": 0, "hits": [], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "q", "button": 32, "cooldown": 300, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 2, "castSpeed": 2.5, "dash": 0.0, "ground": false, "frames": [{"w": 6, "a": 1, "r": 9, "c": 3, "hits": [], "shot": {"count": 4, "dmg": 2, "spread": 12, "speed": 20, "speedMax": 20, "ttl": 90, "homingAfter": 15, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "e", "button": 64, "cooldown": 150, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 2, "castSpeed": 2.5, "dash": 0.0, "ground": false, "frames": [{"w": 6, "a": 1, "r": 9, "c": 3, "hits": [], "shot": {"count": 3, "dmg": 3, "spread": 15, "speed": 30, "speedMax": 30, "ttl": 90, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "f", "button": 128, "cooldown": 390, "steps": 1, "chargeMin": 15, "chargeMax": 42, "chargeSpeed": 1.0, "move": 0, "castSpeed": 0.0, "dash": 0.0, "ground": true, "frames": [{"w": 0, "a": 1, "r": 10, "c": 0, "hits": [], "shot": {"count": 1, "dmg": 4, "spread": 0, "speed": 40, "speedMax": 40, "ttl": 90, "homingAfter": 0, "splash": 0.0, "onHit": 1}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}]}, {"name": "Lancer", "hp": 100, "atk": 1.3, "def": 0.4, "crit": 0.1, "damage": [65, 60, 70, 50, 0], "passive": 3, "passiveTicks": 240, "passiveDmg": 1, "rage": 0.0, "rightClickIsSkill": true, "skills": [{"slot": "basic", "button": 8, "cooldown": 0, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 1, "castSpeed": 2.5, "dash": 0.0, "ground": true, "frames": [{"w": 11, "a": 4, "r": 15, "c": 9, "hits": [{"from": 1, "to": 4, "shape": "arc", "range": 3.2, "angle": 25, "fwd": 0.0, "dmg": 0}], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "alt", "button": 16, "cooldown": 0, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 1, "castSpeed": 2.5, "dash": 0.0, "ground": true, "frames": [{"w": 11, "a": 4, "r": 15, "c": 11, "hits": [{"from": 1, "to": 4, "shape": "arc", "range": 2.2, "angle": 70, "fwd": 0.0, "dmg": 3}], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "q", "button": 32, "cooldown": 300, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 1, "castSpeed": 2.5, "dash": 0.0, "ground": false, "frames": [{"w": 12, "a": 3, "r": 15, "c": 15, "hits": [], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 1, "radius": 5.0, "amount": 100, "duration": 150}}]}, {"slot": "e", "button": 64, "cooldown": 150, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 1, "castSpeed": 2.5, "dash": 0.0, "ground": true, "frames": [{"w": 5, "a": 14, "r": 11, "c": 6, "hits": [{"from": 1, "to": 2, "shape": "arc", "range": 3.2, "angle": 30, "fwd": 0.0, "dmg": 2}, {"from": 4, "to": 5, "shape": "arc", "range": 3.2, "angle": 30, "fwd": 0.0, "dmg": 2}, {"from": 9, "to": 10, "shape": "arc", "range": 3.2, "angle": 30, "fwd": 0.0, "dmg": 2}, {"from": 12, "to": 14, "shape": "arc", "range": 3.4, "angle": 35, "fwd": 0.0, "dmg": 2}], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "f", "button": 128, "cooldown": 390, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 1, "castSpeed": 0.0, "dash": 8.0, "ground": true, "frames": [{"w": 6, "a": 18, "r": 6, "c": 4, "hits": [{"from": 1, "to": 1, "shape": "arc", "range": 2.2, "angle": 70, "fwd": 0.0, "dmg": 3}, {"from": 6, "to": 6, "shape": "arc", "range": 2.2, "angle": 70, "fwd": 0.0, "dmg": 3}, {"from": 12, "to": 12, "shape": "arc", "range": 2.2, "angle": 70, "fwd": 0.0, "dmg": 3}, {"from": 18, "to": 18, "shape": "arc", "range": 2.6, "angle": 80, "fwd": 0.0, "dmg": 3}], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}]}, {"name": "Healer", "hp": 100, "atk": 1.7, "def": 0.0, "crit": 0.1, "damage": [35, 0, 0, 0, 0], "passive": 4, "passiveTicks": 240, "passiveDmg": 0, "rage": 0.0, "rightClickIsSkill": false, "skills": [{"slot": "basic", "button": 8, "cooldown": 0, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 2, "castSpeed": 2.5, "dash": 0.0, "ground": false, "frames": [{"w": 15, "a": 1, "r": 14, "c": 14, "hits": [], "shot": {"count": 1, "dmg": 0, "spread": 0, "speed": 15, "speedMax": 15, "ttl": 90, "homingAfter": 0, "splash": 1.5, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "alt", "button": 0, "cooldown": 0, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 0, "castSpeed": 0.0, "dash": 0.0, "ground": false, "frames": [{"w": 0, "a": 0, "r": 0, "c": 0, "hits": [], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "q", "button": 32, "cooldown": 390, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 2, "castSpeed": 2.5, "dash": 0.0, "ground": false, "frames": [{"w": 15, "a": 1, "r": 14, "c": 14, "hits": [], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 2, "radius": 7.0, "amount": 30, "duration": 0}}]}, {"slot": "e", "button": 64, "cooldown": 150, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 2, "castSpeed": 2.5, "dash": 0.0, "ground": false, "frames": [{"w": 19, "a": 1, "r": 10, "c": 10, "hits": [], "shot": {"count": 1, "dmg": 255, "spread": 0, "speed": 10, "speedMax": 10, "ttl": 60, "homingAfter": 0, "splash": 0.0, "onHit": 2}, "support": {"kind": 0, "radius": 0.0, "amount": 0, "duration": 0}}]}, {"slot": "f", "button": 128, "cooldown": 450, "steps": 1, "chargeMin": 0, "chargeMax": 0, "chargeSpeed": 0.0, "move": 2, "castSpeed": 2.5, "dash": 0.0, "ground": false, "frames": [{"w": 23, "a": 1, "r": 6, "c": 6, "hits": [], "shot": {"count": 0, "dmg": 0, "spread": 0, "speed": 0, "speedMax": 0, "ttl": 0, "homingAfter": 0, "splash": 0.0, "onHit": 0}, "support": {"kind": 3, "radius": 5.0, "amount": 0, "duration": 240}}]}]}], "snip": {"MoveMods": {"path": "server/src/shared/movement.h", "start": 64, "code": "// 스킬이 이번 틱 이동에 주는 영향. abilities.h의 StepAbility가 만들고 Step이 읽는다. 기본값 = 영향 없음.\nstruct MoveMods {\n  uint8_t lock = 0;    // 선딜·후딜: 이동·점프·구르기 금지\n  uint8_t noAim = 0;   // 우클릭이 조준(감속)이 아닌 직업 (창술사: 우클릭 = 방패 치기)\n  float speed = 0.0F;  // 0보다 크면 이 속도로만 이동 (충전·시전 중 감속). 점프·구르기 금지\n  float dashSpeed = 0.0F;  // 0보다 크면 dash 방향으로 강제 전진 (창술사 F)\n  int8_t dashX = 0, dashZ = 0;\n};"}, "StepMoveRule": {"path": "server/src/shared/movement.h", "start": 128, "code": "  float wx = 0;\n  float wz = 0;\n  float speed = 0;\n  if (s.dodgeT > 0) {\n    wx = static_cast<float>(s.dodgeX) / 127.0F;\n    wz = static_cast<float>(s.dodgeZ) / 127.0F;\n    speed = kDodgeSpeed;\n    s.dodgeT--;\n  } else if (m.dashSpeed > 0.0F) {\n    wx = static_cast<float>(m.dashX) / 127.0F;\n    wz = static_cast<float>(m.dashZ) / 127.0F;\n    speed = m.dashSpeed;\n  } else if (m.lock != 0) {\n    speed = 0.0F;  // 제자리 (공중이면 수직으로만 떨어짐)\n  } else {\n    wx = static_cast<float>(in.moveX) / 127.0F;\n    wz = static_cast<float>(in.moveZ) / 127.0F;\n    if (m.speed > 0.0F) {\n      speed = m.speed;\n    } else if ((in.buttons & kAim) != 0 && m.noAim == 0) {\n      speed = kAimSpeed;\n    } else {\n      speed = (in.buttons & kSprint) != 0 ? kSprintSpeed : kMoveSpeed;\n    }\n  }\n  const float len2 = wx * wx + wz * wz;\n  if (len2 > 1.0F) {\n    const float inv = 1.0F / std::sqrt(len2);\n    wx *= inv;\n    wz *= inv;\n  }\n  s.vx = wx * speed;\n  s.vz = wz * speed;"}, "AbilityState": {"path": "server/src/shared/abilities.h", "start": 56, "code": "// 서버·클라가 매 틱 똑같이 갱신하는 스킬 상태. 스냅샷에 실려 재조정 때 비교된다.\nstruct AbilityState {\n  uint8_t slot = kNoSlot;\n  uint8_t phase = kPhaseNone;\n  uint8_t tick = 0;\n  uint8_t step = 0;\n  uint8_t queued = 0;  // 콤보 입력 예약 (판정·후딜 중에 다시 누름)\n  uint8_t charge = 0;\n  int8_t lastX = 0, lastZ = 127;  // 마지막 이동 방향 → 돌진 방향\n  int8_t dashX = 0, dashZ = 0;\n  std::array<uint16_t, kSlotCount> cooldown{};\n};"}, "StepAbility": {"path": "server/src/shared/abilities.h", "start": 100, "code": "// 한 틱 진행. mv는 이번 틱 이동(Step) \"전\" 상태여야 한다 (prevButtons로 새로 눌린 버튼을 계산).\ninline AbilityResult StepAbility(AbilityState& a, const ClassTiming& c, const InputCmd& in, const MoveState& mv) {\n  AbilityResult r;\n  r.mods.noAim = c.rightClickIsSkill ? 1 : 0;\n  const auto pressed = static_cast<uint8_t>(in.buttons & ~mv.prevButtons);\n  const bool moving = in.moveX != 0 || in.moveZ != 0;\n  if (moving) {\n    a.lastX = in.moveX;\n    a.lastZ = in.moveZ;\n  }\n  for (auto& cd : a.cooldown) {\n    if (cd > 0) --cd;\n  }\n\n  if (a.slot != kNoSlot) {  // 진행 중인 동작\n    const SkillTiming& s = c.skills[a.slot];\n    const Frames& f = s.steps[a.step];\n    const bool comboPress = (pressed & s.button) != 0 && a.step + 1 < s.stepCount;\n    switch (a.phase) {\n      case kPhaseCharge: {\n        const bool dodged = (pressed & kDodge) != 0;\n        if (!dodged && (in.buttons & s.button) != 0) {\n          if (a.charge < s.chargeMax) ++a.charge;  // 누르고 있는 동안 충전\n        } else if (!dodged && a.charge >= s.chargeMin) {\n          detail::BeginWindup(a, s);  // 떼는 순간 발동\n        } else {\n          detail::End(a);  // 구르기를 눌렀거나 너무 일찍 뗌 → 취소 (구르기는 이 틱에 바로 나감)\n        }\n        break;\n      }\n      case kPhaseWindup:\n        ++a.tick;\n        if (a.tick >= f.windup) detail::Fire(a, s);\n        break;\n      case kPhaseActive:\n        if (comboPress) a.queued = 1;\n        if (a.tick >= f.active) {\n          a.phase = kPhaseRecovery;\n          a.tick = 0;\n        } else {\n          ++a.tick;\n        }\n        break;\n      case kPhaseRecovery:\n        if (comboPress) a.queued = 1;\n        ++a.tick;\n        if (a.queued != 0) {\n          a.queued = 0;\n          ++a.step;\n          detail::BeginWindup(a, s);  // 다음 콤보 단계로 (후딜을 끝까지 기다리지 않음)\n        } else if (a.tick > f.recovery || (a.tick > f.cancelAfter && (moving || (pressed & (kJump | kDodge)) != 0))) {\n          detail::End(a);  // 후딜이 끝났거나, 캔슬 구간에서 이동·점프·구르기 → 이 틱에 바로 움직임\n        }\n        break;\n      default:\n        detail::End(a);\n        break;\n    }\n  }\n\n  if (a.slot == kNoSlot && mv.dodgeT == 0) {  // 새 동작 시작. 같은 틱에 여러 개 눌렸으면 F > E > Q > 우클릭 > 기본\n    static constexpr std::array<uint8_t, kSlotCount> kOrder = {kSlotF, kSlotE, kSlotQ, kSlotAlt, kSlotBasic};\n    for (const uint8_t slot : kOrder) {\n      const SkillTiming& s = c.skills[slot];\n      if (s.button == 0 || (pressed & s.button) == 0 || a.cooldown[slot] != 0) continue;\n      if (s.needGround && mv.grounded == 0) continue;\n      a.slot = slot;\n      a.step = 0;\n      a.queued = 0;\n      a.charge = 0;\n      a.tick = 0;\n      a.dashX = a.lastX;\n      a.dashZ = a.lastZ;\n      if (s.chargeMax > 0) {\n        a.phase = kPhaseCharge;\n        a.charge = 1;  // 누른 틱도 1로 셈 → \"N틱 누름 = 충전 N\"\n      } else {\n        a.cooldown[slot] = s.cooldown;\n        detail::BeginWindup(a, s);\n      }\n      break;\n    }\n  }\n\n  if (a.slot != kNoSlot) {  // 지금 단계에 맞는 이동 규칙\n    const SkillTiming& s = c.skills[a.slot];\n    if (a.phase == kPhaseCharge) {\n      r.mods.speed = s.chargeSpeed;\n    } else if (s.dashSpeed > 0.0F && a.phase == kPhaseActive) {\n      r.mods.dashSpeed = s.dashSpeed;\n      r.mods.dashX = a.dashX;\n      r.mods.dashZ = a.dashZ;\n    } else if (s.move == kMoveLocked) {\n      r.mods.lock = 1;\n    } else if (s.move == kMoveSlowed) {\n      r.mods.speed = s.castSpeed;\n    }\n  }\n  r.slot = a.slot;\n  r.phase = a.phase;\n  r.tick = a.tick;\n  r.step = a.step;\n  r.charge = a.charge;\n  return r;\n}"}, "SimStep": {"path": "server/src/shared/abilities.h", "start": 206, "code": "// 클라 예측과 서버가 같이 부르는 \"한 틱\": 스킬 규칙 → 이동 규칙 순서\ninline AbilityResult SimStep(MoveState& mv, AbilityState& ab, const ClassTiming& c, const InputCmd& in,\n                             const Level& lv) {\n  const AbilityResult r = StepAbility(ab, c, in, mv);\n  Step(mv, in, lv, r.mods);\n  return r;\n}"}, "TimingTable": {"path": "server/src/shared/abilities.h", "start": 240, "code": "inline const ClassTiming& TimingOf(ClassId id) {\n  static const std::array<ClassTiming, kClassCount> kTable = {{\n      // 전사: 3단 콤보 / Q 번개검 / E 회전베기 / F 대검 내려치기. 쿨 7·5·15초\n      {{{\n           SkillTiming{kAttack,\n                       0,\n                       3,\n                       {F(5, 1, 24, 15), F(5, 1, 24, 14), F(3, 5, 22, 15)},\n                       0,\n                       0,\n                       0.0F,\n                       kMoveLocked,\n                       0.0F,\n                       0.0F,\n                       false},\n           None(),\n           Act(kSkillQ, 210, F(7, 1, 22, 15)),\n           Act(kSkillE, 150, F(9, 3, 18, 14), kMoveLocked, true),\n           Act(kSkillF, 450, F(14, 1, 15, 11), kMoveLocked, true),\n       }},\n       false},\n      // 궁수: 기본 공격 = 누르고 있다가 떼서 발사 (0.4~0.8초 충전, 원본 30→70 at 50/s, 50 이상일 때 발사)\n      //       Q 유도 화살 4발 / E 3갈래 / F 충전 폭발 화살 (0.5~1.4초 충전, 원본 30→100, 55 이상). 쿨 1·10·5·13초\n      {{{\n           Charged(kAttack, 30, F(0, 1, 6, 0), 12, 24, 2.0F, false),\n           None(),\n           Act(kSkillQ, 300, F(6, 1, 9, 3), kMoveSlowed),\n           Act(kSkillE, 150, F(6, 1, 9, 3), kMoveSlowed),\n           Charged(kSkillF, 390, F(0, 1, 10, 0), 15, 42, 1.0F, true),\n       }},\n       false},\n      // 창술사: 찌르기 / 우클릭 방패 치기 / Q 아군 실드 / E 4연속 찌르기 / F 방패 돌진 4타. 쿨 10·5·13초\n      {{{\n           Act(kAttack, 0, F(11, 4, 15, 9), kMoveLocked, true),\n           Act(kAim, 0, F(11, 4, 15, 11), kMoveLocked, true),\n           Act(kSkillQ, 300, F(12, 3, 15, 15)),\n           Act(kSkillE, 150, F(5, 14, 11, 6), kMoveLocked, true),\n           SkillTiming{kSkillF, 390, 1, {F(6, 18, 6, 4), {}, {}}, 0, 0, 0.0F, kMoveLocked, 0.0F, 8.0F, true},\n       }},\n       true},\n      // 힐러: 화염구 / Q 범위 회복 / E 저주 구슬 / F 범위 버프. 시전 중에는 천천히 걸을 수 있음. 쿨 13·5·15초\n      {{{\n           Act(kAttack, 0, F(15, 1, 14, 14), kMoveSlowed),\n           None(),\n           Act(kSkillQ, 390, F(15, 1, 14, 14), kMoveSlowed),\n           Act(kSkillE, 150, F(19, 1, 10, 10), kMoveSlowed),\n           Act(kSkillF, 450, F(23, 1, 6, 6), kMoveSlowed),\n       }},\n       false},\n  }};\n  return kTable[static_cast<size_t>(id)];\n}"}, "HitDef": {"path": "server/src/game/classes.h", "start": 20, "code": "// 근접·범위 판정 하나. 판정 단계의 from~to 틱 동안 매 틱 검사하고, 같은 대상은 한 번만 맞는다.\n// (원본은 칼 콜라이더를 켜 두고 OnTriggerEnter → 같은 몬스터가 두 번 맞거나 빈 프레임에 놓치는 일이 있었다)\nenum class Shape : uint8_t { kArc, kCircle };\nstruct HitDef {\n  uint8_t from = 0, to = 0;  // 판정 단계 안의 틱 번호 (1부터). from == 0이면 비어 있음\n  Shape shape = Shape::kArc;\n  float range = 0.0F;         // 반지름 (m)\n  float halfAngleDeg = 0.0F;  // kArc: 정면 기준 좌우 각도\n  float forward = 0.0F;       // kCircle: 중심을 바라보는 방향으로 이만큼 이동\n  uint8_t dmgIndex = 0;       // 직업 damage[] 표의 몇 번째 값인가 (원본 s_damage[] 인덱스와 같음)\n};"}, "ShotDef": {"path": "server/src/game/classes.h", "start": 32, "code": "enum class OnHit : uint8_t { kNone, kExplodeBurn, kCurseZone };\nstruct ShotDef {      // 투사체\n  uint8_t count = 0;  // 0이면 투사체 없음\n  uint8_t dmgIndex = 0;\n  float spreadDeg = 0.0F;  // 여러 발일 때 양 끝 사이 각도의 절반\n  float speed = 0.0F;      // m/s (충전 스킬은 충전량에 따라 speed → speedMax)\n  float speedMax = 0.0F;\n  float gravity = 0.0F;\n  uint16_t ttl = 0;          // 틱\n  uint16_t homingAfter = 0;  // 이 틱 이후 가장 가까운 몬스터 쪽으로 휜다 (0 = 유도 없음)\n  float homingRange = 0.0F;\n  float turn = 0.0F;          // 유도: 매 틱 목표 방향을 섞는 비율 (0~1)\n  float splashRadius = 0.0F;  // 명중 지점 주변 추가 피해 (데미지 / splashDiv)\n  uint8_t splashDiv = 1;\n  float knockback = 0.0F;\n  OnHit onHit = OnHit::kNone;\n  bool forceCritOnPassive = false;\n};"}, "SupportDef": {"path": "server/src/game/classes.h", "start": 51, "code": "enum class Support : uint8_t { kNone, kShield, kHeal, kBuff };\nstruct SupportDef {  // 아군 대상 (자기 포함)\n  Support kind = Support::kNone;\n  float radius = 0.0F;\n  int amount = 0;         // 실드량·회복량\n  uint16_t duration = 0;  // 틱\n};"}, "Warrior": {"path": "server/src/game/classes.h", "start": 125, "code": "    // ---------------- 전사 ----------------\n    // [원본] atk 1.5 def 0.2 ctr 0.4, damage {30, 30, 50, 90}\n    // [원본] 기본 3타 모두 damage[0], E = 내 주변 OverlapBox(반경 3), F = 칼 판정 + OverlapBox(반경 11)\n    // [원본] 패시브 한 단계당 +0.07 (prefab/Class/Warrior.prefab)\n    // [원본 버그] 멀티에서 쓰는 Resources/Warrior.prefab·WarriorVer2.prefab은 0 → 멀티에서는 패시브 무효.\n    //             같은 직업의 수치가 프리팹마다 달랐다 → 재설계는 수치를 이 표 한 곳에만 둔다\n    // [설계] 번개검: 원본은 범위 안 \"무작위\" 몬스터 → 가장 가까운 몬스터로 유도. 속도 15m/s\n    ShotDef bolt = Arrow(1, 1, 0.0F, 15.0F);\n    bolt.gravity = 0.0F;\n    bolt.ttl = 30;  // [원본] 1초 뒤 사라짐\n    bolt.homingAfter = 1;\n    bolt.homingRange = 11.0F;\n    bolt.turn = 0.35F;\n    t[0] = ClassDef{\n        .name = \"Warrior\",\n        .maxHp = 100,\n        .atk = 1.5F,\n        .def = 0.2F,\n        .crit = 0.4F,\n        .damage = {30, 30, 50, 90, 0},\n        .skills = {{\n            /* 기본 3타 */ {Hits(Arc(1, 1, 2.5F, 60.0F, 0)), Hits(Arc(1, 1, 2.5F, 60.0F, 0)),\n                            Hits(Arc(1, 5, 2.8F, 75.0F, 0))},\n            /* 우클릭  */ Empty(),\n            /* Q 번개검 */ One(Shot(bolt)),\n            /* E 회전   */ One(Hits(Circle(1, 3, 3.0F, 0.0F, 2))),\n            /* F 내려치기 */ One(Hits(Arc(1, 1, 3.0F, 45.0F, 3), Circle(1, 1, 11.0F, 0.0F, 3))),\n        }},\n        .passive = Passive::kRage,\n        .passiveTicks = 0,\n        .passiveDmgIndex = 0,\n        .ragePerStack = 0.07F,\n    };"}, "Archer": {"path": "server/src/game/classes.h", "start": 159, "code": "    // ---------------- 궁수 ----------------\n    // [원본] atk 1.7 def 0.1 ctr 0.4, damage {47, 35, 30, 42, 30}\n    // [원본] 기본 damage[1]. 3번째 기본은 damage[0] + 확정 치명 (원본은 4번째 화살에 적용되던 버그)\n    // [원본] Q 유도 4발 (0.5초 직진 후 유도), E 3갈래 damage[3]\n    // [원본] F 충전 화살 damage[4] → 폭발 40 (반경 2.2) + 화상 30 × 5회\n    ShotDef basic = Arrow(1, 1, 0.0F, 50.0F);\n    basic.speedMax = 70.0F;  // [원본] 충전량 50~70을 화살 힘으로 사용\n    basic.forceCritOnPassive = true;\n    ShotDef homing = Arrow(2, 4, 12.0F, 20.0F);\n    homing.homingAfter = 15;\n    homing.homingRange = 15.0F;\n    homing.turn = 0.25F;\n    homing.gravity = 0.0F;\n    ShotDef boom = Arrow(4, 1, 0.0F, 40.0F);\n    boom.onHit = OnHit::kExplodeBurn;\n    t[1] = ClassDef{\n        .name = \"Archer\",\n        .maxHp = 100,\n        .atk = 1.7F,\n        .def = 0.1F,\n        .crit = 0.4F,\n        .damage = {47, 35, 30, 42, 30},\n        .skills = {{\n            /* 기본 (충전) */ One(Shot(basic)),\n            /* 우클릭 = 조준 */ Empty(),\n            /* Q 유도 4발 */ One(Shot(homing)),\n            /* E 3갈래   */ One(Shot(Arrow(3, 3, 15.0F, 30.0F))),\n            /* F 폭발 화살 */ One(Shot(boom)),\n        }},\n        .passive = Passive::kThirdShot,\n        .passiveTicks = 0,\n        .passiveDmgIndex = 0,\n        .ragePerStack = 0.0F,\n    };"}, "Lancer": {"path": "server/src/game/classes.h", "start": 194, "code": "    // ---------------- 창술사 ----------------\n    // [원본] atk 1.3 def 0.4 ctr 0.1, damage {65, 60, 70, 50}\n    // [원본] Q 반경 5m 아군에게 실드 100 (5초), E 4연속 찌르기 damage[2], F·우클릭 방패 damage[3]\n    // [원본 버그] E는 데미지를 시작할 때 한 번만 굴려 4타가 같은 숫자 → 재설계는 타마다 굴림\n    // [원본 확인 필요] 8초마다 강화되는 기본 공격이 damage[1] = 60으로 일반(65)보다 약함.\n    //                  기획 의도를 알 수 없어 값은 그대로 두고 표시만 함\n    // [설계] E·F 다단 히트 시점 = 원본 비율(e .18/.28/.42/.54, f .20/.35/.55/.78)을 틱으로 옮긴 것\n    t[2] = ClassDef{\n        .name = \"Lancer\",\n        .maxHp = 100,\n        .atk = 1.3F,\n        .def = 0.4F,\n        .crit = 0.1F,\n        .damage = {65, 60, 70, 50, 0},\n        .skills = {{\n            /* 기본 찌르기 */ One(Hits(Arc(1, 4, 3.2F, 25.0F, 0))),\n            /* 우클릭 방패 */ One(Hits(Arc(1, 4, 2.2F, 70.0F, 3))),\n            /* Q 실드   */ One(Help(Support::kShield, 5.0F, 100, 150)),\n            /* E 4연타  */\n            One(Hits(Arc(1, 2, 3.2F, 30.0F, 2), Arc(4, 5, 3.2F, 30.0F, 2), Arc(9, 10, 3.2F, 30.0F, 2),\n                     Arc(12, 14, 3.4F, 35.0F, 2))),\n            /* F 돌진 4타 */\n            One(Hits(Arc(1, 1, 2.2F, 70.0F, 3), Arc(6, 6, 2.2F, 70.0F, 3), Arc(12, 12, 2.2F, 70.0F, 3),\n                     Arc(18, 18, 2.6F, 80.0F, 3))),\n        }},\n        .passive = Passive::kEmpowered,\n        .passiveTicks = 240,\n        .passiveDmgIndex = 1,\n        .ragePerStack = 0.0F,\n    };"}, "Healer": {"path": "server/src/game/classes.h", "start": 225, "code": "    // ---------------- 힐러 ----------------\n    // [원본] atk 1.7 def 0 ctr 0.1, damage {35}\n    // [원본] 화염구 damage[0] + 반경 1.5 스플래시(1/3) + 넉백, Q 반경 7 회복 30\n    // [원본] E 저주 구슬: 2초 뒤(또는 충돌 시) 장판 → 0.5초마다 반경 1m에 15 + 방어력 −0.2\n    // [원본] F 반경 5 버프 (atk +0.1, ctr +0.2, def +0.1, 8초), 패시브: 8초간 안 맞으면 다음 1회 무효\n    // [원본 버그] 회복 함수가 인자를 무시하고 항상 30 → 재설계는 표의 값 사용\n    // [원본 버그] 버프 해제를 \"8초 뒤 빼기\"로 해서 겹치거나 죽으면 수치가 틀어짐\n    //             → 재설계는 남은 시간만 저장하고 수치는 매번 기본값에서 다시 계산\n    ShotDef fire = Arrow(0, 1, 0.0F, 15.0F);\n    fire.gravity = 0.0F;\n    fire.splashRadius = 1.5F;\n    fire.splashDiv = 3;\n    fire.knockback = 1.0F;\n    ShotDef curse = Arrow(kNoDamage, 1, 0.0F, 10.0F);\n    curse.gravity = 0.0F;\n    curse.ttl = 60;\n    curse.onHit = OnHit::kCurseZone;\n    t[3] = ClassDef{\n        .name = \"Healer\",\n        .maxHp = 100,\n        .atk = 1.7F,\n        .def = 0.0F,\n        .crit = 0.1F,\n        .damage = {35, 0, 0, 0, 0},\n        .skills = {{\n            /* 기본 화염구 */ One(Shot(fire)),\n            /* 우클릭 = 조준 */ Empty(),\n            /* Q 회복   */ One(Help(Support::kHeal, 7.0F, 30, 0)),\n            /* E 저주 구슬 */ One(Shot(curse)),\n            /* F 버프   */ One(Help(Support::kBuff, 5.0F, 0, 240)),\n        }},\n        .passive = Passive::kBarrier,\n        .passiveTicks = 240,\n        .passiveDmgIndex = 0,\n        .ragePerStack = 0.0F,\n    };"}, "StepPlayerTail": {"path": "server/src/game/world.cpp", "start": 166, "code": "  // 클라 예측과 같은 함수: 스킬 타이밍 → 이동\n  const AbilityResult r = SimStep(p.mv, p.ab, TimingOf(p.cls), in, level_);\n  TickStatus(p);\n  if (r.phase == kPhaseActive) ApplyAction(p, r, in.yaw);"}, "TickStatus": {"path": "server/src/game/world.cpp", "start": 172, "code": "// 지속 효과는 \"남은 틱\"만 줄인다. 수치는 StatsOf가 매번 기본값에서 다시 계산한다.\nvoid World::TickStatus(Player& p) {\n  const ClassDef& def = ClassOf(p.cls);\n  if (p.shieldTicks > 0) {\n    --p.shieldTicks;\n    if (p.shieldTicks == 0) p.shield = 0;  // 시간이 다 되면 남은 실드는 사라짐\n  }\n  if (p.buffTicks > 0) --p.buffTicks;\n  if ((def.passive == Passive::kEmpowered || def.passive == Passive::kBarrier) && p.passiveTimer < def.passiveTicks) {\n    ++p.passiveTimer;\n  }\n}"}, "StatsOf": {"path": "server/src/game/world.cpp", "start": 185, "code": "CombatStats World::StatsOf(const Player& p) const {\n  const ClassDef& def = ClassOf(p.cls);\n  CombatStats s{def.atk, def.def, def.crit};\n  if (def.passive == Passive::kRage) {\n    const auto stacks = static_cast<float>(RageStacks(p.hp));\n    s.atk += stacks * def.ragePerStack;\n    s.def += stacks * def.ragePerStack;\n  }\n  if (p.buffTicks > 0) {\n    s.atk += kBuffAtk;\n    s.crit += kBuffCrit;\n    s.def += kBuffDef;\n  }\n  s.def = std::min(s.def, 0.9F);  // 방어력 상한: 버프가 겹쳐도 무적이 되지 않게\n  return s;\n}"}, "RollDamage": {"path": "server/src/game/world.cpp", "start": 218, "code": "// 원본 PlayerState.set_damage와 같은 공식: floor(damage[i] × atk) + [-5, +4], 치명타 ×1.7\nint World::RollDamage(const Player& p, uint8_t dmgIndex, bool forceCrit, uint8_t& crit) {\n  const ClassDef& def = ClassOf(p.cls);\n  const CombatStats s = StatsOf(p);\n  const auto base = static_cast<float>(def.damage[std::min<size_t>(dmgIndex, def.damage.size() - 1)]);\n  int dmg = static_cast<int>(std::floor(base * s.atk)) + rng_.Range(-5, 4);  // 원본 Random.Range(a-5, a+5)는 끝 미포함\n  crit = (forceCrit || rng_.Uniform() < s.crit) ? 1 : 0;\n  if (crit != 0) dmg = static_cast<int>(std::floor(static_cast<float>(dmg) * 1.7F));\n  return std::max(dmg, 1);\n}"}, "ApplyAction": {"path": "server/src/game/world.cpp", "start": 229, "code": "// 판정 단계의 매 틱 호출. tick 1 = 판정이 막 시작된 틱\nvoid World::ApplyAction(Player& p, const AbilityResult& r, uint16_t yaw) {\n  const SkillEffect& e = ClassOf(p.cls).skills[r.slot][r.step];\n  if (r.tick == 1) Activate(p, r, e, yaw);\n  for (size_t i = 0; i < e.hits.size(); ++i) {\n    const HitDef& h = e.hits[i];\n    if (h.from != 0 && r.tick >= h.from && r.tick <= h.to) ApplyHit(p, h, static_cast<uint8_t>(i), yaw);\n  }\n}"}, "Activate": {"path": "server/src/game/world.cpp", "start": 239, "code": "void World::Activate(Player& p, const AbilityResult& r, const SkillEffect& e, uint16_t yaw) {\n  const ClassDef& def = ClassOf(p.cls);\n  p.struck.clear();\n  p.empoweredSwing = false;\n  if (r.slot == kSlotBasic && def.passive == Passive::kEmpowered && p.passiveTimer >= def.passiveTicks) {\n    p.empoweredSwing = true;  // 8초 충전된 상태에서 휘두른 기본 공격\n    p.passiveTimer = 0;\n  }\n  if (e.shot.count > 0) Shoot(p, r, e.shot, yaw);\n  if (e.support.kind != Support::kNone) ApplySupport(p, e.support);\n}"}, "ApplyHit": {"path": "server/src/game/world.cpp", "start": 251, "code": "void World::ApplyHit(Player& p, const HitDef& h, uint8_t index, uint16_t yaw) {\n  const ClassDef& def = ClassOf(p.cls);\n  const float a = YawRad(yaw);\n  const float fx = std::sin(a);\n  const float fz = std::cos(a);\n  const float cosHalf = std::cos(h.halfAngleDeg * (kPi / 180.0F));\n  const float cx = p.mv.px + fx * h.forward;\n  const float cz = p.mv.pz + fz * h.forward;\n  const uint8_t dmgIndex = p.empoweredSwing ? def.passiveDmgIndex : h.dmgIndex;\n  for (auto& m : monsters_) {\n    if (m.state == Monster::State::kDead) continue;\n    const uint32_t key = (static_cast<uint32_t>(index) << 16U) | m.id;\n    if (std::find(p.struck.begin(), p.struck.end(), key) != p.struck.end()) continue;  // 이 판정에 이미 맞음\n    const float dx = m.x - cx;\n    const float dz = m.z - cz;\n    const float d = std::sqrt(dx * dx + dz * dz);\n    if (d > h.range + kMonsterRadius) continue;\n    if (h.shape == Shape::kArc && d > 0.001F && (dx * fx + dz * fz) / d < cosHalf) continue;  // 부채꼴 밖\n    if (std::abs(m.y - p.mv.py) > 2.5F) continue;  // 높이 차이가 크면 안 맞음\n    p.struck.push_back(key);\n    uint8_t crit = 0;\n    const int dmg = RollDamage(p, dmgIndex, false, crit);  // 대상마다, 타마다 따로 굴림\n    DamageMonster(m, dmg, p.id, crit);\n  }\n}"}, "Shoot": {"path": "server/src/game/world.cpp", "start": 277, "code": "void World::Shoot(Player& p, const AbilityResult& r, const ShotDef& s, uint16_t yaw) {\n  const ClassDef& def = ClassOf(p.cls);\n  bool forceCrit = false;\n  uint8_t dmgIndex = s.dmgIndex;\n  if (s.forceCritOnPassive && def.passive == Passive::kThirdShot) {\n    p.basicCount = static_cast<uint8_t>((p.basicCount + 1) % 3);\n    if (p.basicCount == 0) {  // 3번째 화살 \"그 자체\"가 강화 (원본은 4번째에 적용되던 버그)\n      forceCrit = true;\n      dmgIndex = 0;\n    }\n  }\n  float speed = s.speed;\n  const SkillTiming& t = TimingOf(p.cls).skills[r.slot];\n  if (t.chargeMax > t.chargeMin) {  // 충전량에 비례해 빨라짐\n    const float k = static_cast<float>(r.charge - t.chargeMin) / static_cast<float>(t.chargeMax - t.chargeMin);\n    speed = s.speed + (s.speedMax - s.speed) * std::clamp(k, 0.0F, 1.0F);\n  }\n  const float base = YawRad(yaw);\n  for (int i = 0; i < s.count; ++i) {\n    const float off = s.count > 1 ? (static_cast<float>(i) / static_cast<float>(s.count - 1) * 2.0F - 1.0F) *\n                                        s.spreadDeg * (kPi / 180.0F)\n                                  : 0.0F;\n    const float a = base + off;\n    Projectile pr;\n    pr.id = NextDynamicId();\n    pr.owner = p.id;\n    pr.cls = p.cls;\n    pr.slot = r.slot;\n    pr.def = &s;\n    pr.vx = std::sin(a) * speed;\n    pr.vz = std::cos(a) * speed;\n    pr.x = p.mv.px + std::sin(a) * 0.6F;\n    pr.y = p.mv.py + 1.4F;\n    pr.z = p.mv.pz + std::cos(a) * 0.6F;\n    pr.ttl = s.ttl;\n    pr.damage = s.dmgIndex == kNoDamage ? 0 : RollDamage(p, dmgIndex, forceCrit, pr.crit);\n    projectiles_.push_back(pr);\n    stats.shots++;\n  }\n}"}, "ApplySupport": {"path": "server/src/game/world.cpp", "start": 318, "code": "void World::ApplySupport(Player& p, const SupportDef& s) {\n  for (auto& ally : players_) {\n    if (!ally.alive || DistXZ(ally.mv.px, ally.mv.pz, p.mv.px, p.mv.pz) > s.radius) continue;\n    switch (s.kind) {\n      case Support::kShield:  // 덮어쓰기 (더하지 않음 → 연속 사용해도 상한이 지켜짐)\n        ally.shield = s.amount;\n        ally.shieldTicks = s.duration;\n        Emit(EventType::kShield, p.id, ally.id, s.amount, 0, ally.mv.px, ally.mv.py + 1.0F, ally.mv.pz);\n        break;\n      case Support::kHeal: {\n        const int before = ally.hp;\n        ally.hp = std::min(ClassOf(ally.cls).maxHp, ally.hp + s.amount);\n        stats.heals++;\n        Emit(EventType::kHeal, p.id, ally.id, ally.hp - before, 0, ally.mv.px, ally.mv.py + 1.2F, ally.mv.pz);\n        break;\n      }\n      case Support::kBuff:  // 남은 시간만 갱신 (겹쳐도 수치가 두 번 오르지 않음)\n        ally.buffTicks = s.duration;\n        Emit(EventType::kBuff, p.id, ally.id, 0, 0, ally.mv.px, ally.mv.py + 1.0F, ally.mv.pz);\n        break;\n      case Support::kNone:\n        break;\n    }\n  }\n}"}, "ProjectileEnds": {"path": "server/src/game/world.cpp", "start": 362, "code": "// 투사체가 사라질 때의 후속 효과 (폭발, 장판)\nvoid World::ProjectileEnds(const Projectile& pr, bool hitSomething) {\n  const ShotDef& s = *pr.def;\n  if (s.onHit == OnHit::kExplodeBurn && hitSomething) {\n    for (auto& m : monsters_) {\n      if (m.state == Monster::State::kDead || DistXZ(m.x, m.z, pr.x, pr.z) > kExplodeRadius + kMonsterRadius) continue;\n      DamageMonster(m, kExplodeDamage, pr.owner, 0);\n      m.burnLeft = kBurnHits;  // 다시 맞으면 횟수만 갱신 (원본은 화상 오브젝트가 계속 쌓였음)\n      m.burnTimer = 1;\n      m.burnOwner = pr.owner;\n    }\n  }\n  if (s.onHit == OnHit::kCurseZone) {  // 맞든 안 맞든 사라지는 자리에 장판 (원본: 2초 뒤 또는 충돌 시)\n    Zone z;\n    z.id = NextDynamicId();\n    z.owner = pr.owner;\n    z.x = pr.x;\n    z.y = std::max(0.0F, pr.y - 1.4F);\n    z.z = pr.z;\n    z.ttl = kCurseZoneTicks;\n    z.timer = 1;  // 생기자마자 첫 피해 (원본 damageCoolTime 초기값 0.5)\n    zones_.push_back(z);\n  }\n}"}, "StepZones": {"path": "server/src/game/world.cpp", "start": 458, "code": "void World::StepZones() {\n  for (auto& z : zones_) {\n    if (z.ttl > 0) --z.ttl;\n    if (--z.timer > 0) continue;\n    z.timer = kCursePeriod;\n    for (auto& m : monsters_) {\n      if (m.state == Monster::State::kDead || DistXZ(m.x, m.z, z.x, z.z) > kCurseRadius + kMonsterRadius) continue;\n      m.defDownTicks = kCurseDefDownTicks;  // 시간만 갱신 (원본은 −0.2를 여러 번 빼고 3초 뒤 더해서 틀어짐)\n      DamageMonster(m, kCurseDamage, z.owner, 0);\n    }\n  }\n  zones_.erase(std::remove_if(zones_.begin(), zones_.end(), [](const Zone& z) { return z.ttl == 0; }), zones_.end());\n}"}, "DamagePlayer": {"path": "server/src/game/world.cpp", "start": 543, "code": "// 피해 처리 순서: 힐러 보호막(1회 무효) → 방어력 → 실드 → 체력\nvoid World::DamagePlayer(Player& p, int dmg, uint16_t source) {\n  const ClassDef& def = ClassOf(p.cls);\n  if (def.passive == Passive::kBarrier) {\n    const bool ready = p.passiveTimer >= def.passiveTicks;\n    p.passiveTimer = 0;  // 원본과 같이: 맞으면 8초를 처음부터 다시 셈\n    if (ready) {\n      stats.blocks++;\n      Emit(EventType::kBlock, source, p.id, dmg, 0, p.mv.px, p.mv.py + 1.2F, p.mv.pz);\n      return;\n    }\n  }\n  int taken = static_cast<int>(std::floor(static_cast<float>(dmg) * (1.0F - StatsOf(p).def)));\n  const int absorbed = std::min(p.shield, taken);\n  p.shield -= absorbed;\n  taken -= absorbed;\n  p.hp = std::max(0, p.hp - taken);\n  Emit(EventType::kHit, source, p.id, taken, 0, p.mv.px, p.mv.py + 1.2F, p.mv.pz);\n  if (p.hp == 0) {\n    p.alive = false;\n    p.respawnTimer = kPlayerRespawnTicks;\n    stats.playerDowns++;\n    Emit(EventType::kDeath, source, p.id, 0, 0, p.mv.px, p.mv.py, p.mv.pz);\n  }\n}"}, "Respawn": {"path": "server/src/game/world.cpp", "start": 132, "code": "      if (p.respawnTimer == 0) {  // 부활: 위치·스킬·버프를 모두 처음 상태로 (빼기로 되돌리지 않음)\n        const uint16_t id = p.id;\n        const ClassId cls = p.cls;\n        const uint16_t seq = p.lastSeq;\n        const InputCmd last = p.lastInput;\n        p = Player{};\n        p.id = id;\n        p.cls = cls;\n        p.hp = def.maxHp;\n        p.started = false;  // 접속 직후처럼 입력 버퍼가 다시 찰 때까지 기다림 (옛 입력을 새 위치에 반복하지 않게)\n        p.anyInput = true;\n        p.lastSeq = seq;\n        p.lastInput = last;\n      }"}, "csAbilityState": {"path": "client-unity/Shared/Abilities.cs", "start": 4, "code": "// C# 주의점: AbilityState는 struct다. struct 안에 배열(ushort[])을 넣으면 복사해도 같은 배열을 가리켜서\n// 예측 기록(after[])이 전부 같은 쿨타임을 공유하게 된다. 그래서 쿨타임을 필드 5개로 풀어 둔다.\nnamespace LostRuins.Shared\n{\n    public enum ClassId : byte { Warrior = 0, Archer = 1, Lancer = 2, Healer = 3 }\n\n    public struct Frames\n    {\n        public byte Windup, Active, Recovery, CancelAfter;\n        public Frames(byte w, byte a, byte r, byte c) { Windup = w; Active = a; Recovery = r; CancelAfter = c; }\n    }\n\n    public sealed class SkillTiming\n    {\n        public byte Button;\n        public ushort Cooldown;\n        public byte StepCount = 1;\n        public Frames[] Steps = new Frames[3];\n        public byte ChargeMin, ChargeMax;\n        public float ChargeSpeed;\n        public byte Move;            // Abilities.MoveFree / MoveLocked / MoveSlowed\n        public float CastSpeed, DashSpeed;\n        public bool NeedGround;\n    }\n\n    public sealed class ClassTiming\n    {\n        public SkillTiming[] Skills;\n        public bool RightClickIsSkill;\n    }\n\n    public struct AbilityState"}, "csPlayback": {"path": "client-unity/Unity/ClassVisuals.cs", "start": 45, "code": "        // 클립의 타격 지점까지 걸리는 시간 ÷ 표의 선딜 시간 = 재생 배율\n        // 예) 전사 1타: 클립 0.9초 × 0.15 = 0.135초 / 선딜 5틱(0.167초) → 0.81배속으로 재생\n        public float PlaybackSpeed(int slot, int step, ClassId id)\n        {\n            SkillAnim a; int t;\n            if (!TryGet(slot, step, out a, out t)) return 1f;\n            byte windup = Abilities.Timing(id).Skills[slot].Steps[step].Windup;\n            if (windup == 0 || a.clipSeconds <= 0f || a.impactNormalized <= 0f) return 1f;\n            return Mathf.Clamp(a.clipSeconds * a.impactNormalized / (windup * Rules.Dt), 0.5f, 2f);   // 너무 느리거나 빠르면 어색하므로 제한\n        }"}, "csPlay": {"path": "client-unity/Unity/ClassVisuals.cs", "start": 56, "code": "        public void Play(Animator animator, int slot, int step)\n        {\n            SkillAnim a; int id;\n            if (!TryGet(slot, step, out a, out id)) return;\n            animator.SetFloat(AnimIds.SkillSpeed, PlaybackSpeed(slot, step, cls));   // 상태의 Speed Multiplier 파라미터\n            animator.SetTrigger(id);\n        }"}, "csOnTick": {"path": "client-unity/Unity/LocalPlayerView.cs", "start": 20, "code": "        // 예측 틱마다 1번 (재조정 중의 재계산에서는 부르지 않음 → 같은 동작이 두 번 재생되지 않음)\n        public void OnTick(MoveState s, InputCmd cmd, AbilityResult r)\n        {\n            aiming = (cmd.Buttons & (byte)Buttons.Aim) != 0 && r.Mods.NoAim == 0;\n            animator.SetBool(AnimIds.Grounded, s.Grounded != 0);\n            animator.SetBool(AnimIds.Dodging, s.DodgeT > 0);\n            animator.SetBool(AnimIds.Charging, r.Phase == Abilities.PhaseCharge);\n            // 새 동작(또는 다음 콤보 단계)이 시작된 틱에 한 번만 트리거. 충전 스킬은 떼서 발사되는 틱에.\n            bool started = r.Slot != Abilities.NoSlot && r.Phase != Abilities.PhaseCharge &&\n                           (r.Slot != lastSlot || r.Step != lastStep || lastPhase == Abilities.PhaseCharge || lastPhase == Abilities.PhaseNone);\n            if (started && visuals != null) visuals.Play(animator, r.Slot, r.Step);\n            lastSlot = r.Slot; lastStep = r.Step; lastPhase = r.Phase;\n        }"}, "csRemote": {"path": "client-unity/Unity/EntityView.cs", "start": 41, "code": "                // 원격 플레이어 스킬: 서버가 보낸 Skill 코드가 바뀐 순간 재생 (보간 지연 100ms만큼 늦게, 위치와 같은 시각)\n                if (Kind == EntityKind.Player && s.Skill != 0 && s.Skill != lastSkill && visuals != null && s.Cls < visuals.Length && visuals[s.Cls] != null)\n                    visuals[s.Cls].Play(animator, (s.Skill - 1) / 3, (s.Skill - 1) % 3);"}, "csReconcile": {"path": "client-unity/Client/LocalPlayerPredictor.cs", "start": 58, "code": "        public void Reconcile(ushort lastInputSeq, MoveState server, AbilityState serverAbility, ushort hp)\n        {\n            if (lastInputSeq == 0 || (ushort)(seq - lastInputSeq) >= History - 1) return;   // 너무 옛날 결과\n            bool respawned = dead && hp > 0;\n            dead = hp == 0;\n            int k0 = lastInputSeq % History;\n            if (!dead && !respawned && after[k0].BitwiseEquals(server) && abilityAfter[k0].SameAs(serverAbility)) return;   // 대부분 여기서 끝\n\n            if (!dead && !respawned)\n            {\n                var mine = after[k0];\n                float dx = mine.Px - server.Px, dy = mine.Py - server.Py, dz = mine.Pz - server.Pz;\n                LastCorrectionMeters = (float)System.Math.Sqrt(dx * dx + dy * dy + dz * dz);\n                Corrections++;\n            }\n            State = server;                                                          // 서버 결과로 되감고\n            Ability = serverAbility;\n            after[k0] = State;                                                       // 기준점도 서버 값으로\n            abilityAfter[k0] = Ability;\n            for (ushort k = (ushort)(lastInputSeq + 1); k != (ushort)(seq + 1); ++k)\n            {\n                if (!dead) LastResult = Abilities.SimStep(ref State, ref Ability, timing, inputs[k % History], level);   // 확인 안 된 입력 다시 적용\n                after[k % History] = State;\n                abilityAfter[k % History] = Ability;\n            }\n        }"}, "csSkillBar": {"path": "client-unity/Unity/SkillBarView.cs", "start": 16, "code": "        public void Set(AbilityState a)\n        {\n            if (timing == null) return;\n            for (int i = 0; i < Abilities.SlotCount && i < cooldownFills.Length; ++i)\n            {\n                if (cooldownFills[i] == null) continue;\n                ushort max = timing.Skills[i].Cooldown;\n                cooldownFills[i].fillAmount = max == 0 ? 0f : (float)a.GetCd(i) / max;\n            }\n        }"}, "csCombat": {"path": "client-unity/Unity/CombatPresenter.cs", "start": 37, "code": "        // 서버 이벤트 종류마다 이펙트 + 숫자. 클라는 \"맞았다\"를 스스로 판단하지 않는다.\n        public void Show(GameEvent e)\n        {\n            var pos = new Vector3(e.X, e.Y, e.Z);\n            switch (e.Type)\n            {\n                case EventType.Hit:\n                    Vfx(e.Crit != 0 ? crits : hits, pos);\n                    numbers.Get().Show(e.Damage, e.Crit != 0 ? \"{0}!\" : \"{0}\", e.Crit != 0 ? critColor : damageColor, pos, numbers);\n                    break;\n                case EventType.Heal:\n                    Vfx(heals, pos);\n                    if (e.Damage > 0) numbers.Get().Show(e.Damage, \"+{0}\", healColor, pos, numbers);   // 실제로 회복된 양만\n                    break;\n                case EventType.Shield:\n                    Vfx(shields, pos);\n                    numbers.Get().Show(e.Damage, \"({0})\", shieldColor, pos, numbers);\n                    break;\n                case EventType.Buff:\n                    Vfx(buffs, pos);\n                    break;\n                case EventType.Block:\n                    Vfx(blocks, pos);                                   // 힐러 패시브: 숫자 대신 \"막음\" 이펙트\n                    break;\n            }\n        }"}, "tRecovery": {"path": "server/tests/unit_tests.cpp", "start": 300, "code": "TEST(Ability_RecoveryLocksMovementUntilCancelWindow) {\n  Sim s(ClassId::kWarrior);  // 1타: 선딜 5, 판정 1, 후딜 24, 캔슬 15\n  s.Tick(0, 0, kAttack);\n  for (int i = 0; i < 6; ++i) s.Tick(0, 0, 0);\n  const float x0 = s.mv.px;\n  for (int i = 0; i < 15; ++i) s.Tick(127, 0, 0);  // 후딜 1~15틱: 이동 키를 눌러도 제자리\n  CHECK(s.mv.px == x0);\n  CHECK(s.ab.slot == kSlotBasic);\n  s.Tick(127, 0, 0);  // 16틱째: 캔슬 → 같은 틱에 바로 이동\n  CHECK(s.ab.slot == kNoSlot);\n  CHECK(s.mv.px > x0);\n}"}, "tCombo": {"path": "server/tests/unit_tests.cpp", "start": 282, "code": "TEST(Ability_WarriorComboAdvancesOnlyWhenPressedAgain) {\n  Sim s(ClassId::kWarrior);\n  s.Tick(0, 0, kAttack);  // 1타 시작\n  CHECK(s.ab.slot == kSlotBasic && s.ab.step == 0 && s.ab.phase == kPhaseWindup);\n  for (int i = 0; i < 6; ++i) s.Tick(0, 0, 0);  // 선딜 5 + 판정 1 → 후딜 진입\n  CHECK(s.ab.phase == kPhaseRecovery);\n  s.Tick(0, 0, kAttack);  // 후딜 중에 다시 누름 → 바로 2타 선딜\n  CHECK(s.ab.step == 1 && s.ab.phase == kPhaseWindup);\n  for (int i = 0; i < 8; ++i) s.Tick(0, 0, 0);\n  s.Tick(0, 0, kAttack);\n  CHECK(s.ab.step == 2);  // 3타\n  for (int i = 0; i < 10; ++i) s.Tick(0, 0, 0);\n  s.Tick(0, 0, kAttack);  // 3타 뒤에는 4타가 없다\n  CHECK(s.ab.step == 2);\n  for (int i = 0; i < 30; ++i) s.Tick(0, 0, 0);\n  CHECK(s.ab.slot == kNoSlot);  // 아무것도 안 누르면 후딜이 끝나고 자유\n}"}, "tCharge": {"path": "server/tests/unit_tests.cpp", "start": 313, "code": "TEST(Ability_ArcherChargeReleasedTooEarlyCancelsWithoutCooldown) {\n  Sim s(ClassId::kArcher);  // 기본 공격: 12틱 이상 충전해야 발사\n  for (int i = 0; i < 6; ++i) s.Tick(0, 0, kAttack);\n  const AbilityResult r = s.Tick(0, 0, 0);  // 0.2초 만에 뗌\n  CHECK(r.phase == kPhaseNone);\n  CHECK(s.ab.cooldown[kSlotBasic] == 0);  // 실패한 충전은 쿨타임을 쓰지 않음\n  for (int i = 0; i < 14; ++i) s.Tick(0, 0, kAttack);\n  const AbilityResult fired = s.Tick(0, 0, 0);\n  CHECK(fired.phase == kPhaseActive && fired.tick == 1);  // 떼는 틱에 바로 발사\n  CHECK(fired.charge == 14);\n  CHECK(s.ab.cooldown[kSlotBasic] == 30);\n}"}, "tDash": {"path": "server/tests/unit_tests.cpp", "start": 335, "code": "TEST(Ability_LancerDashMovesOnlyDuringActive) {\n  Sim s(ClassId::kLancer);  // F: 선딜 6, 판정 18 동안 8m/s 돌진\n  s.Tick(127, 0, 0);        // 오른쪽(+x)으로 걷다가\n  const float x0 = s.mv.px;\n  s.Tick(0, 0, kSkillF);  // 손을 떼고 F\n  for (int i = 0; i < 5; ++i) s.Tick(0, 0, 0);\n  CHECK(s.mv.px == x0);  // 선딜 동안 제자리\n  for (int i = 0; i < 18; ++i) s.Tick(0, 0, 0);\n  const float dashed = s.mv.px - x0;\n  CHECK(dashed > 4.7F && dashed < 4.9F);  // 8m/s × 18틱 × (1/30)초 = 4.8m, 키를 안 눌러도 마지막 방향으로\n}"}, "tArc": {"path": "server/tests/unit_tests.cpp", "start": 383, "code": "TEST(World_WarriorArcHitsFrontNotBack) {\n  World w(1, 2, 0);\n  const uint16_t id = w.AddPlayer(ClassId::kWarrior);\n  w.PlaceMonster(0, 0.0F, 2.0F, 1000);   // 앞 (yaw 0 = +z 방향)\n  w.PlaceMonster(1, 0.0F, -2.0F, 1000);  // 뒤\n  const auto ev = Drive(w, id, 40, [](int t) { return t == 2 ? kAttack : 0; });\n  CHECK(CountOn(ev, EventType::kHit, w.Monsters()[0].id) == 1);\n  CHECK(CountOn(ev, EventType::kHit, w.Monsters()[1].id) == 0);\n}"}, "tOnce": {"path": "server/tests/unit_tests.cpp", "start": 393, "code": "TEST(World_ActiveWindowHitsEachTargetOnce) {\n  World w(1, 1, 0);\n  const uint16_t id = w.AddPlayer(ClassId::kWarrior);\n  w.PlaceMonster(0, 0.0F, 2.0F, 5000);\n  // 3타 콤보. 3타는 판정이 5틱 열려 있지만 같은 몬스터는 한 번만 맞아야 한다 → 총 3회\n  const auto ev = Drive(w, id, 90, [](int t) { return (t == 2 || t == 10 || t == 20) ? kAttack : 0; });\n  CHECK(CountOn(ev, EventType::kHit, w.Monsters()[0].id) == 3);\n}"}, "tLancerE": {"path": "server/tests/unit_tests.cpp", "start": 402, "code": "TEST(World_LancerEHitsFourTimesWithSeparateRolls) {\n  World w(3, 1, 0);\n  const uint16_t id = w.AddPlayer(ClassId::kLancer);\n  w.PlaceMonster(0, 0.0F, 2.5F, 5000);\n  const auto ev = Drive(w, id, 40, [](int t) { return t == 2 ? kSkillE : 0; });\n  std::vector<int> dmg;\n  for (const auto& e : ev) {\n    if (e.type == EventType::kHit) dmg.push_back(e.damage);\n  }\n  CHECK(dmg.size() == 4);  // 원본 비율 .18 / .28 / .42 / .54에 맞춘 4타\n  bool varied = false;\n  for (const int d : dmg) varied = varied || d != dmg[0];\n  CHECK(varied);                                       // 원본은 한 번 굴린 숫자를 4번 사용\n  for (const int d : dmg) CHECK(d >= 86 && d <= 162);  // floor(70×1.3)=91 ±5, 치명 ×1.7\n}"}, "tRage": {"path": "server/tests/unit_tests.cpp", "start": 418, "code": "TEST(World_WarriorRageScalesWithMissingHp) {\n  World w(1, 0, 0);\n  const uint16_t id = w.AddPlayer(ClassId::kWarrior);\n  CHECK(std::fabs(w.StatsOf(*w.FindPlayer(id)).atk - 1.5F) < 1e-6F);\n  w.SetPlayerHp(id, 30);  // 10~39 → 2단계 × 0.07 (원본 prefab/Class/Warrior.prefab 값)\n  CHECK(std::fabs(w.StatsOf(*w.FindPlayer(id)).atk - 1.64F) < 1e-5F);\n  CHECK(std::fabs(w.StatsOf(*w.FindPlayer(id)).def - 0.34F) < 1e-5F);\n}"}, "tRageBuff": {"path": "server/tests/unit_tests.cpp", "start": 474, "code": "TEST(World_WarriorRageAndHealerBuffStack) {\n  // 원본: 전사 passive()가 매 프레임 atk·def를 기본값에서 다시 써서 힐러 버프(atk·def)가 다음 프레임에 지워졌다\n  World w(1, 0, 0);\n  const uint16_t warrior = w.AddPlayer(ClassId::kWarrior);\n  const uint16_t healer = w.AddPlayer(ClassId::kHealer);  // 2m 옆 → 버프 범위(5m) 안\n  w.SetPlayerHp(warrior, 30);                             // 분노 2단계\n  for (uint16_t s = 1; s < 60; ++s) w.PushInput(warrior, In(s));\n  Drive(w, healer, 40, [](int t) { return t == 2 ? kSkillF : 0; });\n  const CombatStats st = w.StatsOf(*w.FindPlayer(warrior));\n  CHECK(std::fabs(st.atk - (1.5F + 2 * 0.07F + 0.1F)) < 1e-5F);  // 기본 + 분노 + 버프가 모두 적용\n  CHECK(std::fabs(st.def - (0.2F + 2 * 0.07F + 0.1F)) < 1e-5F);\n}"}, "tBarrier": {"path": "server/tests/unit_tests.cpp", "start": 427, "code": "TEST(World_HealerBarrierBlocksOneHitAfterEightQuietSeconds) {\n  World w(1, 0, 0);\n  const uint16_t id = w.AddPlayer(ClassId::kHealer);\n  Drive(w, id, 241, [](int) { return 0; });\n  CHECK(World::PassiveReady(*w.FindPlayer(id)));\n  w.HurtPlayer(id, 20);\n  CHECK(w.FindPlayer(id)->hp == 100);  // 막음\n  CHECK(w.stats.blocks == 1);\n  w.HurtPlayer(id, 20);\n  CHECK(w.FindPlayer(id)->hp == 80);  // 두 번째는 막지 못함 (다시 8초를 버텨야 함)\n}"}, "tShield": {"path": "server/tests/unit_tests.cpp", "start": 439, "code": "TEST(World_ShieldAbsorbsAndHealCapsAtMax) {\n  World w(1, 0, 0);\n  const uint16_t lancer = w.AddPlayer(ClassId::kLancer);\n  const uint16_t archer = w.AddPlayer(ClassId::kArcher);  // 2m 옆 → 실드 범위(5m) 안\n  w.PushInput(archer, In(1));\n  Drive(w, lancer, 40, [](int t) { return t == 2 ? kSkillQ : 0; });\n  CHECK(w.FindPlayer(archer)->shield == 100);\n  CHECK(w.FindPlayer(lancer)->shield == 100);\n  w.HurtPlayer(archer, 50);  // 방어 0.1 → 45를 실드가 흡수\n  CHECK(w.FindPlayer(archer)->hp == 100);\n  CHECK(w.FindPlayer(archer)->shield == 55);\n\n  World h(1, 0, 0);\n  const uint16_t healer = h.AddPlayer(ClassId::kHealer);\n  h.SetPlayerHp(healer, 90);\n  const auto ev = Drive(h, healer, 40, [](int t) { return t == 2 ? kSkillQ : 0; });\n  CHECK(h.FindPlayer(healer)->hp == 100);  // 상한\n  bool sawHeal10 = false;\n  for (const auto& e : ev) sawHeal10 = sawHeal10 || (e.type == EventType::kHeal && e.damage == 10);\n  CHECK(sawHeal10);  // 실제로 회복된 양만 표시\n}"}, "tBuff": {"path": "server/tests/unit_tests.cpp", "start": 461, "code": "TEST(World_BuffRefreshesInsteadOfStacking) {\n  World w(1, 0, 0);\n  const uint16_t a = w.AddPlayer(ClassId::kHealer);\n  const uint16_t b = w.AddPlayer(ClassId::kHealer);\n  w.PushInput(b, In(1, 0, 0, 0));\n  w.PushInput(b, In(2, 0, 0, kSkillF));\n  for (uint16_t s = 3; s < 60; ++s) w.PushInput(b, In(s));\n  Drive(w, a, 50, [](int t) { return t == 3 ? kSkillF : 0; });       // 두 힐러가 거의 동시에 버프\n  CHECK(std::fabs(w.StatsOf(*w.FindPlayer(a)).atk - 1.8F) < 1e-6F);  // 1.7 + 0.1 (0.2가 아님)\n  Drive(w, a, 245, [](int) { return 0; });\n  CHECK(std::fabs(w.StatsOf(*w.FindPlayer(a)).atk - 1.7F) < 1e-6F);  // 끝나면 정확히 원래 값\n}"}, "tBurn": {"path": "server/tests/unit_tests.cpp", "start": 487, "code": "TEST(World_ArcherExplosionBurnsFiveTimes) {\n  World w(1, 1, 0);\n  const uint16_t id = w.AddPlayer(ClassId::kArcher);\n  w.PlaceMonster(0, 0.0F, 8.0F, 5000);\n  const auto ev = Drive(w, id, 220, [](int t) { return (t >= 2 && t < 22) ? kSkillF : 0; });\n  int burns = 0;\n  int explode = 0;\n  for (const auto& e : ev) {\n    if (e.type != EventType::kHit) continue;\n    burns += e.damage == kBurnDamage ? 1 : 0;\n    explode += e.damage == kExplodeDamage ? 1 : 0;\n  }\n  CHECK(CountOn(ev, EventType::kHit, w.Monsters()[0].id) == 1 + 1 + 5);  // 화살 + 폭발 + 화상 5회\n  CHECK(explode == 1);\n  CHECK(burns == 5);\n}"}, "tCurse": {"path": "server/tests/unit_tests.cpp", "start": 504, "code": "TEST(World_CurseZoneTicksEveryHalfSecondAndAmplifiesDamage) {\n  World w(1, 1, 0);\n  const uint16_t id = w.AddPlayer(ClassId::kHealer);\n  w.PlaceMonster(0, 0.0F, 4.0F, 5000);\n  const auto ev = Drive(w, id, 200, [](int t) { return t == 2 ? kSkillE : 0; });\n  int ticks = 0;\n  for (const auto& e : ev) ticks += (e.type == EventType::kHit && e.damage == 18) ? 1 : 0;  // 15 × 1.2\n  CHECK(ticks == 6);                                                                        // 3초 동안 0.5초마다\n  CHECK(w.Zones().empty());  // 시간이 지나면 사라짐\n}"}, "tPassive": {"path": "server/tests/unit_tests.cpp", "start": 249, "code": "TEST(World_PassiveCritOnEveryThirdBasicShot) {  // 1편 F7 버그 수정 확인 (원본은 4번째에 적용)\n  World w(1, 0, 0);\n  const uint16_t id = w.AddPlayer(ClassId::kArcher);\n  int shots = 0;\n  uint16_t seq = 0;\n  for (int t = 0; t < 900 && shots < 9; ++t) {\n    const bool hold = (t % 40) < 14;  // 14틱(0.47초) 충전 후 뗌 → 발사. 쿨타임 1초라 40틱 간격\n    w.PushInput(id, In(++seq, 0, 0, hold ? kAttack : 0));\n    const size_t before = w.Projectiles().size();\n    w.Step();\n    if (w.Projectiles().size() > before) {\n      ++shots;\n      if (shots % 3 == 0) CHECK(w.Projectiles().back().crit == 1);\n    }\n  }\n  CHECK(shots == 9);\n}"}, "tRespawn": {"path": "server/tests/unit_tests.cpp", "start": 548, "code": "TEST(World_RespawnWaitsForFreshInputInsteadOfRepeating) {\n  World w(1, 0, 1);\n  const uint16_t id = w.AddPlayer(ClassId::kWarrior);\n  uint16_t seq = 0;\n  for (int i = 0; i < 3; ++i) {\n    w.PushInput(id, In(++seq, 127, 0));\n    w.Step();\n  }\n  w.HurtPlayer(id, 1000);\n  CHECK(!w.FindPlayer(id)->alive);\n  for (int i = 0; i < 90; ++i) {  // 죽어 있는 동안에도 입력 번호는 소비\n    w.PushInput(id, In(++seq, 127, 0));\n    w.Step();\n  }\n  CHECK(w.FindPlayer(id)->alive);\n  const uint64_t repeats = w.stats.repeatedInputs;\n  w.Step();\n  w.Step();\n  CHECK(w.stats.repeatedInputs == repeats);  // 옛 입력을 부활 위치에 반복하지 않음 (전에는 4m 오보정의 원인)\n  CHECK(w.FindPlayer(id)->mv.px == 0.0F);\n  CHECK(w.FindPlayer(id)->lastSeq == seq);\n}"}, "oWarriorWait": {"path": "원본/Warrior/Warrior.cs", "start": 144, "code": "        float timer = 0f;\n        while (timer <= anim.length)\n        {\n            timer += Time.deltaTime;\n            float normalizedTime = timer / anim.length;\n\n            if (attackState == AttackState.WindUp)\n            {\n                if (normalizedTime >= animState[comboCount].impactStartTime)\n                {\n                    attackState = AttackState.Impact;\n                    trail.SetActive(true);\n                    turnSwordCollider(comboCount);"}, "oWarriorPassive": {"path": "원본/Warrior/Warrior.cs", "start": 227, "code": "    #region Passive\n    public void upStateAtPassive(int scalar)\n    {\n        def = stateObejct.def + scalar * increaseAtPassive;\n        atk = stateObejct.atk + scalar * increaseAtPassive;\n    }\n    public override void passive()\n    {\n        if (hp >= 70)\n        {\n            upStateAtPassive(0);\n        }\n        else if (hp < 70 && hp >= 40)\n        {\n            upStateAtPassive(1);\n        }\n        else if (hp < 40 && hp >= 10)\n        {\n            upStateAtPassive(2);\n        }\n        else\n        {\n            upStateAtPassive(3);\n        }\n    }"}, "oRestore": {"path": "원본/Common/PlayerState.cs", "start": 286, "code": "    public virtual void RestoreHealth(int heal)\n    {\n        if (isDied)\n            return;\n\n        if (hp + 30 > 100)\n            hp = 100;\n        else\n            hp += 30;"}, "oBuff": {"path": "원본/Healer/Healer.cs", "start": 209, "code": "                {\n                    // 10, 20, 10퍼씩 증가\n                    basePlayer = player.transform.gameObject.GetComponent<PlayerState>();\n                    basePlayer.atk += 0.1f;\n                    basePlayer.ctr += 0.2f;\n                    basePlayer.def += 0.1f;"}, "oBuffDown": {"path": "원본/Healer/Healer.cs", "start": 229, "code": "    protected IEnumerator downState(PlayerState player)//능력치 감소\n    {\n        yield return new WaitForSeconds(8f);\n        player.atk -= 0.1f;\n        player.ctr -= 0.2f;\n        player.def -= 0.1f;\n    }"}, "oLancerE": {"path": "원본/Lancer/Lancer.cs", "start": 282, "code": "    public override void skill_e()\n    {\n        if (Input.GetKeyDown(KeyCode.E) && !isAttack && !isDodge && isGrounded && coolTime[2] >= stateObejct.skillCoolTime[2])\n        {\n            coolTime[2] = 0f;\n            skillNum = 4;\n            lance.damage = set_damage(2);\n            StartCoroutine(tryAttack());\n            StartCoroutine(ui_coolTime(1, stateObejct.skillCoolTime[2]));\n        }"}, "oLancerPassive": {"path": "원본/Lancer/Lancer.cs", "start": 215, "code": "    #region PASSIVE\n    public override void passive()\n    {\n        if (coolTime[0] >= stateObejct.skillCoolTime[0])\n        {\n            skillNum = 1;\n            lance.damage = set_damage(1);\n        }\n        else\n        {\n            skillNum = 0;\n            lance.damage = set_damage(0);\n        }"}, "oDealerShoot": {"path": "원본/Archer/Dealer.cs", "start": 314, "code": "    #region 기본 화살\n    public virtual void ShootBasicArrow()\n    {\n        GameObject normalArrow = Instantiate(arrow, shootTransform.position, Quaternion.LookRotation(arrow_dir));\n        baseArrow = normalArrow.GetComponent<arrow>();\n        if (shoot_count == 3)\n            baseArrow.damage = set_damage(0);\n        else\n            baseArrow.damage = set_damage(1);"}, "oDealerPassive": {"path": "원본/Archer/Dealer.cs", "start": 289, "code": "    public override void passive() // 3번씩 쏠 때마다 100% 치명타 화살 적용\n    {\n        ctr = stateObejct.ctr;\n        if (shoot_count >= 3)\n        {\n            shoot_count = 0;\n            ctr = 1f;\n        }"}, "oDebuffCircle": {"path": "원본/Healer/magic/DebuffCircle.cs", "start": 21, "code": "    void setDebuffMonster()\n    {\n        damageCoolTime += Time.deltaTime;\n        if (damageCoolTime >= 0.5f)\n        {\n            Collider[] monster = Physics.OverlapSphere(transform.position, 1f, LayerMask.GetMask(\"monster\"));\n\n            if (monster != null)\n            {\n                for (int i = 0; i < monster.Length; i++)\n                {\n                    if (!debuff)\n                    {\n                        Instantiate(debuffShape, monster[i].transform);\n                    }\n                    monster[i].GetComponent<MonsterState>().TakeDamage(15);\n                }\n            }\n            debuff = true;\n            damageCoolTime = 0f;\n        }\n    }"}, "oExplosion": {"path": "원본/Archer/charge_explosion.cs", "start": 13, "code": "    void Start()\n    {\n        targetColliders = Physics.OverlapSphere(transform.position, range, LayerMask.GetMask(\"monster\"));\n        for(int i = 0; i<targetColliders.Length; i++)\n        {\n            targetColliders[i].GetComponent<MonsterState>().TakeDamage(40);\n            Fire = Instantiate(burnFire, targetColliders[i].transform);\n            Fire.transform.position = targetColliders[i].transform.position;\n            Fire.Play();\n        }\n    }"}}, "load": [{"scenario": "local", "input_buffer": 0, "monsters": 12, "seconds": 20.0, "ticks": 600, "tick_us_avg": 54.8, "tick_us_p99": 105.6, "up_Bps_per_client": 1138, "down_Bps_per_client": 6891, "up_pps_per_client": 30.1, "down_pps_per_client": 30.0, "avg_snapshot_bytes": 229.7, "avg_input_bytes": 37.9, "max_packet_bytes": 382, "entities_culled": 0, "room_packets_per_s": 180, "pred_comparisons": 1797, "pred_exact": 1794, "pred_corrections": 3, "ability_only": 0, "max_correction_m": 0.167, "confirm_ms_p50": 34, "confirm_ms_p95": 34, "events": 342, "dup_events_ignored": 98, "own_hits": 70, "server_shots": 27, "server_hits": 70, "server_kills": 31, "repeated_inputs": 3, "player_downs": 0, "respawns": 0, "dropped_out": 0, "dropped_in": 0, "heals": 0, "blocks": 0, "classes": "Warrior,Archer,Lancer"}, {"scenario": "rtt100_loss2", "input_buffer": 0, "monsters": 12, "seconds": 20.0, "ticks": 600, "tick_us_avg": 59.3, "tick_us_p99": 108.0, "up_Bps_per_client": 1100, "down_Bps_per_client": 7149, "up_pps_per_client": 29.1, "down_pps_per_client": 29.2, "avg_snapshot_bytes": 244.4, "avg_input_bytes": 37.9, "max_packet_bytes": 359, "entities_culled": 0, "room_packets_per_s": 177, "pred_comparisons": 1651, "pred_exact": 1646, "pred_corrections": 5, "ability_only": 1, "max_correction_m": 0.083, "confirm_ms_p50": 153, "confirm_ms_p95": 188, "events": 381, "dup_events_ignored": 1119, "own_hits": 81, "server_shots": 40, "server_hits": 81, "server_kills": 23, "repeated_inputs": 5, "player_downs": 1, "respawns": 1, "dropped_out": 45, "dropped_in": 39, "heals": 1, "blocks": 0, "classes": "Archer,Lancer,Healer"}, {"scenario": "rtt200_loss5", "input_buffer": 0, "monsters": 12, "seconds": 20.0, "ticks": 599, "tick_us_avg": 56.6, "tick_us_p99": 97.7, "up_Bps_per_client": 1058, "down_Bps_per_client": 6978, "up_pps_per_client": 28.0, "down_pps_per_client": 28.2, "avg_snapshot_bytes": 247.7, "avg_input_bytes": 37.8, "max_packet_bytes": 413, "entities_culled": 0, "room_packets_per_s": 174, "pred_comparisons": 1663, "pred_exact": 1655, "pred_corrections": 8, "ability_only": 3, "max_correction_m": 0.582, "confirm_ms_p50": 301, "confirm_ms_p95": 310, "events": 375, "dup_events_ignored": 2506, "own_hits": 80, "server_shots": 16, "server_hits": 80, "server_kills": 27, "repeated_inputs": 5, "player_downs": 0, "respawns": 0, "dropped_out": 99, "dropped_in": 96, "heals": 3, "blocks": 2, "classes": "Lancer,Healer,Warrior"}, {"scenario": "local", "input_buffer": 1, "monsters": 12, "seconds": 20.0, "ticks": 600, "tick_us_avg": 56.0, "tick_us_p99": 101.0, "up_Bps_per_client": 1138, "down_Bps_per_client": 7176, "up_pps_per_client": 30.1, "down_pps_per_client": 30.0, "avg_snapshot_bytes": 239.2, "avg_input_bytes": 37.9, "max_packet_bytes": 309, "entities_culled": 0, "room_packets_per_s": 180, "pred_comparisons": 1794, "pred_exact": 1794, "pred_corrections": 0, "ability_only": 0, "max_correction_m": 0.0, "confirm_ms_p50": 34, "confirm_ms_p95": 34, "events": 306, "dup_events_ignored": 108, "own_hits": 63, "server_shots": 43, "server_hits": 63, "server_kills": 25, "repeated_inputs": 0, "player_downs": 0, "respawns": 0, "dropped_out": 0, "dropped_in": 0, "heals": 2, "blocks": 1, "classes": "Healer,Warrior,Archer"}, {"scenario": "rtt100_loss2", "input_buffer": 1, "monsters": 12, "seconds": 20.0, "ticks": 600, "tick_us_avg": 56.5, "tick_us_p99": 115.5, "up_Bps_per_client": 1103, "down_Bps_per_client": 6776, "up_pps_per_client": 29.1, "down_pps_per_client": 29.2, "avg_snapshot_bytes": 232.2, "avg_input_bytes": 37.9, "max_packet_bytes": 364, "entities_culled": 0, "room_packets_per_s": 177, "pred_comparisons": 1733, "pred_exact": 1733, "pred_corrections": 0, "ability_only": 0, "max_correction_m": 0.0, "confirm_ms_p50": 153, "confirm_ms_p95": 156, "events": 342, "dup_events_ignored": 972, "own_hits": 68, "server_shots": 27, "server_hits": 68, "server_kills": 29, "repeated_inputs": 0, "player_downs": 0, "respawns": 0, "dropped_out": 41, "dropped_in": 43, "heals": 0, "blocks": 0, "classes": "Warrior,Archer,Lancer"}, {"scenario": "rtt200_loss5", "input_buffer": 1, "monsters": 12, "seconds": 20.0, "ticks": 600, "tick_us_avg": 58.6, "tick_us_p99": 106.7, "up_Bps_per_client": 1057, "down_Bps_per_client": 7199, "up_pps_per_client": 27.9, "down_pps_per_client": 28.2, "avg_snapshot_bytes": 255.3, "avg_input_bytes": 37.8, "max_packet_bytes": 393, "entities_culled": 0, "room_packets_per_s": 174, "pred_comparisons": 1662, "pred_exact": 1654, "pred_corrections": 8, "ability_only": 0, "max_correction_m": 0.582, "confirm_ms_p50": 335, "confirm_ms_p95": 343, "events": 303, "dup_events_ignored": 2024, "own_hits": 63, "server_shots": 38, "server_hits": 63, "server_kills": 25, "repeated_inputs": 5, "player_downs": 0, "respawns": 0, "dropped_out": 101, "dropped_in": 94, "heals": 2, "blocks": 0, "classes": "Archer,Lancer,Healer"}, {"scenario": "local_200mon", "input_buffer": 1, "monsters": 200, "seconds": 20.0, "ticks": 600, "tick_us_avg": 163.8, "tick_us_p99": 241.9, "up_Bps_per_client": 1138, "down_Bps_per_client": 35794, "up_pps_per_client": 30.0, "down_pps_per_client": 30.0, "avg_snapshot_bytes": 1193.1, "avg_input_bytes": 37.9, "max_packet_bytes": 1200, "entities_culled": 187520, "room_packets_per_s": 180, "pred_comparisons": 706, "pred_exact": 706, "pred_corrections": 0, "ability_only": 0, "max_correction_m": 0.0, "confirm_ms_p50": 34, "confirm_ms_p95": 67, "events": 4077, "dup_events_ignored": 1892, "own_hits": 766, "server_shots": 5, "server_hits": 766, "server_kills": 264, "repeated_inputs": 0, "player_downs": 13, "respawns": 11, "dropped_out": 0, "dropped_in": 0, "heals": 2, "blocks": 0, "classes": "Lancer,Healer,Warrior"}], "bench": [{"monsters": 12, "tick_us_avg": 0.83, "tick_us_p99": 1.46, "budget_share_pct": 0.003}, {"monsters": 50, "tick_us_avg": 2.26, "tick_us_p99": 4.02, "budget_share_pct": 0.007}, {"monsters": 200, "tick_us_avg": 5.28, "tick_us_p99": 15.14, "budget_share_pct": 0.016}, {"monsters": 1000, "tick_us_avg": 25.15, "tick_us_p99": 61.16, "budget_share_pct": 0.075}], "stats": {"locClassRows": {"Warrior": 25, "Archer": 28, "Lancer": 20, "Healer": 27}, "locAbilities": 216, "locClasses": 199, "locWorld": 536, "tests": ["Movement_JumpLiftsOffOnTheSameTick", "Movement_CoyoteTimeAllowsLateJump", "Movement_JumpBufferRemembersEarlyPress", "Movement_DodgeRespectsCooldown", "Movement_WallStopsPlayer", "Movement_IsDeterministic", "Protocol_SnapshotRoundTrip", "Protocol_RejectsTruncatedPacket", "Protocol_RejectsUnknownPacketType", "Protocol_RejectsTooManyInputs", "Protocol_SanitizesInput", "Ack_TracksOutOfOrderAndWrap", "Reliable_ResendsUntilAcked", "Reliable_DedupIgnoresRepeats", "Geometry_FastArrowDoesNotTunnel", "World_PassiveCritOnEveryThirdBasicShot", "Ability_WarriorComboAdvancesOnlyWhenPressedAgain", "Ability_RecoveryLocksMovementUntilCancelWindow", "Ability_ArcherChargeReleasedTooEarlyCancelsWithoutCooldown", "Ability_DodgeCancelsCharge", "Ability_LancerDashMovesOnlyDuringActive", "Ability_CooldownBlocksRecastAndCountsInTicks", "World_WarriorArcHitsFrontNotBack", "World_ActiveWindowHitsEachTargetOnce", "World_LancerEHitsFourTimesWithSeparateRolls", "World_WarriorRageScalesWithMissingHp", "World_HealerBarrierBlocksOneHitAfterEightQuietSeconds", "World_ShieldAbsorbsAndHealCapsAtMax", "World_BuffRefreshesInsteadOfStacking", "World_WarriorRageAndHealerBuffStack", "World_ArcherExplosionBurnsFiveTimes", "World_CurseZoneTicksEveryHalfSecondAndAmplifiesDamage", "World_InputBufferDelaysFirstStep", "World_RepeatsLastInputWhenLate", "World_IgnoresDuplicateAndOldInputs", "World_RespawnWaitsForFreshInputInsteadOfRepeating", "World_DynamicIdsWrapInsideTheirRange"]}};
+(() => {
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const fmt = (n, d = 0) => Number(n).toLocaleString('ko-KR', {minimumFractionDigits: d, maximumFractionDigits: d});
+  const fr = Math.fround;
+  const TICK = 1000 / 30;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const P1 = 'https://claude.ai/artifact/Su8MPkTj3SBDtMdJKL4VXk', P2 = 'https://claude.ai/artifact/Gy5xGonVaNQBfmZx7nZTg6', P3 = 'https://claude.ai/artifact/NCeE9T3fKkVjqwTBFDytQU';
+  const C = DATA.classes, S = DATA.snip;
+
+  // ---------- 코드 블록 ----------
+  const KW = {cpp: new Set('alignas auto bool break case class const constexpr continue default delete do double else enum explicit extern false float for if inline int long namespace noexcept nullptr operator private protected public return short signed sizeof static static_cast static_assert reinterpret_cast struct switch template this true typename uint8_t uint16_t uint32_t uint64_t int8_t size_t using virtual void while include pragma once'.split(' ')),
+    cs: new Set('abstract as base bool break byte case catch class const continue default do else enum event false finally float for foreach if in int internal is long namespace new null out override private protected public readonly ref return sbyte sealed short static string struct switch this throw true try uint ulong ushort using var void while get set yield'.split(' '))};
+  const hlLine = (line, lang) => {
+    let out = '', i = 0, m; const re = /(\/\/.*$)|("(?:\\.|[^"\\])*")|('(?:\\.|[^'\\])')|(\b\d[\d.]*[fFuUlL]*\b|\b0x[0-9a-fA-F]+\b)|([A-Za-z_][A-Za-z0-9_]*)/g;
+    while ((m = re.exec(line))) {
+      out += esc(line.slice(i, m.index)); const tok = m[0];
+      if (m[1]) out += `<span class="cm">${esc(tok)}</span>`;
+      else if (m[2] || m[3]) out += `<span class="st">${esc(tok)}</span>`;
+      else if (m[4]) out += `<span class="nu">${esc(tok)}</span>`;
+      else if (KW[lang].has(tok)) out += `<span class="kw">${tok}</span>`;
+      else if (/^[A-Z][a-z]/.test(tok) && tok.length > 2) out += `<span class="ty">${tok}</span>`;
+      else out += esc(tok);
+      i = m.index + tok.length;
+    }
+    return out + esc(line.slice(i));
+  };
+  const CAP = {
+    oWarriorWait: '원본 전사: 매 프레임 deltaTime을 더해 진행률이 impactStartTime을 넘는 "프레임"에 판정을 켠다',
+    AbilityState: '스킬 상태 전부. 스냅샷에 107비트로 실려 클라 예측과 비교된다',
+    SimStep: '클라 예측기와 서버가 똑같이 부르는 한 틱',
+    StepAbility: '스킬 타이밍 규칙 전체. C#의 Abilities.StepAbility와 한 줄씩 같다 (12,000틱 비트 일치)',
+    MoveMods: '스킬이 이동에 주는 영향은 이 다섯 값뿐',
+    StepMoveRule: '이동 함수 안에서 규칙을 적용하는 부분',
+    ApplyAction: '판정 구간의 매 틱 호출: 첫 틱엔 발사·지원, 매 틱 근접 판정 창 검사',
+    Activate: '판정 첫 틱: 창술사 강화 공격 소모, 투사체, 지원 효과',
+    ApplyHit: '근접 판정: 부채꼴·원, 같은 판정에 같은 대상 1회, 대상마다 데미지 굴림',
+    StatsOf: '버프·패시브는 남은 시간만 저장하고 수치는 매번 기본값에서 계산',
+    TickStatus: '지속 효과는 남은 틱만 줄인다. 코루틴이 없다',
+    DamagePlayer: '피해 순서: 힐러 보호막 → 방어력 → 실드 → 체력',
+    RollDamage: '원본 set_damage와 같은 공식',
+    csPlayback: '리타이밍: 클립의 타격 지점이 판정 틱에 오도록 재생 배율을 계산',
+    csOnTick: '예측 틱마다: 새 동작이 시작된 틱에만 트리거',
+    csRemote: '다른 플레이어: 서버가 보낸 스킬 코드가 바뀐 순간 같은 연출',
+    csSkillBar: '쿨타임 UI: 예측된 남은 틱 ÷ 표의 쿨타임',
+    csAbilityState: 'struct 안에 배열을 두지 않은 이유',
+    csReconcile: '되감기: 이동과 스킬 상태를 함께 비교하고, 기준값도 서버 값으로 덮어쓴다',
+    tRespawn: '이 테스트가 실패하던 것을 고친 뒤 통과',
+  };
+  function renderCode(el, key, opt = {}) {
+    if (!el) return;
+    const s = S[key]; const lang = s.path.endsWith('.cs') ? 'cs' : 'cpp';
+    const lines = s.code.split('\n');
+    const on = opt.on || [], bad = opt.bad || [];
+    const body = lines.map((l, k) => {
+      const cls = bad.some(b => l.includes(b)) ? ' bad' : on.some(b => l.includes(b)) ? ' on' : '';
+      return `<span class="ln${cls}" data-n="${s.start + k}">${hlLine(l, lang) || ' '}</span>`;
+    }).join('');
+    const cap = opt.cap || CAP[key];
+    el.innerHTML = `<div class="ph"><b>${esc(s.path)}</b><span>${s.start}–${s.start + lines.length - 1}행</span></div><pre tabindex="0">${body}</pre>${cap ? `<div class="cap">${esc(cap)}</div>` : ''}`;
+  }
+
+  // ---------- 숫자 도우미 ----------
+  const base = (c, i) => Math.floor(fr(fr(c.damage[i]) * fr(c.atk)));
+  const critOf = v => Math.floor(fr(fr(v) * fr(1.7)));
+  const dmgRange = (c, i) => { const b = base(c, i); return {lo: b - 5, hi: b + 4, clo: critOf(b - 5), chi: critOf(b + 4)}; };
+  const sec = t => (t / 30).toFixed(t % 30 === 0 ? 0 : 1);
+  const ms = t => Math.round(t * TICK);
+
+  // ---------- 01 요약 수치 ----------
+  const load = DATA.load, st = DATA.stats;
+  const worst = load.filter(r => r.input_buffer === 1 && r.scenario === 'rtt200_loss5')[0] || load[load.length - 1];
+  const rowsLoc = Object.values(st.locClassRows).reduce((a, b) => a + b, 0);
+  const FIGS = [
+    ['2,330', '줄', '원본 직업 코드', 'PlayerState·직업 4개·보조 스크립트 17개(1,641줄) + Multi 4개(689줄), 주석·괄호 줄 제외', 'ev-fact', '코드 확인'],
+    [fmt(rowsLoc), '줄', '재설계의 직업별 표', `classes.h 직업 블록 4개. 공용 엔진은 abilities.h ${st.locAbilities}줄 + world.cpp`, 'ev-fact', '코드 확인'],
+    ['6', '개', '원본에서 새로 찾은 버그', '+ 기획 확인이 필요한 값 4개. 04장 탭마다 근거 코드', 'ev-fact', '코드 확인'],
+    [String(st.tests.length), '개', '서버 단위 테스트', '검사 107개 전부 통과, ASan·UBSan 포함', 'ev-test', '테스트 통과'],
+    ['12,000', '틱', 'C++과 C#이 비트까지 같음', '직업 4개 × 3,000틱, 이동 14 + 스킬 15 필드', 'ev-test', '테스트 통과'],
+    [(100 * worst.pred_exact / worst.pred_comparisons).toFixed(1), '%', '예측이 서버와 정확히 일치', `왕복 200ms·손실 5%에서 ${fmt(worst.pred_comparisons)}번 비교 중`, 'ev-meas', '실측'],
+  ];
+  $('#figs').innerHTML = FIGS.map(([v, u, l, ref, ev, evl]) => `<div class="fig"><div class="v">${v}<small>${u}</small></div><div class="l">${l} <span class="ev ${ev}">${evl}</span></div><div class="ref">${esc(ref)}</div></div>`).join('');
+
+  // ---------- 02 구조 그림 ----------
+  (function shape() {
+    const box = (x, y, w, h, t, sub, cls = '') => `<g class="${cls}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="var(--surface)" stroke="var(--line-strong)"/><text x="${x + w / 2}" y="${y + (sub ? h / 2 - 3 : h / 2 + 5)}" text-anchor="middle" class="m" font-size="13">${t}</text>${sub ? `<text x="${x + w / 2}" y="${y + h / 2 + 14}" text-anchor="middle" class="sub" font-size="11">${sub}</text>` : ''}</g>`;
+    const inh = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2 + 9}" stroke="var(--ink-2)"/><path d="M${x2 - 6} ${y2 + 10} L${x2} ${y2} L${x2 + 6} ${y2 + 10} Z" fill="var(--surface)" stroke="var(--ink-2)"/>`;
+    const use = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--accent)" stroke-dasharray="4 3" marker-end="url(#ar4)"/>`;
+    let g = '';
+    g += `<text x="20" y="26" font-size="14" font-weight="600">원본: 상속 3단</text>`;
+    g += box(150, 44, 170, 46, 'PlayerState (추상)', '329줄 · 입력·이동·전투·UI');
+    const kids = [['Warrior', '214줄'], ['Dealer(궁수)', '511줄 · 보조 6'], ['Lancer', '272줄 · 보조 4'], ['Healer', '315줄 · 보조 7']];
+    const multis = [['MultiWarrior', '190줄'], ['MultiDealer', '208줄'], ['MultiLancer', '144줄'], ['MultiHealer', '147줄']];
+    kids.forEach((k, i) => { const x = 14 + i * 114; g += box(x, 132, 106, 46, k[0], k[1]); g += inh(x + 53, 132, 235, 90); });
+    multis.forEach((k, i) => { const x = 14 + i * 114; g += box(x, 222, 106, 42, k[0], k[1]); g += inh(x + 53, 222, x + 53, 178); });
+    g += `<text x="20" y="296" font-size="12" class="sub">메서드를 통째로 복사 (1편 F8) · RPC가 72곳에 나옴</text>`;
+    g += `<text x="20" y="316" font-size="12" class="sub">수치: State 에셋 + 프리팹 필드 + 스크립트 상수 (같은 직업도 프리팹마다 다름)</text>`;
+    g += `<line x1="482" y1="20" x2="482" y2="330" stroke="var(--line)"/>`;
+    g += `<text x="500" y="26" font-size="14" font-weight="600">재설계: 표 + 공용 엔진</text>`;
+    g += box(500, 44, 200, 50, 'ClassTiming 표', 'abilities.h · 직업마다 1줄');
+    g += box(724, 44, 214, 50, 'ClassDef 표', 'classes.h · 직업마다 1블록');
+    g += box(500, 132, 200, 50, 'StepAbility', '타이밍 (서버·클라 공용)');
+    g += box(500, 222, 200, 46, 'Step(MoveMods)', '이동 (서버·클라 공용)');
+    g += box(724, 132, 214, 50, 'World::ApplyAction', '효과 적용 (서버만)');
+    g += box(724, 222, 66, 46, 'HitDef', '근접');
+    g += box(798, 222, 66, 46, 'ShotDef', '투사체');
+    g += box(872, 222, 66, 46, 'Support', '지원');
+    g += box(724, 280, 214, 40, 'ClassVisuals (Unity 에셋)', '');
+    g += use(600, 94, 600, 130) + use(831, 94, 831, 130) + use(600, 182, 600, 220) + use(700, 157, 722, 157) + use(757, 182, 757, 220) + use(831, 182, 831, 220) + use(905, 182, 905, 220);
+    g += `<text x="500" y="300" font-size="12" class="sub">직업 추가 = 표 두 곳에 줄 추가 + 연출 에셋</text>`;
+    g += `<text x="500" y="318" font-size="12" class="sub">싱글/멀티 구분 코드 없음 (싱글도 로컬 서버)</text>`;
+    $('#shape-fig').innerHTML = `<div style="overflow-x:auto"><svg viewBox="0 0 950 336" style="min-width:720px" role="img" aria-label="원본은 PlayerState 아래 직업 4개, 그 아래 Multi 4개가 상속으로 이어지고, 재설계는 표 두 개를 공용 함수가 읽는 구조"><defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--accent)"/></marker></defs>${g}</svg></div><figcaption><b>그림 1.</b> 줄 수는 원본 스크립트에서 주석·괄호 줄을 뺀 값 <span class="ev ev-fact">코드 확인</span>. 점선 화살표는 "표를 읽는다"는 뜻입니다.</figcaption>`;
+  })();
+
+  // ---------- 직업·스킬 이름 ----------
+  const KO = ['전사', '궁수', '창술사', '힐러'];
+  const SK = [
+    {basic: ['기본 1타', '기본 2타', '기본 3타'], q: '번개검', e: '회전베기', f: '대검 내려치기'},
+    {basic: ['기본 (충전 사격)'], q: '유도 화살 4발', e: '3갈래 화살', f: '충전 폭발 화살'},
+    {basic: ['찌르기'], alt: '방패 치기 (우클릭)', q: '아군 실드', e: '4연속 찌르기', f: '방패 돌진 4타'},
+    {basic: ['화염구'], q: '범위 회복', e: '저주 구슬', f: '범위 버프'},
+  ];
+  const KEY = {basic: '좌클릭', alt: '우클릭', q: 'Q', e: 'E', f: 'F'};
+  const MOVE = ['자유', '제자리', '천천히'];
+  const ORIG_RATIO = {  // 원본 AnimationState 비율 (시작/끝/캔슬), 표시용
+    0: {basic: ['0.15 / 0.20 / 0.70', '0.15 / 0.19 / 0.65', '0.10 / 0.26 / 0.75'], q: '0.24 / 0.28 / 0.78', e: '0.31 / 0.39 / 0.85', f: '0.46 / 0.50 / 0.87'},
+    2: {basic: ['0.38 / 0.50 / 0.80'], alt: '0.38 / 0.50 / 0.85', q: '0.40 / 0.50 / —', e: '0.18·0.28·0.42·0.54 / 0.63 / 0.82', f: '0.20·0.35·0.55·0.78 / 0.80 / 0.93'},
+    3: {basic: ['0.50 / — / —'], q: '0.50 / — / —', e: '0.64 / — / —', f: '0.75 / — / —'},
+  };
+  function skillList(ci) {
+    const out = [];
+    C[ci].skills.forEach(s => {
+      if (!s.button) return;
+      s.frames.forEach((f, step) => {
+        const nm = Array.isArray(SK[ci][s.slot]) ? SK[ci][s.slot][step] : SK[ci][s.slot];
+        const ratio = ORIG_RATIO[ci] ? (Array.isArray(ORIG_RATIO[ci][s.slot]) ? ORIG_RATIO[ci][s.slot][step] : ORIG_RATIO[ci][s.slot]) : null;
+        out.push({ci, s, f, step, name: nm, key: KEY[s.slot], ratio});
+      });
+    });
+    return out;
+  }
+  function effectText(c, it) {
+    const f = it.f, parts = [];
+    f.hits.forEach(h => {
+      const r = dmgRange(c, h.dmg);
+      parts.push(`${h.shape === 'arc' ? `부채꼴 ${h.range}m·좌우 ${h.angle}°` : `원 반경 ${h.range}m`} (판정 ${h.from === h.to ? h.from + '틱째' : h.from + '~' + h.to + '틱'}) ${r.lo}~${r.hi}`);
+    });
+    if (f.shot.count) {
+      const sh = f.shot; const r = sh.dmg === 255 ? null : dmgRange(c, sh.dmg);
+      let t = `투사체 ${sh.count}발 ${sh.speed === sh.speedMax ? sh.speed : sh.speed + '~' + sh.speedMax}m/s`;
+      if (sh.homingAfter) t += ` · ${sh.homingAfter === 1 ? '바로' : (sh.homingAfter / 30).toFixed(1) + '초 뒤'} 유도`;
+      if (r) t += ` · ${r.lo}~${r.hi}`;
+      if (sh.splash) t += ` · 주변 ${sh.splash}m에 1/3`;
+      if (sh.onHit === 1) t += ' · 폭발 40 (2.2m) + 화상 30×5';
+      if (sh.onHit === 2) t += ' · 장판 3초: 0.5초마다 15 + 받는 피해 1.2배';
+      parts.push(t);
+    }
+    const su = f.support;
+    if (su.kind === 1) parts.push(`반경 ${su.radius}m 아군 실드 ${su.amount} (${su.duration / 30}초)`);
+    if (su.kind === 2) parts.push(`반경 ${su.radius}m 아군 회복 ${su.amount}`);
+    if (su.kind === 3) parts.push(`반경 ${su.radius}m 아군 버프 ${su.duration / 30}초 (공격 +0.1, 치명 +0.2, 방어 +0.1)`);
+    return parts.join(' / ');
+  }
+
+  // ---------- 03 타임라인 ----------
+  const tl = {ci: 0, idx: 0, rtt: 100, playing: false, t: 0, raf: 0, last: 0};
+  function chargeFor(s) { return s.chargeMax ? Math.min(s.chargeMax, s.chargeMin + 2) : 0; }
+  function tlModel() {
+    const it = skillList(tl.ci)[tl.idx]; const s = it.s, f = it.f;
+    const ch = chargeFor(s);
+    const segs = [];
+    let t = 0;
+    if (ch) { segs.push(['charge', 0, ch]); t = ch; }
+    if (f.w) segs.push(['wind', t, t + f.w]);
+    const a0 = t + f.w;
+    segs.push(['act', a0, a0 + f.a]);
+    const r0 = a0 + f.a;
+    if (f.c < f.r) { segs.push(['rec', r0, r0 + f.c]); segs.push(['cancel', r0 + f.c, r0 + f.r]); }
+    else segs.push(['rec', r0, r0 + f.r]);
+    const hitTicks = [];
+    f.hits.forEach(h => { for (let k = h.from; k <= h.to; ++k) if (k === h.from) hitTicks.push(a0 + k - 1); });
+    if (!f.hits.length) hitTicks.push(a0);
+    return {it, segs, a0, end: r0 + f.r, hitTicks, ch};
+  }
+  function tlDraw() {
+    const m = tlModel();
+    const rtt = tl.rtt, half = rtt / 2;
+    const serverOff = half + TICK;                 // 입력이 도착 + 입력 버퍼 1틱
+    const peerOff = serverOff + half + 100;        // 서버 결과가 동료에게 도착 + 보간 100ms
+    const total = Math.max(m.end * TICK + peerOff + 60, 900);
+    const X0 = 118, W = 860, k = (W - X0 - 14) / total, x = v => X0 + v * k;
+    const lanes = [['내 화면', 0, '누르는 즉시 (예측)'], ['서버', serverOff, `입력 도착 ${Math.round(half)}ms + 버퍼 1틱`], ['동료 화면', peerOff, '서버 결과 도착 + 보간 100ms']];
+    const col = {charge: 'var(--phase-charge)', wind: 'var(--phase-wind)', act: 'var(--phase-act)', rec: 'var(--phase-rec)', cancel: 'var(--phase-cancel)'};
+    let g = '';
+    for (let v = 0; v <= total; v += 100) {
+      g += `<line x1="${x(v)}" y1="22" x2="${x(v)}" y2="214" stroke="var(--line)" ${v % 500 ? 'stroke-dasharray="2 4"' : ''}/>`;
+      if (v % 200 === 0) g += `<text x="${x(v)}" y="16" text-anchor="middle" font-size="10" class="mono" fill="var(--muted)">${v}ms</text>`;
+    }
+    lanes.forEach(([name, off, sub], li) => {
+      const y = 36 + li * 60;
+      g += `<text x="8" y="${y + 13}" font-size="12.5" font-weight="600">${name}</text><text x="8" y="${y + 28}" font-size="9.5" fill="var(--muted)">${sub}</text>`;
+      m.segs.forEach(([kind, a, b]) => { g += `<rect x="${x(off + a * TICK)}" y="${y}" width="${Math.max(1.5, (b - a) * TICK * k)}" height="22" fill="${col[kind]}" opacity="${kind === 'rec' ? .75 : .92}"/>`; });
+      m.hitTicks.forEach(h => { g += `<rect x="${x(off + h * TICK) - 1.5}" y="${y - 6}" width="3" height="34" fill="var(--ink)"/>`; });
+      const showAt = li === 0 ? serverOff + m.hitTicks[0] * TICK + half : peerOff + m.hitTicks[0] * TICK;
+      if (li !== 1) g += `<circle cx="${x(showAt)}" cy="${y + 38}" r="5" fill="var(--s1)"/><text x="${x(showAt) + 8}" y="${y + 42}" font-size="10" fill="var(--s1)">${li === 0 ? `숫자 +${Math.round(showAt - m.hitTicks[0] * TICK)}ms` : '숫자 (휘두름과 동시)'}</text>`;
+    });
+    g += `<line id="tl-head" x1="${x(0)}" y1="22" x2="${x(0)}" y2="214" stroke="var(--accent)" stroke-width="2"/>`;
+    $('#tl-svg').innerHTML = `<svg viewBox="0 0 ${W} 222" role="img" aria-label="선택한 스킬의 선딜·판정·후딜을 내 화면, 서버, 동료 화면 세 줄로 그린 타임라인">${g}</svg>`;
+    tl.scale = {x, total};
+    const it = m.it, f = it.f, s = it.s, c = C[tl.ci];
+    const cell = (k2, v, sm = '') => `<div><span class="k">${k2}</span><span class="x">${v}${sm ? ` <small>${sm}</small>` : ''}</span></div>`;
+    $('#tl-read').innerHTML =
+      (m.ch ? cell('충전', `${s.chargeMin}~${s.chargeMax}틱`, `${ms(s.chargeMin)}~${ms(s.chargeMax)}ms, 그림은 ${m.ch}틱`) : '') +
+      cell('선딜', `${f.w}틱`, `${ms(f.w)}ms`) + cell('판정', `${f.a}틱`, `${ms(f.a)}ms`) +
+      cell('후딜', `${f.r}틱`, f.c < f.r ? `${f.c}틱 뒤부터 캔슬` : '캔슬 없음') +
+      cell('쿨타임', s.cooldown ? `${sec(s.cooldown)}초` : '없음', s.cooldown ? `${s.cooldown}틱` : '') +
+      cell('이동', s.dash ? `돌진 ${s.dash}m/s` : m.ch ? `충전 중 ${s.chargeSpeed}m/s` : MOVE[s.move], s.move === 2 ? `${s.castSpeed}m/s` : '') +
+      (it.ratio ? cell('원본 비율 (시작/끝/캔슬)', it.ratio, '1초 클립 가정으로 틱 환산') : cell('원본 비율', '없음', '궁수는 원본 에셋 없음 → 설계값'));
+    const myNum = Math.round(tl.rtt / 2 + TICK + tl.rtt / 2);
+    $('#tl-say').innerHTML = `<b>${KO[tl.ci]} ${esc(it.name)}</b> (${it.key}). ${esc(effectText(c, it))}. 내 화면은 누른 틱에 바로 휘두르고, 데미지 숫자는 서버 판정이 돌아오는 ${myNum}ms 뒤에 뜹니다. 동료 화면은 휘두르는 모습과 숫자를 같은 순간에 봅니다 (06장 이벤트 스케줄러).`;
+    tlHead(tl.t);
+  }
+  function tlHead(v) { const h = document.getElementById('tl-head'); if (h && tl.scale) { const xx = tl.scale.x(v); h.setAttribute('x1', xx); h.setAttribute('x2', xx); } }
+  function tlLoop(now) {
+    if (!tl.playing) return;
+    const dt = Math.min(64, now - (tl.last || now)); tl.last = now;
+    tl.t += dt * ($('#tl-slow').checked ? 0.25 : 1);
+    if (tl.t > tl.scale.total) tl.t = 0;
+    tlHead(tl.t);
+    tl.raf = requestAnimationFrame(tlLoop);
+  }
+  function segButtons(el, items, cur, onPick) {
+    el.innerHTML = items.map((t, i) => `<button type="button" aria-pressed="${i === cur}">${esc(t)}</button>`).join('');
+    [...el.children].forEach((b, i) => b.addEventListener('click', () => { [...el.children].forEach(x => x.setAttribute('aria-pressed', 'false')); b.setAttribute('aria-pressed', 'true'); onPick(i); }));
+  }
+  function tlSkills() { segButtons($('#tl-skill'), skillList(tl.ci).map(i => `${i.key} ${i.name}`), tl.idx, i => { tl.idx = i; tl.t = 0; tlDraw(); }); }
+  segButtons($('#tl-cls'), KO, 0, i => { tl.ci = i; tl.idx = 0; tl.t = 0; tlSkills(); tlDraw(); });
+  segButtons($('#tl-rtt'), ['0ms', '100ms', '200ms'], 1, i => { tl.rtt = [0, 100, 200][i]; tlDraw(); });
+  tlSkills(); tlDraw();
+  $('#tl-play').addEventListener('click', () => {
+    tl.playing = !tl.playing; $('#tl-play').textContent = tl.playing ? '멈춤' : '재생';
+    if (tl.playing) { tl.last = 0; tl.raf = requestAnimationFrame(tlLoop); } else cancelAnimationFrame(tl.raf);
+  });
+  if (!reduce) { tl.playing = true; $('#tl-play').textContent = '멈춤'; tl.raf = requestAnimationFrame(tlLoop); }
+
+  // ---------- 03 원본 판정 흔들림 시뮬레이션 ----------
+  renderCode($('#c-oWarriorWait'), 'oWarriorWait', {bad: ['timer += Time.deltaTime', 'normalizedTime >=']});
+  (function jitter() {
+    let seed = 12345; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const target = 150;  // 0.15 × 1초 클립
+    const rows = [30, 60, 144].map(fps => {
+      const vals = [];
+      for (let n = 0; n < 2000; ++n) {
+        let t = 0;
+        while (t < target) { let d = 1000 / fps * (0.8 + 0.4 * rnd()); if (rnd() < 0.03) d += 40; t += d; }
+        vals.push(t);
+      }
+      vals.sort((a, b) => a - b);
+      return {name: `원본 · ${fps}fps`, min: vals[0], p50: vals[1000], p95: vals[1900], max: vals[1999]};
+    });
+    rows.push({name: '재설계 · 서버 틱', min: 5 * TICK, p50: 5 * TICK, p95: 5 * TICK, max: 5 * TICK, fixed: true});
+    const X0 = 150, W = 820, x = v => X0 + (v - 100) / 160 * (W - X0 - 30);
+    let g = '';
+    for (let v = 100; v <= 260; v += 20) g += `<line x1="${x(v)}" y1="14" x2="${x(v)}" y2="${24 + rows.length * 34}" stroke="var(--line)"/><text x="${x(v)}" y="${38 + rows.length * 34}" text-anchor="middle" font-size="10" fill="var(--muted)">${v}ms</text>`;
+    rows.forEach((r, i) => {
+      const y = 24 + i * 34;
+      g += `<text x="8" y="${y + 13}" font-size="12">${r.name}</text>`;
+      if (r.fixed) g += `<rect x="${x(r.min) - 2}" y="${y}" width="4" height="18" fill="var(--good)"/><text x="${x(r.min) + 8}" y="${y + 13}" font-size="11" fill="var(--good-ink)">항상 ${r.min.toFixed(1)}ms (5틱), 모든 화면 공통</text>`;
+      else g += `<line x1="${x(r.min)}" y1="${y + 9}" x2="${x(r.max)}" y2="${y + 9}" stroke="var(--ink-2)"/><rect x="${x(r.p50) - 1}" y="${y + 2}" width="${Math.max(3, x(r.p95) - x(r.p50))}" height="14" fill="var(--s2)" opacity=".85"/><text x="${x(r.max) + 8}" y="${y + 13}" font-size="11" fill="var(--ink-2)">${r.min.toFixed(0)}~${r.max.toFixed(0)}ms</text>`;
+    });
+    $('#jit').innerHTML = `<svg viewBox="0 0 ${W} ${50 + rows.length * 34}" role="img" aria-label="원본은 프레임레이트에 따라 판정 시점이 100에서 230밀리초 사이로 흔들리고, 재설계는 항상 166.7밀리초">${g}</svg><figcaption><b>그림 2.</b> 판정이 실제로 켜지는 시각. 선은 최소~최대, 막대는 중앙값~95% 구간 <span class="ev ev-sim">시뮬레이션</span>. 원본에서 목표는 150ms였지만 30fps에서는 최대 ${rows[0].max.toFixed(0)}ms까지 밀립니다. 멀티에서는 세 컴퓨터가 각자 이 분포에서 뽑힌 시각에 판정했습니다.</figcaption>`;
+  })();
+
+  // ---------- 04 직업별 ----------
+  const TXT = [
+    { // 전사
+      orig: [['좌클릭', '3단 콤보', '판정·쿨다운 중에 다시 누르면 다음 타. 세 타 모두 damage[0]=30.'], ['Q', '번개검', '범위(OverlapBox) 안 몬스터 중 무작위 하나를 1초 동안 쫓아감. damage[1]=30.'], ['E', '회전베기', '내 주변 반경 3의 상자 안 전부. damage[2]=50.'], ['F', '대검 내려치기', '칼 판정 + 반경 11의 상자 안 전부. damage[3]=90.'], ['패시브', '분노', '체력 70/40/10 경계마다 공격력·방어력 +increaseAtPassive.']],
+      files: 'Warrior.cs 214줄 · 리팩터링 중이던 Sword·LightningSword 등 5개 · MultiWarrior.cs 190줄',
+      bugs: [
+        ['버그', '멀티에서 패시브가 아무 효과가 없었습니다', 'Photon이 불러오는 Resources/Warrior.prefab과 WarriorVer2.prefab의 increaseAtPassive가 0입니다. prefab/Class/Warrior.prefab만 0.07이라 같은 직업의 수치가 프리팹마다 달랐습니다.', 'oWarriorPassive', ['increaseAtPassive']],
+        ['버그', '힐러 버프의 공격·방어 증가가 전사에게는 다음 프레임에 지워졌습니다', 'passive()가 Update에서 매 프레임 불리고, atk·def를 "기본값 + 단계 × 증가량"으로 다시 씁니다. 힐러가 더한 0.1이 바로 덮어써지고, 8초 뒤 힐러 코루틴이 0.1을 빼면 다음 프레임에 또 덮어써집니다. 치명타 증가만 남았습니다.', 'oBuff', ['atk += 0.1f']],
+        ['구조', '판정 시점이 프레임레이트에 따라 흔들렸습니다', '03장 그림 2. 콤보 입력도 같은 코루틴 안에서 프레임마다 확인해서, 낮은 fps에서는 입력 창이 짧아졌습니다.', null, null],
+      ],
+      why: ['전사 콤보는 SkillTiming의 stepCount = 3과 프레임 세 줄입니다. 판정·후딜 중에 다시 누르면 queued가 켜지고, 후딜 첫 틱에 다음 타 선딜로 넘어갑니다. 원본의 isCombo + comboCount + attackState 세 변수를 한 구조체가 대신합니다.', '3타는 판정 창이 5틱(0.10~0.26)이라 그 동안 매 틱 검사하되 같은 몬스터는 한 번만 맞습니다. 원본처럼 칼 콜라이더를 켜고 끄면 판정 길이가 프레임 수에 따라 달라집니다.', '번개검은 "무작위 대상"을 "가장 가까운 대상"으로 바꿨습니다. 서버 난수로 무작위를 유지할 수도 있지만, 플레이어가 결과를 예상할 수 있어야 한다고 봤습니다. 기획 확인 대상입니다.', '패시브 증가량은 원본 0.07을 그대로 쓰되 수치를 표 한 곳에만 둡니다.'],
+      tests: ['tCombo', 'tRecovery', 'tArc', 'tOnce', 'tRage', 'tRageBuff'],
+    },
+    { // 궁수
+      orig: [['우클릭', '조준', '누르고 있는 동안 이동 2m/s.'], ['좌클릭', '충전 사격', '누르고 있으면 30→70 (초당 50), 50 이상에서 떼면 그 힘으로 발사. damage[1]=35.'], ['패시브', '3발마다 강화', '세 번째 화살은 damage[0]=47 + 확정 치명. 원본은 네 번째에 적용 (1편 F7).'], ['Q', '유도 화살 4발', '0.5초 직진 후 가까운 적으로 휨. damage[2]=30.'], ['E', '3갈래', '카메라 오른쪽 벡터로 벌린 세 발. damage[3]=42.'], ['F', '충전 폭발 화살', '30→100 충전, 55 이상에서 발사. damage[4]=30 + 폭발 40 (반경 2.2) + 화상 30 × 5회.']],
+      files: 'Dealer.cs 482줄 + 화살·폭발·화상 보조 6개 · MultiDealer.cs 208줄 (RPC 24곳)',
+      bugs: [
+        ['1편', '3발마다 강화가 4번째 화살에 적용됐습니다', 'shoot_count를 올리는 곳, 비교하는 곳(== 3), 0으로 되돌리는 곳(>= 3)이 서로 다른 함수에 있어서 순서가 한 칸 밀렸습니다.', 'oDealerShoot', ['shoot_count == 3']],
+        ['확인', '화상이 맞을 때마다 새로 쌓였습니다', '폭발할 때마다 화상 이펙트(Burn: 1초마다 30씩 5번)를 몬스터에 새로 붙여서, 연속으로 맞히면 화상이 여러 개 동시에 돕니다. 의도였는지 알 수 없어 재설계는 "횟수 갱신"으로 바꾸고 표시했습니다.', 'oExplosion', ['Instantiate(burnFire']],
+        ['구조', '폭발·화상 데미지가 공격력과 치명타를 무시합니다', '40과 30이 스크립트 상수입니다. 재설계도 원본 값을 유지하되 상수를 classes.h 한 곳에 모았습니다.', null, null],
+      ],
+      why: ['기본 공격은 "누르고 있다가 떼면 발사"를 chargeMin 12틱(0.4초) ~ chargeMax 24틱(0.8초)으로 옮겼습니다. 원본의 30→70, 50 이상 조건과 같은 시간입니다. 너무 일찍 떼면 쿨타임을 쓰지 않고 취소됩니다.', '충전 중에는 이동 2m/s, 구르기를 누르면 충전을 버리고 그 틱에 구릅니다. 원본은 isAim·aim_set·충전값을 여러 함수가 나눠 확인했습니다.', '3발마다 강화는 basicCount를 발사하는 순간 한 곳에서 올리고 확인합니다. 버그가 생길 틈이 줄었습니다.', '화살 방향은 클라가 보낸 yaw로 서버가 계산합니다. 원본은 각 컴퓨터의 카메라 방향으로 쏴서 다른 화면이 같은 화살을 재현하지 못했습니다(1편 F3).'],
+      tests: ['tCharge', 'tPassive', 'tBurn'],
+    },
+    { // 창술사
+      orig: [['좌클릭', '찌르기', 'damage[0]=65.'], ['패시브', '강화 찌르기', '8초마다 다음 기본 공격이 passive 애니메이션 + damage[1]=60.'], ['우클릭', '방패 치기', 'damage[3]=50.'], ['Q', '아군 실드', '반경 5 아군에게 실드 100 (5초). 방패가 아군에게 날아가 닿으면 적용.'], ['E', '4연속 찌르기', 'damage[2]=70.'], ['F', '방패 돌진 4타', 'damage[3]=50, 마지막 타에 전진.']],
+      files: 'Lancer.cs 302줄 + 창·방패 보조 4개 · MultiLancer.cs 144줄',
+      bugs: [
+        ['버그', 'E 4연타가 모두 같은 숫자였습니다', 'E를 누를 때 lance.damage = set_damage(2)를 한 번 계산하고 네 번 재사용합니다. 치명타도 네 타 전부 아니면 전무입니다.', 'oLancerE', ['set_damage(2)']],
+        ['확인', '8초마다 강화되는 공격이 일반 공격보다 약합니다', '강화 공격은 damage[1]=60, 일반은 damage[0]=65입니다. 강화 애니메이션이 다른 이점을 주는 의도였는지 알 수 없어 값은 그대로 두고 코드에 표시했습니다.', 'oLancerPassive', ['set_damage(1)']],
+      ],
+      why: ['E와 F의 다단 히트는 원본 에셋 비율(e 0.18·0.28·0.42·0.54, f 0.20·0.35·0.55·0.78)을 틱으로 옮긴 판정 창 네 개입니다. 타마다 데미지를 따로 굴립니다.', 'F 돌진은 판정 구간 18틱 동안 8m/s로 전진합니다(4.8m). 이동이 SimStep 안에 있어서 내 화면 예측과 서버가 같은 자리에 도착합니다. 원본은 마지막 타에만 전진했는데, 돌진 중 4타가 더 읽기 쉽다고 봤습니다.', '우클릭은 다른 직업에서는 조준 감속이지만 창술사는 스킬입니다. ClassTiming.rightClickIsSkill 하나로 구분해서 이동 코드에 직업 분기가 없습니다.', '실드는 방패가 날아가 닿는 순간이 아니라 판정 첫 틱에 서버가 바로 적용하고, 날아가는 방패는 연출로만 그립니다. 화면마다 도착 시각이 달라지는 문제가 없어집니다.'],
+      tests: ['tDash', 'tLancerE', 'tShield'],
+    },
+    { // 힐러
+      orig: [['좌클릭', '화염구', 'damage[0]=35 + 반경 1.5에 1/3 + 넉백.'], ['Q', '범위 회복', '반경 7 아군 회복.'], ['E', '저주 구슬', '2초 뒤(또는 충돌 시) 장판 → 0.5초마다 반경 1에 15 + 방어 −0.2 (3초).'], ['F', '범위 버프', '반경 5 아군 8초: 공격 +0.1, 치명 +0.2, 방어 +0.1.'], ['패시브', '보호막', '8초간 맞지 않으면 다음 피격 1회 무효.']],
+      files: 'Healer.cs 220줄 + 마법 보조 7개 · MultiHealer.cs 147줄 (패시브를 매 프레임 RPC, 1편 F1)',
+      bugs: [
+        ['버그', '회복량이 인자를 무시하고 항상 30이었습니다', 'RestoreHealth(int heal)이 heal을 쓰지 않고 30을 더합니다. 회복량을 바꿔도 반영되지 않습니다.', 'oRestore', ['hp + 30', 'hp += 30']],
+        ['버그', '저주 장판의 방어 감소가 첫 틱에 있던 몬스터에게만 걸렸습니다', 'debuff 플래그가 장판 하나에 하나라서, 첫 피해 틱이 지나면 true가 되고 나중에 들어온 몬스터는 데미지만 받습니다.', 'oDebuffCircle', ['if (!debuff)', 'debuff = true']],
+        ['버그', '버프를 "8초 뒤 빼기"로 되돌립니다', '그 사이 수치를 다시 쓰는 코드(전사 패시브)와 만나면 버프가 사라지고, 장판 두 개의 방어 감소는 −0.4로 쌓입니다. 재설계는 남은 시간만 저장합니다.', 'oBuffDown', ['player.atk -= 0.1f']],
+      ],
+      why: ['회복·실드·버프는 SupportDef 한 종류로 묶었습니다. 대상 찾기(반경 안 살아 있는 아군)가 한 곳이라 직업이 늘어도 같은 코드입니다.', '버프는 buffTicks만 저장하고 공격력은 StatsOf가 매번 기본값 + 패시브 + 버프로 계산합니다. 겹치면 시간만 갱신되고 두 번 오르지 않습니다.', '저주 장판은 Zone 엔티티 하나입니다. 몬스터 쪽에는 defDownTicks 하나만 두고 시간을 갱신해서 중첩과 복원 문제가 없습니다.', '보호막은 원본과 같이 "어떤 피해든 받으면 8초를 다시 셈"입니다. 피해 처리 순서(보호막 → 방어 → 실드 → 체력)를 DamagePlayer 한 함수에 적었습니다.'],
+      tests: ['tBarrier', 'tBuff', 'tCurse', 'tRageBuff'],
+    },
+  ];
+  function classPanel(ci) {
+    const c = C[ci], t = TXT[ci], list = skillList(ci);
+    const keys = t.orig.map(([kk, b, p]) => `<div><span class="kk">${esc(kk)}</span><b>${esc(b)}</b><p>${esc(p)}</p></div>`).join('');
+    const bugs = t.bugs.map(([tag, b, p], i) => `<li class="${tag === '확인' ? 'q' : ''}"><span class="t">${esc(tag)}</span><b>${esc(b)}</b><p>${esc(p)}</p></li>`).join('');
+    const rows = list.map(it => {
+      const f = it.f, s = it.s; const tot = f.w + f.a + f.r;
+      const dm = [];
+      f.hits.forEach(h => { const r = dmgRange(c, h.dmg); dm.push(`${r.lo}~${r.hi} <small>치명 ${r.clo}~${r.chi}</small>`); });
+      if (f.shot.count && f.shot.dmg !== 255) { const r = dmgRange(c, f.shot.dmg); dm.push(`${r.lo}~${r.hi} <small>치명 ${r.clo}~${r.chi}</small>`); }
+      const uniq = [...new Set(dm)];
+      return `<tr><td>${esc(it.key)}</td><td>${esc(it.name)}</td><td class="num">${s.cooldown ? sec(s.cooldown) + '초' : '—'}</td><td class="num">${s.chargeMax ? `<small>충전 ${s.chargeMin}~${s.chargeMax}</small> ` : ''}${f.w} / ${f.a} / ${f.r}</td><td class="num">${ms(tot)}ms</td><td>${s.dash ? '돌진' : s.chargeMax ? '충전 중 감속' : MOVE[s.move]}</td><td class="num">${uniq.join('<br>') || '—'}</td></tr>`;
+    }).join('');
+    const passive = ['', `체력 70 미만부터 단계마다 공격·방어 +${c.rage}`, '기본 공격 3발마다 damage[0] + 확정 치명', `${c.passiveTicks / 30}초마다 다음 기본 공격이 damage[${c.passiveDmg}]`, `${c.passiveTicks / 30}초간 맞지 않으면 다음 피격 1회 무효`][c.passive];
+    const stats = `<p class="small">체력 ${c.hp} · 공격 배율 ${c.atk} · 방어 ${c.def} · 치명 ${Math.round(c.crit * 100)}% · 데미지 표 [${c.damage.filter((v, i) => v || i === 0).join(', ')}] · 패시브: ${esc(passive)} <span class="ev ev-fact">코드 확인</span></p>`;
+    const bugCode = t.bugs.filter(b => b[3]).map((b, i) => `<div class="cb" data-k="${b[3]}" data-bad="${esc(JSON.stringify(b[4]))}"></div>`).join('');
+    const tests = t.tests.map(k => `<div class="cb" data-k="${k}"></div>`).join('');
+    const nameEn = ['Warrior', 'Archer', 'Lancer', 'Healer'][ci];
+    return `
+      <div class="stack"><h3>원본이 하던 일</h3><p class="muted small">${esc(t.files)}</p><div class="keys4">${keys}</div></div>
+      <div class="stack"><h3>원본에서 찾은 문제</h3><ul class="bugs">${bugs}</ul><div class="pair">${bugCode}</div></div>
+      <div class="stack"><h3>재설계 표</h3>${stats}
+        <div class="tbl-wrap"><table class="dmg"><thead><tr><th>키</th><th>스킬</th><th class="num">쿨타임</th><th class="num">선딜 / 판정 / 후딜 (틱)</th><th class="num">전체</th><th>이동</th><th class="num">데미지 (몬스터 방어 0)</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <p class="note">데미지 = floor(damage[i] × 공격 배율) + (−5 ~ +4), 치명타는 ×1.7 <span class="ev ev-calc">계산</span>. 원본 set_damage와 같은 공식이며, 원본 주석의 "±5"와 달리 정수 Random.Range는 상한을 포함하지 않아 실제로는 −5~+4입니다. 재설계는 원본 동작을 따랐습니다.</p>
+      </div>
+      <div class="stack"><h3>코드</h3><p>이 블록이 ${KO[ci]}의 전부입니다. 타이밍은 abilities.h의 표 한 줄, 효과는 아래 블록입니다.</p><div class="cb" data-k="${nameEn}"></div></div>
+      <div class="stack"><h3>왜 이렇게 했나</h3><ul>${t.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul></div>
+      <div class="stack"><h3>이 동작을 지키는 테스트 <span class="ev ev-test">테스트 통과</span></h3><div class="pair">${tests}</div></div>`;
+  }
+  function showClass(ci) {
+    [...$('#ctabs').children].forEach((b, i) => { b.setAttribute('aria-selected', String(i === ci)); b.tabIndex = i === ci ? 0 : -1; });
+    $('#cpanel').innerHTML = classPanel(ci);
+    $('#cpanel').setAttribute('aria-labelledby', 'tab-' + ci);
+    $('#cpanel').querySelectorAll('.cb[data-k]').forEach(el => {
+      const k = el.dataset.k; const bad = el.dataset.bad ? JSON.parse(el.dataset.bad) : [];
+      const cap = k.startsWith('t') ? null : (k.startsWith('o') ? '원본 코드 (본인 스크립트)' : `classes.h의 ${KO[ci]} 블록`);
+      renderCode(el, k, {bad, cap: CAP[k] || cap});
+    });
+  }
+  $('#ctabs').innerHTML = KO.map((k, i) => `<button role="tab" id="tab-${i}" type="button" aria-selected="${i === 0}">${k}</button>`).join('');
+  [...$('#ctabs').children].forEach((b, i) => {
+    b.addEventListener('click', () => showClass(i));
+    b.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const n = (i + (e.key === 'ArrowRight' ? 1 : 3)) % 4; showClass(n); $('#ctabs').children[n].focus(); } });
+  });
+  showClass(0);
+
+  // ---------- 05·06 코드 ----------
+  const mk = (k, o) => renderCode(document.getElementById('c-' + k), k, o);
+  mk('AbilityState'); mk('SimStep'); mk('StepAbility', {on: ['queued = 1', 'detail::End(a);  // 후딜', 'kPhaseCharge: {']});
+  mk('MoveMods'); mk('StepMoveRule', {on: ['m.dashSpeed', 'm.lock', 'm.speed > 0.0F', 'm.noAim']});
+  mk('ApplyAction'); mk('Activate'); mk('ApplyHit', {on: ['p.struck', 'RollDamage(p, dmgIndex']});
+  mk('StatsOf', {on: ['p.buffTicks > 0', 'stacks']}); mk('TickStatus'); mk('DamagePlayer'); mk('RollDamage');
+  mk('csPlayback'); mk('csOnTick'); mk('csRemote'); mk('csSkillBar'); mk('csAbilityState'); mk('csReconcile', {on: ['SameAs(serverAbility)', 'after[k0] = State']});
+  mk('tRespawn');
+
+  // ---------- 07 통신 ----------
+  $('#wire-tbl').innerHTML = `<thead><tr><th>항목</th><th class="num">전 (2·3편)</th><th class="num">후 (4편)</th><th>무엇이 늘었나</th></tr></thead><tbody>
+    <tr><td>엔티티 1개</td><td class="num">83비트</td><td class="num">89비트</td><td>직업 2비트 + 스킬 코드 4비트 (원격 애니메이션, 투사체 모양)</td></tr>
+    <tr><td>이벤트 1개</td><td class="num">107비트</td><td class="num">108비트</td><td>종류 2→3비트: 회복·실드·버프·막음 추가</td></tr>
+    <tr><td>스냅샷 고정부</td><td class="num">286비트</td><td class="num">403비트</td><td>내 스킬 상태 107비트 (쿨타임 5개 × 10비트 포함) + 실드 8 + 표시 2</td></tr>
+    <tr><td>Connect / Accept</td><td class="num">0 / 262비트</td><td class="num">2 / 264비트</td><td>원하는 직업 → 서버가 확정</td></tr>
+    <tr><td>평균 스냅샷 (12마리)</td><td class="num">—</td><td class="num">${fmt(Math.min(...load.filter(r => r.monsters === 12).map(r => r.avg_snapshot_bytes)), 0)}~${fmt(Math.max(...load.filter(r => r.monsters === 12).map(r => r.avg_snapshot_bytes)), 0)}바이트</td><td>투사체·장판 수에 따라 달라짐 <span class="ev ev-meas">실측</span></td></tr>
+    <tr><td>내려받기 / 인</td><td class="num">—</td><td class="num">${fmt(Math.min(...load.filter(r => r.monsters === 12).map(r => r.down_Bps_per_client)) / 1024, 1)}~${fmt(Math.max(...load.filter(r => r.monsters === 12).map(r => r.down_Bps_per_client)) / 1024, 1)}KB/s</td><td>30Hz 스냅샷 <span class="ev ev-meas">실측</span></td></tr></tbody>`;
+
+  // ---------- 08 검증 ----------
+  const SC = {local: '로컬', rtt100_loss2: '왕복 100ms · 손실 2%', rtt200_loss5: '왕복 200ms · 손실 5%', local_200mon: '로컬 · 몬스터 200'};
+  const CL = {Warrior: '전사', Archer: '궁수', Lancer: '창술사', Healer: '힐러'};
+  $('#load-tbl').innerHTML = `<thead><tr><th>네트워크</th><th class="num">입력 버퍼</th><th>직업</th><th class="num">예측 일치</th><th class="num">보정</th><th class="num">스킬만 다름</th><th class="num">최대 보정</th><th class="num">확인 지연 p50</th><th class="num">평균 스냅샷</th><th class="num">명중 / 처치</th><th class="num">회복 / 막음</th></tr></thead><tbody>` +
+    load.map(r => `<tr><td>${SC[r.scenario] || r.scenario}</td><td class="num">${r.input_buffer}틱</td><td>${r.classes.split(',').map(x => CL[x]).join('·')}</td><td class="num">${(100 * r.pred_exact / r.pred_comparisons).toFixed(1)}% <small class="muted">${fmt(r.pred_exact)}/${fmt(r.pred_comparisons)}</small></td><td class="num">${r.pred_corrections}</td><td class="num">${r.ability_only}</td><td class="num">${r.max_correction_m.toFixed(2)}m</td><td class="num">${r.confirm_ms_p50}ms</td><td class="num">${fmt(r.avg_snapshot_bytes)}B</td><td class="num">${r.server_hits} / ${r.server_kills}</td><td class="num">${r.heals} / ${r.blocks}</td></tr>`).join('') + '</tbody>';
+  const TDESC = {
+    Ability_WarriorComboAdvancesOnlyWhenPressedAgain: '다시 눌러야 다음 타, 3타 뒤에는 4타 없음',
+    Ability_RecoveryLocksMovementUntilCancelWindow: '후딜 15틱 동안 이동 키를 눌러도 제자리, 16틱째 바로 이동',
+    Ability_ArcherChargeReleasedTooEarlyCancelsWithoutCooldown: '0.2초 만에 떼면 취소·쿨타임 없음, 14틱 충전 후 떼면 그 틱에 발사',
+    Ability_DodgeCancelsCharge: '충전 중 구르기 → 충전을 버리고 그 틱에 구름',
+    Ability_LancerDashMovesOnlyDuringActive: '선딜 동안 제자리, 판정 18틱 동안 4.8m 돌진',
+    Ability_CooldownBlocksRecastAndCountsInTicks: '쿨타임 150틱 동안 재사용 불가, 지나면 가능',
+    World_WarriorArcHitsFrontNotBack: '부채꼴 판정: 앞 몬스터만 맞음',
+    World_ActiveWindowHitsEachTargetOnce: '판정 창 5틱 동안 같은 대상은 1번 → 3타 콤보 = 3히트',
+    World_LancerEHitsFourTimesWithSeparateRolls: 'E는 4히트, 숫자가 서로 다름',
+    World_WarriorRageScalesWithMissingHp: '체력 30 → 공격 1.64, 방어 0.34',
+    World_WarriorRageAndHealerBuffStack: '분노 + 힐러 버프가 함께 적용 (원본은 버프가 지워짐)',
+    World_HealerBarrierBlocksOneHitAfterEightQuietSeconds: '8초 무피격 → 1회 무효, 두 번째는 들어감',
+    World_ShieldAbsorbsAndHealCapsAtMax: '실드가 피해 흡수, 회복은 최대 체력에서 멈추고 실제 회복량만 표시',
+    World_BuffRefreshesInsteadOfStacking: '버프 두 번 = 시간 갱신, 끝나면 정확히 원래 값',
+    World_ArcherExplosionBurnsFiveTimes: '화살 + 폭발 + 화상 5회 = 7히트',
+    World_CurseZoneTicksEveryHalfSecondAndAmplifiesDamage: '3초 동안 0.5초마다 18 (15 × 1.2), 끝나면 장판 사라짐',
+    World_RespawnWaitsForFreshInputInsteadOfRepeating: '부활 직후 옛 입력을 반복하지 않음 (4.3m 오보정 수정)',
+  };
+  $('#test-tbl').innerHTML = '<thead><tr><th>테스트</th><th>확인하는 규칙</th></tr></thead><tbody>' + Object.entries(TDESC).filter(([k]) => st.tests.includes(k)).map(([k, v]) => `<tr><td class="mono" style="font-size:.76rem">${k}</td><td>${esc(v)}</td></tr>`).join('') + '</tbody>';
+  $('#bench-tbl').innerHTML = '<thead><tr><th class="num">몬스터</th><th class="num">틱 평균</th><th class="num">틱 p99</th><th class="num">예산 대비</th></tr></thead><tbody>' + DATA.bench.map(b => `<tr><td class="num">${fmt(b.monsters)}</td><td class="num">${b.tick_us_avg.toFixed(1)}µs</td><td class="num">${b.tick_us_p99.toFixed(1)}µs</td><td class="num">${b.budget_share_pct.toFixed(3)}%</td></tr>`).join('') + '</tbody>';
+
+  // ---------- 09 고민 노트 ----------
+  const L = (href, t) => `<a href="${href}">${t}</a>`;
+  const NOTES = [
+    ['코드가 전부 스파게티 같다 (SOLID, 의존성, 결합도)', 'ok', '맞음',
+      '"아무것도 모를 때 짜서 혼잡하고 SOLID·의존성·커플링이 안 좋다."',
+      `원본 PlayerState(329줄)가 입력, 이동, 전투, 쿨타임 UI, 사운드를 함께 들고 있고, 직업 클래스가 Input.GetKeyDown을 직접 읽습니다 ${L(P1 + '#f7', '1편 F7')}·${L(P1 + '#f8', 'F8')}.`,
+      'SOLID라는 단어보다 "바뀌는 이유가 다른 코드를 나눈다"가 실제로 쓰는 기준입니다. 입력, 규칙, 연출, 전송은 바뀌는 이유가 서로 다릅니다.',
+      '입력(InputCmd 1바이트) → 규칙(abilities.h·classes.h·world.cpp) → 연출(ClassVisuals·CombatPresenter) → 전송(protocol.h)으로 나눴습니다. 규칙 쪽은 Unity를 몰라서 단위 테스트가 0.1초 안에 끝납니다.'],
+    ['AI가 서버·클라를 더 잘 짜는데, 내 코드는 특이성이 없다', 'half', '절반',
+      '"현재에는 그다지 특이성이 없다. AI가 서버 제작·연동과 클라이언트 쪽은 우세하다."',
+      '코드를 빨리 쓰는 일은 AI가 잘합니다. 이 재설계 코드도 제가 작성했습니다.',
+      '면접에서 차이가 나는 부분은 무엇을 잴지 정하고, 결과를 보고 판단하고, 왜 그렇게 했는지 설명하는 능력입니다. 예를 들어 이번 4.3m 오보정은 코드를 읽어서가 아니라 측정해서 찾았고, 원인을 좁혀서 테스트로 고정했습니다.',
+      '10장의 순서대로 StepAbility와 ApplyHit을 직접 다시 짜고 테스트를 통과시켜 보세요. "AI가 쓴 코드를 어떻게 검증했나"라는 질문에 직접 겪은 일로 답할 수 있게 됩니다.'],
+    ['팀이 같이 한 부분은 빼고 내 파트만 올렸다', 'ok', '맞음',
+      '"다같이 한 부분을 제외하고는 내 파트만 올린 거긴 한데."',
+      `공개 저장소에는 본인 코드와 재설계만 두는 것이 맞습니다. 원본 저장소의 90%는 외부 에셋입니다 ${L(P1 + '#f11', '1편 F11')}.`,
+      '팀 프로젝트는 "내가 맡은 범위"를 분명히 적는 것이 오히려 신뢰를 줍니다.',
+      '1편은 팀원 코드 인용이 있어서 저장소에 넣지 않았고, 4편의 원본 인용도 본인 스크립트만 썼습니다.'],
+    ['char 하나(8비트)로 여러 플래그를 쓰면 좋았을 것 같다', 'half', '절반',
+      '"0b 2진수 8bit인 char 변수 하나를 가지고 여러 플래그 변수들로 사용할 수 있을 것 같은데."',
+      '네트워크로 보내는 값에는 정확히 맞는 생각입니다. 재설계의 버튼 입력이 바로 1바이트 비트 플래그(점프 1, 구르기 2, … F 128)이고, 스냅샷의 HUD 표시도 2비트입니다.',
+      '하지만 원본 bool 10개의 진짜 문제는 메모리(10바이트)가 아니라 "공격 중이면서 구르는 중" 같은 말이 안 되는 조합이었습니다. 비트로 묶어도 2^10가지 조합은 그대로입니다. 해법은 상태 하나와 타이머입니다.',
+      'AbilityState의 phase 하나가 원본 isAttack·attackState·isCombo·skillNum·comboCount를 대신합니다(05장). 비트 플래그는 InputCmd.buttons와 패킷에만 씁니다.'],
+    ['Move 오버라이드가 중복된다. 부모 Move의 일부만 필요해서 Dealer에서 다시 썼다', 'turn', '방향 수정',
+      '"필요없는 것과 필요한 것이 부모의 MOVE에 있어서 그것들을 제외하면서도 필요한 건 포함시키려고."',
+      `상속으로 "일부만" 재사용하려면 결국 복사하게 됩니다 ${L(P1 + '#f8', '1편 F8')}. 부모가 바뀌면 복사본이 따로 놀게 됩니다.`,
+      '현업에서는 이동을 한 함수로 두고, 스킬은 이동에 "규칙"만 넘깁니다. 무엇을 빼고 넣을지를 상속 구조가 아니라 데이터로 표현합니다.',
+      'MoveMods(잠금·감속·돌진·조준 무시)가 그 규칙입니다. 궁수 조준 감속은 오버라이드 대신 숫자 하나, 창술사 우클릭은 bool 하나입니다(05장).'],
+    ['몇 초 뒤 취소를 IEnumerator로 했는데, 동시성 프로그래밍이 나았을까', 'turn', '방향 수정',
+      '"몇 초 후 스킬이 취소되도록 IEnumerator 쓴 느낌인데 이걸 동시성 프로그래밍으로 했으면 더 좋지 않았을까."',
+      '코루틴은 스레드가 아니라 메인 스레드에서 프레임마다 이어서 실행되는 함수입니다. 스레드로 바꾸면 Unity API를 부를 수 없고, 실행 순서가 매번 달라져 서버와 같은 결과를 낼 수 없습니다.',
+      '게임 로직의 시간은 틱 단위 타이머로 다룹니다. 상태에 "남은 틱"을 저장하고 매 틱 1씩 줄입니다. 취소는 그 상태를 바꾸면 끝이라 StopCoroutine을 관리할 필요가 없습니다.',
+      `재설계에는 코루틴이 하나도 없습니다. tick·cooldown·buffTicks·shieldTicks·passiveTimer가 원본 직업 스크립트의 코루틴 14개를 대신합니다. 동시성은 서버에서 정말 필요한 곳에만 씁니다 ${L(P3 + '#c-thread', '3편 13장')}.`],
+    ['현업에서는 최적화를 어떻게 하나', 'ok', '맞음',
+      '"다른 방법이 있다면 현업에서는 최적화 부분에서 어떻게 진행할까?"',
+      `원본의 비용은 매 프레임 RPC, 화살·이펙트 Instantiate/Destroy, 매 프레임 문자열·GetComponent였습니다 ${L(P1 + '#f1', '1편 F1')}·${L(P1 + '#f9', 'F9')}.`,
+      '먼저 재고, 가장 큰 것부터 고치고, 다시 잽니다. 원칙은 자주 도는 코드에서 할당 0, 오브젝트 풀, 해시 캐시, 값이 바뀔 때만 UI 갱신입니다.',
+      `서버 틱 평균 ${fmt(load[0].tick_us_avg, 0)}µs(봇 3명 + 몬스터 12마리, 33,333µs 예산), 시뮬레이션만 재면 몬스터 1,000마리에서 ${DATA.bench[3].tick_us_avg.toFixed(0)}µs입니다 <span class="ev ev-meas">실측</span>. 화상·저주는 오브젝트 대신 몬스터 필드 두 개입니다.`],
+    ['IK, 점프, 물리 충돌, 애니메이션 부드러움을 중요하게 여겼다', 'ok', '맞음',
+      '"IK 쪽이나 점프, 물리적 충돌 등을 엄청 중요시 여겨서 애니메이션 부드러움이나."',
+      `손맛을 중요하게 본 감각은 정확합니다. 원본에서는 점프가 0.45초 늦게 떴고 Rigidbody를 여섯 곳에서 조작했으며 ${L(P1 + '#f4', '1편 F4')}, 조준 IK 가중치가 한 프레임에 바뀌었습니다 ${L(P1 + '#f10', 'F10')}.`,
+      '현업은 "판정은 고정, 그림은 맞춘다"로 풉니다. 판정 틱은 표가 정하고, 애니메이션 재생 속도를 그 틱에 맞추고(리타이밍), 후딜 캔슬 구간으로 조작감을 만듭니다.',
+      '이동 한 함수 + 코요테 타임·점프 버퍼(2편), 렌더 보간, IK 가중치 0.15초 블렌드, 리타이밍과 캔슬 구간(06장)까지 반영했습니다. 발 IK와 루트 모션은 남은 일입니다.'],
+    ['멀티가 버벅이고 가까이 있어도 2~3초 늦었다. 이펙트·데미지·컷신이 안 맞았다', 'ok', '맞음',
+      '"누구는 가까이 있는데도 2~3초 더 느리게 반응하고 이펙트, 데미지, 컷신 연동 안 되었거든."',
+      `원인은 네 단계가 겹친 것이었습니다: TCP, 매 프레임 RPC, 초당 10번 동기화, Lerp 추적 ${L(P1 + '#f2', '1편 02장')}.`,
+      'UDP 30Hz, 내 캐릭터는 예측, 다른 캐릭터는 100ms 보간, 결과는 서버 이벤트 하나를 모두가 같은 시각에 그리는 구조가 표준입니다.',
+      `입력이 서버에서 확인되기까지 로컬 ${load[3].confirm_ms_p50}ms, 왕복 100ms에서 ${load[4].confirm_ms_p50}ms입니다 <span class="ev ev-meas">실측</span>. 화면 반응은 예측이라 0ms입니다. 이번에 이벤트 스케줄러를 넣어 동료 화면에서도 칼이 닿는 순간 숫자가 뜹니다. 컷신은 "서버 틱 N에 시작" 이벤트로 맞추는 설계까지만 했습니다.`],
+    ['메모리를 낭비했다', 'ok', '맞음',
+      '"마구잡이로 넣고 기능들 사용해보고 메모리 낭비시키고."',
+      `화살·이펙트를 매번 만들고 부쉈고(Dealer 4곳, 보조 스크립트 13곳), 값이 안 바뀌어도 매 프레임 문자열을 만들었습니다 ${L(P1 + '#f9', '1편 F9')}.`,
+      '자주 생기는 것은 풀에서 빌리고, 매 프레임 도는 코드에서는 new를 하지 않습니다.',
+      '서버는 버퍼를 재사용하고, 클라는 ObjectPool과 TMP SetText 포맷을 씁니다. 이벤트 스케줄러도 리스트를 앞으로 당겨 재사용합니다.'],
+    ['멀티용으로 짜지 않아서 상속받아 Multi를 만든 해괴한 상황', 'ok', '맞음',
+      '"애초에 멀티 용 코드로 작성을 안 해서 그걸로 상속받아서 또 멀티용으로 만든 해괴한 상황도 발생했고."',
+      'Multi 4개가 689줄이고 RPC가 72곳에 나옵니다. 싱글과 멀티가 다른 코드라서 한쪽만 고쳐지는 일이 생깁니다.',
+      '현업에서는 싱글도 "같은 프로세스 안의 서버에 접속한 멀티"로 만듭니다. 그러면 경로가 하나뿐입니다.',
+      '재설계 직업 코드에는 싱글/멀티 분기가 하나도 없습니다.'],
+    ['뒤끝(API) 대신 직접 서버, client-server, P2P였다면', 'half', '절반',
+      '"뒤끝이라는 서버로 사용했었는데 API로. 직접 서버를 만들거나 client-server, p2p로 구성했으면 어땠을까?"',
+      '뒤끝 같은 BaaS는 로그인, 랭킹, 저장 같은 "기록"에 맞고, 실시간 판정에는 맞지 않습니다. 원본은 점수를 클라가 제출해서 조작이 가능했습니다.',
+      `P2P나 호스트 방식은 호스트가 유리하고 치트와 NAT 문제가 있습니다. 협동 3인이라면 전용 권한 서버 + BaaS 병행이 무난합니다 ${L(P2, '2편')}.`,
+      '게임 판정은 C++ 서버, 계정·랭킹은 BaaS에 두고 점수는 서버가 제출하는 구조를 2편에서 정했고, 4편에서 직업 판정까지 서버로 옮겼습니다.'],
+    ['C++로 서버를 만들고 싶었지만 아무도 몰랐다', 'ok', '맞음',
+      '"서버도 C++로 만들고 싶었어. 그런데 모두 서버에 대한 지식이 전무해서 만들 줄 몰랐어."',
+      '필요한 지식은 UDP 소켓, 고정 틱, 비트 직렬화, ACK·재전송, 결정론 다섯 가지였습니다. 각각은 수십~수백 줄입니다.',
+      '처음부터 엔진을 만들기보다, 지금처럼 게임 규칙을 순수 C++ 라이브러리로 두고 테스트부터 붙이는 순서가 현실적입니다.',
+      `${L(P3, '3편')}이 그 다섯 가지를 순서대로 설명하고, 4편에서 직업 네 개가 그 서버 위에서 돌아갑니다.`],
+    ['서버를 잘 몰라서 쉽게 설명이 필요하다', 'ok', '맞음',
+      '"서버의 경우에는 특히 내가 많이 취약하고 정보의 양도 적어서."',
+      '4편에서 서버가 새로 하는 일은 세 가지뿐입니다: 판정 창 검사, 투사체·장판 이동, 지원 효과 적용.',
+      '셋 다 "매 틱 표를 읽고 반복문을 도는 코드"입니다. 네트워크 코드는 4편에서 거의 바뀌지 않았고, 패킷에 필드 몇 개만 늘었습니다(07장).',
+      `03장 타임라인의 세 줄이 서버가 끼어드는 지점을 보여 줍니다. 낯선 용어는 ${L(P3 + '#s-words', '3편 용어 사전')}에 있습니다.`],
+    ['2년 공백이 있는데, 게임사와 공기업 면접에서 어떻게 보일까', 'half', '절반',
+      '"게임개발 놓은 지 2년 된 백수라서 더 모르지만." / "게임업계나 공기업·공무원 전산직 면접 쪽에서 보면 어때?"',
+      '공백보다 "최근에 무엇을 다시 했고 설명할 수 있는가"를 봅니다. 이 문서 묶음(문제 → 측정 → 수정 → 검증)이 그 증거가 될 수 있지만, 직접 다시 구현해 설명할 수 있어야 합니다.',
+      '게임사 클라이언트라면 예측·리타이밍·프레임 데이터, 서버라면 권한·프로토콜·결정론 테스트를 이야기합니다. 공기업·전산직이라면 게임 용어 대신 "요구사항 → 설계 → 테스트 → 문서화"와 버그를 숫자로 설명한 경험으로 바꿔 말합니다.',
+      'CI가 매 커밋마다 빌드·테스트·새니타이저·C++/C# 일치 검사를 돌리는 기록이 저장소에 남아 있습니다. 공기업 면접에서도 그대로 통하는 근거입니다.'],
+  ];
+  $('#notes4').innerHTML = NOTES.map(([h, v, vt, quote, then, std, here], i) => `<details class="rv"${i < 2 ? ' open' : ''}><summary><span class="k">${String(i + 1).padStart(2, '0')}</span><span class="h">${esc(h)}</span><span class="vd vd-${v}">${vt}</span></summary><div class="body"><div><h5>당시 고민</h5><p class="quote">${esc(quote)}</p></div><div><h5>실제로 어땠나</h5><p>${then}</p></div><div><h5>현업 기준</h5><p>${std}</p></div><div><h5>이 재설계에서</h5><p>${here}</p></div></div></details>`).join('');
+})();
+
+</script>

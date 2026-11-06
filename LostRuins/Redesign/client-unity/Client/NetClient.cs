@@ -24,18 +24,22 @@ namespace LostRuins.Client
         EndPoint from = new IPEndPoint(IPAddress.Any, 0);
         ushort sendSeq;
         float connectTimer;
+        readonly ClassId wantedClass;
 
         public bool Connected { get; private set; }
         public ushort PlayerId { get; private set; }
         public MoveState SpawnState { get; private set; }
+        public ClassId Class { get; private set; }
+        public ushort LastSnapshotTick { get; private set; }   // 지금 처리 중인 스냅샷의 서버 틱 (이벤트에 붙임)
         public long BytesIn { get; private set; }
         public long BytesOut { get; private set; }
 
         public event Action<Snapshot> SnapshotReceived;    // 넘겨받은 Snapshot은 다음 패킷에서 재사용되므로 보관하지 말 것
         public event Action<GameEvent> EventReceived;      // 중복 제거 후 1번씩
 
-        public NetClient(string host, int port)
+        public NetClient(string host, int port, ClassId cls)
         {
+            wantedClass = cls;
             server = new IPEndPoint(IPAddress.Parse(host), port);
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             socket.Blocking = false;
@@ -74,6 +78,7 @@ namespace LostRuins.Client
         {
             writer.Reset();
             Protocol.WriteHeader(writer, new Header { Type = type, Seq = sendSeq++, Ack = acks.Ack, AckBits = acks.Bits });
+            if (type == PacketType.Connect) Protocol.WriteConnect(writer, wantedClass);
             if (inputs != null) Protocol.WriteInputs(writer, inputs);
             socket.SendTo(writer.Buffer, writer.Length, SocketFlags.None, server);
             BytesOut += writer.Length;
@@ -87,14 +92,16 @@ namespace LostRuins.Client
             acks.OnReceived(h.Seq);
             if (h.Type == PacketType.Accept)
             {
-                PlayerId = reader.ReadU16(); reader.ReadU16();
-                SpawnState = Protocol.ReadMoveState(reader);
-                Connected = reader.Ok;
+                var a = Protocol.ReadAccept(reader);
+                if (!reader.Ok) return;
+                PlayerId = a.PlayerId; Class = a.Cls; SpawnState = a.Spawn;
+                Connected = true;
                 return;
             }
             if (h.Type != PacketType.Snapshot) return;
             Protocol.ReadSnapshot(reader, snapshot);
             if (!reader.Ok) return;                             // 망가진 패킷은 통째로 버림
+            LastSnapshotTick = snapshot.ServerTick;
             var handler = EventReceived;
             for (int i = 0; i < snapshot.Events.Count; ++i)
             {

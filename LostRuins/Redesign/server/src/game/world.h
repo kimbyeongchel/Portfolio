@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "../shared/protocol.h"
-#include "skills.h"
+#include "classes.h"
 
 namespace lr {
 
@@ -27,21 +27,29 @@ class Rng {  // xorshift64*: 서버만 굴리는 난수 (데미지 편차, 치�
   uint64_t s_;
 };
 
-enum class Action : uint8_t { kIdle = 0, kMove = 1, kJump = 2, kDodge = 3, kAttack = 4, kDead = 5 };
+enum class Action : uint8_t { kIdle = 0, kMove = 1, kJump = 2, kDodge = 3, kAttack = 4, kDead = 5, kCharge = 6 };
 
 struct Player {
   uint16_t id = 0;
-  MoveState mv;
-  int hp = kArcherStats.maxHp;
+  ClassId cls = ClassId::kArcher;
+  MoveState mv;     // ┐ 클라도 똑같이 계산하는 부분 (예측 + 재조정 대상)
+  AbilityState ab;  // ┘
+  int hp = 100;
   bool alive = true;
   uint16_t respawnTimer = 0;
-  bool started = false;  // 입력 버퍼가 처음 찰 때까지 시뮬레이션하지 않음
-  uint16_t lastSeq = 0;  // 마지막으로 처리한 입력 번호 → 스냅샷에 실어 재조정 기준
+  bool started = false;   // 입력 버퍼가 찰 때까지 시뮬레이션하지 않음 (접속 직후, 부활 직후)
+  bool anyInput = false;  // 입력을 하나라도 처리했나 → 이후로는 lastSeq보다 옛 번호를 거름
+  uint16_t lastSeq = 0;   // 마지막으로 처리한 입력 번호 → 스냅샷에 실어 재조정 기준
   InputCmd lastInput;
   std::deque<InputCmd> queue;
-  std::array<uint16_t, 4> cooldown{};
-  uint8_t basicCount = 0;
-  uint8_t attackAnim = 0;
+  // ---- 서버만 아는 전투 상태 (클라는 이벤트·스냅샷으로 결과만 받음) ----
+  int shield = 0;
+  uint16_t shieldTicks = 0;
+  uint16_t buffTicks = 0;       // 남은 시간만 저장 → 수치는 매번 기본값 + 버프로 다시 계산
+  uint16_t passiveTimer = 0;    // 창술사: 강화 공격 충전, 힐러: 마지막 피격 이후 시간
+  uint8_t basicCount = 0;       // 궁수: 기본 공격 횟수
+  bool empoweredSwing = false;  // 창술사: 지금 휘두르는 공격이 강화 공격인가
+  std::vector<uint32_t> struck;  // 이번 동작에서 이미 맞은 (판정 번호 << 16 | 대상) → 같은 대상 중복 히트 방지
 };
 
 struct Monster {
@@ -52,18 +60,35 @@ struct Monster {
   State state = State::kIdle;
   uint16_t timer = 0;
   uint16_t target = 0;
+  uint16_t defDownTicks = 0;  // 저주: 받는 피해 증가 (중첩 대신 시간 갱신)
+  uint8_t burnLeft = 0;       // 화상: 남은 횟수 (중첩 대신 횟수 갱신)
+  uint16_t burnTimer = 0;
+  uint16_t burnOwner = 0;
 };
 
 struct Projectile {
   uint16_t id = 0, owner = 0;
   float x = 0, y = 0, z = 0, vx = 0, vy = 0, vz = 0;
-  uint16_t ttl = 0;
-  int damage = 0;
+  uint16_t ttl = 0, age = 0;
+  int damage = 0;  // 쏘는 순간 굴려 둠 (맞는 순간의 버프가 아니라 쏜 순간의 공격력)
   uint8_t crit = 0;
+  ClassId cls = ClassId::kArcher;
+  uint8_t slot = 0;  // 클라가 어떤 모양(화살·번개검·화염구…)으로 그릴지 고르는 데 사용
+  const ShotDef* def = nullptr;
+};
+
+struct Zone {  // 힐러 E 저주 장판
+  uint16_t id = 0, owner = 0;
+  float x = 0, y = 0, z = 0;
+  uint16_t ttl = 0, timer = 0;
+};
+
+struct CombatStats {  // 버프·패시브를 반영한 "지금" 수치
+  float atk, def, crit;
 };
 
 struct WorldStats {
-  uint64_t shots = 0, hits = 0, kills = 0, playerDowns = 0;
+  uint64_t shots = 0, hits = 0, kills = 0, playerDowns = 0, heals = 0, blocks = 0;
   uint64_t repeatedInputs = 0;  // 입력이 제때 안 와서 직전 입력을 반복한 횟수 (재조정의 원인)
   uint64_t droppedInputs = 0;   // 큐가 넘쳐서 버린 입력
 };
@@ -77,7 +102,7 @@ class World {
  public:
   // inputBufferTicks: 서버가 처리 전에 모아 둘 입력 수. 0 = 즉시 처리, 1 = 33ms 여유
   World(uint64_t seed, int monsterCount, int inputBufferTicks = 1);
-  uint16_t AddPlayer();
+  uint16_t AddPlayer(ClassId cls = ClassId::kArcher);
   void RemovePlayer(uint16_t id);
   void PushInput(uint16_t playerId, const InputCmd& in);
   void Step();
@@ -87,16 +112,35 @@ class World {
   uint32_t Tick() const { return tick_; }
   const Level& GetLevel() const { return level_; }
   size_t MonsterCount() const { return monsters_.size(); }
-  const std::vector<Projectile>& Projectiles() const { return projectiles_; }  // 읽기 전용 (테스트·디버그용)
-  static uint16_t NextIdAfter(uint16_t id);                                    // 화살 번호 순환 규칙
+  // 읽기 전용 (테스트·디버그용)
+  const std::vector<Projectile>& Projectiles() const { return projectiles_; }
+  const std::vector<Monster>& Monsters() const { return monsters_; }
+  const std::vector<Zone>& Zones() const { return zones_; }
+  CombatStats StatsOf(const Player& p) const;
+  static bool PassiveReady(const Player& p);  // HUD 표시용
+  // 테스트용: 몬스터를 원하는 위치에 두고 AI를 멈춤 / 플레이어 체력 설정
+  void PlaceMonster(size_t index, float x, float z, int hp);
+  void SetPlayerHp(uint16_t id, int hp);
+  void HurtPlayer(uint16_t id, int dmg) {
+    if (Player* p = FindPlayerMut(id)) DamagePlayer(*p, dmg, 0);
+  }
+  static uint16_t NextIdAfter(uint16_t id);  // 화살 번호 순환 규칙
   WorldStats stats;
 
  private:
   Player* FindPlayerMut(uint16_t id);
   void StepPlayer(Player& p);
-  void Fire(Player& p, const SkillDef& def, uint16_t yaw);
-  int RollDamage(float mul, bool forceCrit, uint8_t& crit);
+  void TickStatus(Player& p);
+  void ApplyAction(Player& p, const AbilityResult& r, uint16_t yaw);
+  void Activate(Player& p, const AbilityResult& r, const SkillEffect& e, uint16_t yaw);
+  void ApplyHit(Player& p, const HitDef& h, uint8_t index, uint16_t yaw);
+  void Shoot(Player& p, const AbilityResult& r, const ShotDef& s, uint16_t yaw);
+  void ApplySupport(Player& p, const SupportDef& s);
+  int RollDamage(const Player& p, uint8_t dmgIndex, bool forceCrit, uint8_t& crit);
+  void DamageMonster(Monster& m, int dmg, uint16_t src, uint8_t crit);
+  void ProjectileEnds(const Projectile& pr, bool hitSomething);
   void StepProjectiles();
+  void StepZones();
   void StepMonsters();
   void DamagePlayer(Player& p, int dmg, uint16_t source);
   void SpawnMonster(Monster& m);
@@ -113,6 +157,8 @@ class World {
   std::vector<Player> players_;
   std::vector<Monster> monsters_;
   std::vector<Projectile> projectiles_;
+  std::vector<Zone> zones_;
+  bool frozenMonsters_ = false;
   std::vector<GameEvent> events_;
 };
 

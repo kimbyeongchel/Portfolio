@@ -61,6 +61,15 @@ struct Level {
   std::vector<Box> boxes;
 };
 
+// 스킬이 이번 틱 이동에 주는 영향. abilities.h의 StepAbility가 만들고 Step이 읽는다. 기본값 = 영향 없음.
+struct MoveMods {
+  uint8_t lock = 0;    // 선딜·후딜: 이동·점프·구르기 금지
+  uint8_t noAim = 0;   // 우클릭이 조준(감속)이 아닌 직업 (창술사: 우클릭 = 방패 치기)
+  float speed = 0.0F;  // 0보다 크면 이 속도로만 이동 (충전·시전 중 감속). 점프·구르기 금지
+  float dashSpeed = 0.0F;  // 0보다 크면 dash 방향으로 강제 전진 (창술사 F)
+  int8_t dashX = 0, dashZ = 0;
+};
+
 // bool 10개 대신: 동작은 타이머 값으로, 조건은 grounded 하나로 (1편 F7)
 struct MoveState {
   float px = 0, py = 0, pz = 0;
@@ -90,9 +99,11 @@ inline bool Overlaps(const Box& b, float x, float y, float z) {
 }
 
 // 한 틱 이동. Rigidbody를 쓰지 않고 여기 한 곳에서만 위치와 속도를 바꾼다 (1편 F4).
-inline void Step(MoveState& s, const InputCmd& in, const Level& lv) {
+// m: 스킬 사용 중의 이동 제한. 스킬 코드가 velocity를 직접 건드리지 않고 "규칙"만 넘긴다.
+inline void Step(MoveState& s, const InputCmd& in, const Level& lv, const MoveMods& m = MoveMods{}) {
   const auto pressed = static_cast<uint8_t>(in.buttons & ~s.prevButtons);
   s.prevButtons = in.buttons;
+  const bool busy = m.lock != 0 || m.speed > 0.0F || m.dashSpeed > 0.0F;  // 스킬 중: 점프·구르기 시작 금지
 
   if ((pressed & kJump) != 0) {
     s.jumpBuf = kJumpBufferTicks;
@@ -106,7 +117,7 @@ inline void Step(MoveState& s, const InputCmd& in, const Level& lv) {
   }
   if (s.dodgeCd > 0) s.dodgeCd--;
 
-  if ((pressed & kDodge) != 0 && s.grounded != 0 && s.dodgeT == 0 && s.dodgeCd == 0 &&
+  if ((pressed & kDodge) != 0 && !busy && s.grounded != 0 && s.dodgeT == 0 && s.dodgeCd == 0 &&
       (in.moveX != 0 || in.moveZ != 0)) {
     s.dodgeT = kDodgeTicks;
     s.dodgeCd = kDodgeCooldownTicks;
@@ -122,10 +133,22 @@ inline void Step(MoveState& s, const InputCmd& in, const Level& lv) {
     wz = static_cast<float>(s.dodgeZ) / 127.0F;
     speed = kDodgeSpeed;
     s.dodgeT--;
+  } else if (m.dashSpeed > 0.0F) {
+    wx = static_cast<float>(m.dashX) / 127.0F;
+    wz = static_cast<float>(m.dashZ) / 127.0F;
+    speed = m.dashSpeed;
+  } else if (m.lock != 0) {
+    speed = 0.0F;  // 제자리 (공중이면 수직으로만 떨어짐)
   } else {
     wx = static_cast<float>(in.moveX) / 127.0F;
     wz = static_cast<float>(in.moveZ) / 127.0F;
-    speed = (in.buttons & kAim) != 0 ? kAimSpeed : (in.buttons & kSprint) != 0 ? kSprintSpeed : kMoveSpeed;
+    if (m.speed > 0.0F) {
+      speed = m.speed;
+    } else if ((in.buttons & kAim) != 0 && m.noAim == 0) {
+      speed = kAimSpeed;
+    } else {
+      speed = (in.buttons & kSprint) != 0 ? kSprintSpeed : kMoveSpeed;
+    }
   }
   const float len2 = wx * wx + wz * wz;
   if (len2 > 1.0F) {
@@ -136,7 +159,8 @@ inline void Step(MoveState& s, const InputCmd& in, const Level& lv) {
   s.vx = wx * speed;
   s.vz = wz * speed;
 
-  if (s.jumpBuf > 0 && s.coyote > 0 && s.dodgeT == 0) {  // 입력한 틱에 바로 이륙
+  if (s.jumpBuf > 0 && s.coyote > 0 && s.dodgeT == 0 &&
+      !busy) {  // 입력한 틱에 바로 이륙 (후딜 중 누른 점프는 버퍼에 남음)
     s.vy = kJumpVelocity;
     s.jumpBuf = 0;
     s.coyote = 0;

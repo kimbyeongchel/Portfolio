@@ -1,5 +1,4 @@
-// 타입 검사 전용 최소 스텁 (CI에서 Unity 없이 Unity 스크립트를 컴파일해 보기 위함).
-// 실제 Unity 동작을 흉내 내지 않는다. Unity 프로젝트에는 넣지 말 것.
+// 타입 검사 전용 최소 스텁. 실제 Unity 동작을 흉내 내지 않는다.
 using System;
 namespace UnityEngine {
   public class Object { public static T Instantiate<T>(T original, Transform parent) where T : Object { return original; } }
@@ -7,6 +6,9 @@ namespace UnityEngine {
   public class Behaviour : Component { public bool enabled; }
   public class MonoBehaviour : Behaviour { }
   public sealed class GameObject : Object { public void SetActive(bool v) { } }
+  public class ScriptableObject : Object { }
+  [AttributeUsage(AttributeTargets.Class)] public sealed class CreateAssetMenuAttribute : Attribute { public string fileName; public string menuName; }
+  public struct Color { public float r, g, b, a; public Color(float r, float g, float b, float a) { this.r = r; this.g = g; this.b = b; this.a = a; } public static Color white { get { return new Color(1, 1, 1, 1); } } }
   public class Transform : Component { public Vector3 position; public Quaternion rotation; public void SetPositionAndRotation(Vector3 p, Quaternion r) { } }
   [AttributeUsage(AttributeTargets.Field)] public sealed class SerializeField : Attribute { }
   public struct Vector2 { public float x, y; }
@@ -41,6 +43,8 @@ namespace UnityEngine {
     public void SetFloat(int id, float v, float damp, float dt) { }
     public void SetBool(int id, bool v) { }
     public void SetInteger(int id, int v) { }
+    public void SetFloat(int id, float v) { }
+    public void SetTrigger(int id) { }
   }
   public class ParticleSystem : Component { public void Play() { } }
   public static class Debug { public static void LogError(object m, Object ctx) { } }
@@ -57,4 +61,4 @@ namespace UnityEngine.InputSystem {
   public class InputAction { public T ReadValue<T>() where T : struct { return default(T); } public bool IsPressed() { return false; } public bool WasPressedThisFrame() { return false; } }
   public class InputActionReference : UnityEngine.Object { public InputAction action; }
 }
-namespace TMPro { public class TMP_Text : UnityEngine.Behaviour { public void SetText(string s, float a) { } } }
+namespace TMPro { public class TMP_Text : UnityEngine.Behaviour { public UnityEngine.Color color; public void SetText(string s, float a) { } } }
