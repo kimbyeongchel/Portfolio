@@ -11,12 +11,14 @@
 | 문서 | 내용 |
 |---|---|
 | [1편 기술 포스트모템](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/postmortem.html) | 원본 진단. 2~3초 지연, 굼뜬 점프, 판정 불일치 등 문제 11가지의 증상·근거·원인·해결 |
-| [2편 재설계서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/redesign.html) | 재설계서. 무엇이 가장 크게 바뀌는지, 구조, 클래스 다이어그램, 전체 소스, 측정값, 8개월 로드맵 |
-| [3편 해설서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/guide.html) | 해설서. 서버 개념을 비유·애니메이션·시뮬레이션으로 설명, 재검증 기록, 코드 한 줄씩 해설 |
-| [4편 직업 재설계](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/classes.html) | 직업 재설계. 네 직업의 원본 동작·버그, 재설계 표와 코드, 스킬 타임라인, 테스트, 고민 노트 |
+| [2편 재설계서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/redesign.html) | 무엇이 가장 크게 바뀌는지, 구조, 클래스 다이어그램, 전체 소스, 측정값, 8개월 로드맵 |
+| [3편 해설서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/guide.html) | 서버 개념을 비유·애니메이션·시뮬레이션으로 설명, 재검증 기록, 코드 한 줄씩 해설 |
+| [4편 직업 재설계](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/classes.html) | 네 직업의 원본 동작·버그, 재설계 표와 코드, 스킬 타임라인, 테스트, 고민 노트 |
 | [docs/REVIEW.md](docs/REVIEW.md) | 재검증에서 고친 21개 항목과 이유 |
 
-2·3편 문서는 직업을 추가하기 전(궁수만 있던) 코드와 수치를 기준으로 합니다. 직업 추가로 바뀐 패킷 크기와 측정값은 4편(classes.html)과 아래 표가 최신입니다.
+읽는 순서: 처음이라면 3편(개념) → 2편(설계) → 4편(직업 코드), 시간이 없다면 4편부터. 1편은 "원래 무엇이 문제였나"를 볼 때 읽습니다.
+
+2·3편 문서는 직업을 추가하기 전(궁수만 있던) 코드와 수치를 기준으로 합니다. 뼈대를 이해하기 쉬운 작은 버전이라 그대로 두었습니다. 직업 추가로 바뀐 패킷 크기와 측정값은 4편(classes.html)과 아래 표가 최신입니다.
 
 HTML 원본은 [docs/](docs/) 폴더에 있습니다. GitHub에서 파일을 직접 열면 소스가 보이므로, 위 링크(GitHub Pages)로 여세요.
 
@@ -43,7 +45,7 @@ Redesign/
 │  ├─ Client/                 LocalPlayerPredictor, SnapshotInterpolator, EventScheduler, NetClient (Unity 무관)
 │  ├─ Unity/                  MonoBehaviour: GameClient, InputReader, ClientCamera, 뷰, 풀, ClassVisuals(연출 표), SkillBarView
 │  └─ Tests/                  ParityTest.cs (mono), Stub/UnityStub.cs (CI 타입 검사 전용)
-└─ docs/                      redesign.html, guide.html, classes.html, REVIEW.md
+└─ docs/                      index.html(목차), postmortem.html(1편), redesign.html(2편), guide.html(3편), classes.html(4편), REVIEW.md
 ```
 
 ## 빌드 · 실행 · 테스트
