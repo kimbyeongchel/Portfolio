@@ -34,3 +34,8 @@
 > - 캐릭터 직업 영상 : https://drive.google.com/file/d/1ED7gzx4T1EU8Si7XoapQFjzEjf-GjC9a/view?usp=sharing
 > - 2분 시연 영상 : https://drive.google.com/file/d/169qa5i7a4x9qzwMlsXnY8VzoMYnaU15U/view?usp=sharing
 > - 테스팅 풀영상 : https://drive.google.com/file/d/1nzQzsq8DT3ueeiaOKH3v3s4UmExwdQyC/view?usp=sharing
+
+## 5. 재설계 (Redesign)
+> - 이 프로젝트의 플레이어·멀티플레이 구조를 C++ 권위 서버 + Unity 클라이언트로 다시 설계한 프로토타입입니다.
+> - 전사·궁수·창술사·힐러 네 직업을 상속 대신 데이터 표와 공용 엔진으로 옮겼고, 원본에서 찾은 버그를 테스트로 고정했습니다.
+> - 소스, 테스트, 측정 결과, 설명 문서: [Redesign/](Redesign/README.md)

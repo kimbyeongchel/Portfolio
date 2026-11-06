@@ -1,0 +1,14 @@
+# CI와 로컬에서 같은 기준으로 검사한다
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  performance-*,
+  clang-analyzer-*,
+  cppcoreguidelines-pro-type-member-init,
+  cppcoreguidelines-special-member-functions,
+  cppcoreguidelines-narrowing-conversions,
+  modernize-use-nullptr,
+  modernize-use-override,
+  readability-implicit-bool-conversion
+HeaderFilterRegex: 'src/.*'
