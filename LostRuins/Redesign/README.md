@@ -6,16 +6,18 @@
 
 ## 문서
 
+**[문서 목차 바로 열기](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/)** · 아래 링크를 누르면 브라우저에서 바로 열립니다.
+
 | 문서 | 내용 |
 |---|---|
-| [docs/redesign.html](docs/redesign.html) | 재설계서. 무엇이 가장 크게 바뀌는지, 구조, 클래스 다이어그램, 전체 소스, 측정값, 8개월 로드맵 |
-| [docs/guide.html](docs/guide.html) | 해설서. 서버 개념을 비유·애니메이션·시뮬레이션으로 설명, 재검증 기록, 코드 한 줄씩 해설 |
-| [docs/classes.html](docs/classes.html) | 직업 재설계. 네 직업의 원본 동작·버그, 재설계 표와 코드, 스킬 타임라인, 테스트, 고민 노트 |
+| [2편 재설계서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/redesign.html) | 재설계서. 무엇이 가장 크게 바뀌는지, 구조, 클래스 다이어그램, 전체 소스, 측정값, 8개월 로드맵 |
+| [3편 해설서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/guide.html) | 해설서. 서버 개념을 비유·애니메이션·시뮬레이션으로 설명, 재검증 기록, 코드 한 줄씩 해설 |
+| [4편 직업 재설계](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/classes.html) | 직업 재설계. 네 직업의 원본 동작·버그, 재설계 표와 코드, 스킬 타임라인, 테스트, 고민 노트 |
 | [docs/REVIEW.md](docs/REVIEW.md) | 재검증에서 고친 21개 항목과 이유 |
 
 2·3편 문서는 직업을 추가하기 전(궁수만 있던) 코드와 수치를 기준으로 합니다. 직업 추가로 바뀐 패킷 크기와 측정값은 4편(classes.html)과 아래 표가 최신입니다.
 
-HTML 문서는 내려받아 브라우저로 열면 됩니다(인터넷이 없으면 시스템 글꼴로 보입니다).
+HTML 원본은 [docs/](docs/) 폴더에 있습니다. GitHub에서 파일을 직접 열면 소스가 보이므로, 위 링크(GitHub Pages)로 여세요.
 
 ## 가장 크게 바뀌는 것
 
