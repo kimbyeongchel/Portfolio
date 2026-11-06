@@ -404,7 +404,7 @@ article.c{background:var(--surface);border:1px solid var(--line);border-radius:1
   <h1>LostRuins 직업 재설계</h1>
   <p class="lede">전사·궁수·창술사·힐러 네 직업의 코드를 어떻게 다시 짰는지 보여 줍니다. 원본이 실제로 하던 일과 그 안에서 찾은 버그를 먼저 확인하고, 재설계한 표와 코드, 그 동작을 고정한 테스트를 차례로 봅니다. 마지막 장에는 그동안 이야기한 고민들을 하나씩 정리해 답을 달았습니다.</p>
   <div class="meta">
-    <span><b>1편</b> LostRuins 기술 포스트모템 <small>(팀원 코드 인용이 있어 비공개)</small></span>
+    <span><b>1편</b> <a href="postmortem.html">LostRuins 기술 포스트모템</a></span>
     <span><b>2편</b> <a href="redesign.html">LostRuins 재설계서</a></span>
     <span><b>3편</b> <a href="guide.html">LostRuins 해설서</a></span>
     <span><b>코드</b> Portfolio / LostRuins / Redesign (lostruins-redesign 브랜치)</span>
@@ -421,7 +421,7 @@ article.c{background:var(--surface);border:1px solid var(--line);border-radius:1
   <div class="col stack">
     <p>가장 궁금한 것이 직업 코드라면 <a href="#s-class">04장</a>부터 보셔도 됩니다. 탭을 고르면 그 직업의 원본 동작, 원본에서 찾은 문제, 재설계한 표, 실제 코드, 그 동작을 지키는 테스트가 한 화면에 나옵니다. 03장의 타임라인은 그 표의 숫자가 화면에서 어떻게 보이는지 움직여 보여 줍니다.</p>
     <p>모든 숫자에 출처를 붙였습니다. <span class="ev ev-meas">실측</span>은 이 분석 환경에서 프로토타입을 돌려 잰 값, <span class="ev ev-test">테스트 통과</span>는 자동 테스트가 확인한 동작, <span class="ev ev-fact">코드 확인</span>은 원본 스크립트·프리팹에서 직접 읽은 값, <span class="ev ev-calc">계산</span>은 표의 숫자로 계산한 값, <span class="ev ev-sim">시뮬레이션</span>은 이 페이지 안에서 가정을 두고 돌린 값입니다. Unity 안에서 실행해 본 값은 없습니다.</p>
-    <p class="note">원본 코드 인용은 본인이 작성한 스크립트(병철 폴더)에서만 했습니다. 팀원 코드는 인용하지 않았습니다.</p>
+    <p class="note">4편의 원본 코드 인용은 본인이 작성한 스크립트(병철 폴더)에서만 했습니다.</p>
   </div>
 </section>
 
@@ -595,7 +595,7 @@ const DATA = {"classes": [{"name": "Warrior", "hp": 100, "atk": 1.5, "def": 0.2,
   const fr = Math.fround;
   const TICK = 1000 / 30;
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const P1 = 'https://claude.ai/artifact/Su8MPkTj3SBDtMdJKL4VXk', P2 = 'redesign.html', P3 = 'guide.html';
+  const P1 = 'postmortem.html', P2 = 'redesign.html', P3 = 'guide.html';
   const C = DATA.classes, S = DATA.snip;
 
   // ---------- 코드 블록 ----------
@@ -998,7 +998,7 @@ const DATA = {"classes": [{"name": "Warrior", "hp": 100, "atk": 1.5, "def": 0.2,
   $('#bench-tbl').innerHTML = '<thead><tr><th class="num">몬스터</th><th class="num">틱 평균</th><th class="num">틱 p99</th><th class="num">예산 대비</th></tr></thead><tbody>' + DATA.bench.map(b => `<tr><td class="num">${fmt(b.monsters)}</td><td class="num">${b.tick_us_avg.toFixed(1)}µs</td><td class="num">${b.tick_us_p99.toFixed(1)}µs</td><td class="num">${b.budget_share_pct.toFixed(3)}%</td></tr>`).join('') + '</tbody>';
 
   // ---------- 09 고민 노트 ----------
-  const L = (href, t) => href.startsWith(P1) ? t : `<a href="${href}">${t}</a>`;  // 1편은 비공개라 글자만
+  const L = (href, t) => `<a href="${href}">${t}</a>`;
   const NOTES = [
     ['코드가 전부 스파게티 같다 (SOLID, 의존성, 결합도)', 'ok', '맞음',
       '"아무것도 모를 때 짜서 혼잡하고 SOLID·의존성·커플링이 안 좋다."',
