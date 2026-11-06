@@ -1,6 +1,6 @@
 # 재검증 기록
 
-2편 프로토타입을 저장소에 넣기 전에 현업 기준으로 다시 검사하고 고친 항목입니다. 같은 내용을 그림과 함께 보려면 [docs/guide.html](guide.html)의 15장을 여세요.
+2편 프로토타입을 저장소에 넣기 전에 현업 기준으로 다시 검사하고 고친 항목입니다. 같은 내용을 그림과 함께 보려면 [3편 해설서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/guide.html)의 15장을 여세요.
 
 ## 사용한 도구와 결과
 
@@ -154,7 +154,7 @@
 
 ## 4편(직업 추가) 때 고친 항목
 
-직업 네 개를 옮기면서 측정과 정적 분석으로 찾은 것입니다. 자세한 설명은 [docs/classes.html](classes.html)의 08장에 있습니다.
+직업 네 개를 옮기면서 측정과 정적 분석으로 찾은 것입니다. 자세한 설명은 [4편 직업 재설계](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/classes.html)의 08장에 있습니다.
 
 ### R18. 부활 직후 옛 입력을 부활 위치에 반복 (정확성)
 
