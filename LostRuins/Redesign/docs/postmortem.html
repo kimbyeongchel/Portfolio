@@ -1,0 +1,1450 @@
+<title>LostRuins 기술 포스트모템</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one reading column (~46rem) with wide figures; each finding is a "case file" — header strip, evidence, cause, fix, result table, verification. */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#eceff3; --ink:#13171b; --ink-2:#47505a; --muted:#79828c;
+  --line:#dce1e6; --line-strong:#c2c9d0; --accent:#2b55c9; --accent-soft:#e6ecfb;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --crit:#d03b3b; --serious:#ec835a; --warn:#fab219; --good:#0ca30c; --good-ink:#006300;
+  --code-bg:#eef1f5; --code-ink:#1d252c; --cm:#68727d; --hl:rgba(208,59,59,.11); --hl-good:rgba(12,163,12,.10);
+  --f-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", "D2Coding", ui-monospace, SFMono-Regular, Menlo, Consolas, "IBM Plex Sans KR", monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1114; --surface:#161a1e; --surface-2:#1d2227; --ink:#e7ebee; --ink-2:#b3bcc4; --muted:#87909a;
+    --line:#2a3037; --line-strong:#3b434c; --accent:#86a4f3; --accent-soft:#1c2541;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+    --good-ink:#3fc23f; --code-bg:#11151a; --code-ink:#dde4ea; --cm:#7f8a96; --hl:rgba(230,103,103,.16); --hl-good:rgba(12,163,12,.16);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1114; --surface:#161a1e; --surface-2:#1d2227; --ink:#e7ebee; --ink-2:#b3bcc4; --muted:#87909a;
+  --line:#2a3037; --line-strong:#3b434c; --accent:#86a4f3; --accent-soft:#1c2541;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --good-ink:#3fc23f; --code-bg:#11151a; --code-ink:#dde4ea; --cm:#7f8a96; --hl:rgba(230,103,103,.16); --hl-good:rgba(12,163,12,.16);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.72;word-break:keep-all;overflow-wrap:anywhere;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 72px}
+.wrap{max-width:62rem;margin:0 auto}
+.col{max-width:46rem}
+h1,h2,h3{text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:clamp(2rem,4.6vw,3.1rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.55rem;font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.22rem;font-weight:700}
+p{margin:0}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible,button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+:not(pre)>code{background:var(--surface-2);padding:.08em .35em;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.ink2{color:var(--ink-2)}
+.stack{display:flex;flex-direction:column;gap:1rem}
+.stack-lg{display:flex;flex-direction:column;gap:1.6rem}
+
+/* header */
+header.top{padding-block:56px 36px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:18px}
+.lede{font-size:1.08rem;color:var(--ink-2);max-width:44rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--f-mono);font-size:.8rem;color:var(--ink-2)}
+.meta span b{color:var(--ink);font-weight:500}
+
+/* evidence badges */
+.ev{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-mono);font-size:.72rem;line-height:1;padding:4px 7px;border-radius:4px;white-space:nowrap;vertical-align:.12em;color:var(--ink-2);border:1px solid var(--line-strong)}
+.ev-fact{background:var(--surface-2);border-color:transparent;color:var(--ink)}
+.ev-calc{border-style:solid}
+.ev-sim{border-style:dotted;border-width:1.5px}
+.ev-est{border-style:dashed;border-width:1.5px;color:var(--ink-2)}
+.legend-ev{display:grid;grid-template-columns:repeat(auto-fit,minmax(13.5rem,1fr));gap:10px 22px;font-size:.88rem;color:var(--ink-2)}
+.legend-ev div{display:flex;gap:10px;align-items:baseline}
+.note{border-left:3px solid var(--line-strong);padding:2px 0 2px 14px;color:var(--ink-2);font-size:.93rem}
+
+/* severity */
+.sev{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;white-space:nowrap}
+.sev svg{width:12px;height:12px;flex:none}
+.sev-crit svg{fill:var(--crit)} .sev-serious svg{fill:var(--serious)} .sev-warn svg{fill:var(--warn)} .sev-low svg{fill:var(--muted)}
+
+section.part{padding-block:56px 8px;display:flex;flex-direction:column;gap:22px}
+section.part>h2{display:flex;gap:14px;align-items:baseline}
+section.part>h2 .num{font-family:var(--f-mono);font-size:.95rem;color:var(--muted);font-weight:500}
+
+/* key figures */
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(12.5rem,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.fig{background:var(--surface);padding:18px 18px 16px;display:flex;flex-direction:column;gap:6px}
+.fig .v{font-size:2.1rem;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.fig .v small{font-size:1rem;font-weight:500;color:var(--ink-2);margin-left:2px}
+.fig .l{font-size:.9rem;color:var(--ink-2);line-height:1.5}
+.fig .ref{margin-top:auto;padding-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-weight:600;font-size:.78rem;color:var(--muted);letter-spacing:.02em;background:var(--surface-2)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:.84rem;white-space:nowrap}
+td .mono{white-space:nowrap}
+.idx td:first-child{font-family:var(--f-mono);font-weight:600}
+.idx a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line-strong)}
+.idx a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+table.res{min-width:34rem}
+table.idx{min-width:38rem}
+.res td:nth-child(2){color:var(--ink-2)}
+.res td:nth-child(3){font-weight:600}
+.res td:nth-child(2),.res td:nth-child(3){font-family:var(--f-mono);font-size:.84rem}
+.bar-cell{display:flex;align-items:center;gap:8px}
+.bar-cell i{display:block;height:8px;border-radius:0 3px 3px 0;background:var(--s1)}
+
+/* finding card */
+article.f{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:26px clamp(16px,3.4vw,34px) 28px;display:flex;flex-direction:column;gap:22px;scroll-margin-top:16px}
+.f-head{display:flex;flex-direction:column;gap:10px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.f-id{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.f-id .id{font-family:var(--f-mono);font-weight:600;font-size:.9rem;padding:3px 8px;border-radius:4px;background:var(--ink);color:var(--surface)}
+.f-id .cost{font-size:.8rem;color:var(--muted)}
+.symptom{font-size:1rem;color:var(--ink-2)}
+.symptom b{color:var(--ink);font-weight:600}
+.blk{display:flex;flex-direction:column;gap:10px;min-width:0}
+.blk>h4{margin:0;font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;font-family:var(--f-mono);font-weight:600;color:var(--muted);display:flex;gap:10px;align-items:center}
+.blk>h4::after{content:"";flex:1;height:1px;background:var(--line)}
+.blk p,.blk li{color:var(--ink)}
+.blk ul,.blk ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr));gap:22px}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);border-radius:var(--r);padding:14px 16px;overflow-x:auto;font-family:var(--f-mono);font-size:.8rem;line-height:1.62;tab-size:4;word-break:normal;overflow-wrap:normal;white-space:pre}
+pre .cm{color:var(--cm)}
+pre mark{background:var(--hl);color:inherit;border-radius:2px;padding:0 2px}
+pre mark.ok{background:var(--hl-good)}
+pre .file{display:block;color:var(--muted);font-size:.74rem;margin-bottom:6px}
+.verify{font-size:.9rem;color:var(--ink-2);background:var(--surface-2);border-radius:var(--r);padding:12px 14px}
+.verify b{color:var(--ink);font-weight:600}
+
+/* figures & charts */
+figure{margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+figcaption{font-size:.86rem;color:var(--ink-2);line-height:1.6}
+figcaption b{color:var(--ink)}
+.chart{width:100%;min-height:40px;position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:var(--f-body);font-size:12px;fill:var(--ink-2)}
+.chart .tick{fill:var(--muted);font-family:var(--f-mono);font-size:11px}
+.chart .val{fill:var(--ink);font-family:var(--f-mono);font-size:11.5px;font-weight:500}
+.chart .val-in{fill:#fff;font-family:var(--f-mono);font-size:11px;font-weight:500}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .axis{stroke:var(--line-strong);stroke-width:1}
+.chart [data-tip]{cursor:default}
+.keys{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.82rem;color:var(--ink-2)}
+.keys span{display:inline-flex;align-items:center;gap:6px}
+.keys i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.keys i.ln{height:3px;border-radius:2px;width:16px}
+.keys i.ring{width:12px;height:12px;border-radius:50%;background:transparent!important;border:2px solid var(--ink)}
+.diagram{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:14px}
+.diagram svg{display:block;width:100%;min-width:640px;height:auto;color:var(--ink)}
+.diagram svg text{font-family:var(--f-body);fill:currentColor}
+.diagram svg .m{font-family:var(--f-mono)}
+.diagram svg .sub{fill:var(--muted)}
+
+/* sims */
+.sim{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.sim canvas{display:block;width:100%;background:var(--surface)}
+.sim-bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 12px;border-top:1px solid var(--line);background:var(--surface-2);font-size:.85rem}
+.sim-bar .grow{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:6px;overflow:hidden}
+.seg button{all:unset;cursor:pointer;padding:5px 11px;font-size:.82rem;color:var(--ink-2);background:var(--surface)}
+.seg button+button{border-left:1px solid var(--line-strong)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.btn{all:unset;cursor:pointer;padding:6px 13px;border-radius:6px;font-size:.84rem;font-weight:600;background:var(--accent);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-strong);font-weight:500}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:1px;background:var(--line);border-top:1px solid var(--line)}
+.readout div{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.readout .k{font-size:.76rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.readout .k i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.readout .x{font-family:var(--f-mono);font-size:1.05rem;font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{accent-color:var(--accent);width:min(220px,100%)}
+label.rng{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* state grid */
+.toggles{display:flex;flex-wrap:wrap;gap:6px}
+.toggles button{all:unset;cursor:pointer;font-family:var(--f-mono);font-size:.8rem;padding:5px 10px;border-radius:5px;border:1px solid var(--line-strong);color:var(--ink-2);background:var(--surface)}
+.toggles button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.cells{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;max-width:34rem}
+.cells span{aspect-ratio:1;border-radius:3px;background:var(--surface-2);border:1px solid var(--line)}
+.cells span.ok{background:var(--s1);border-color:transparent;opacity:.85}
+.cells span.cur{outline:2px solid var(--ink);outline-offset:1px}
+.state-msg{font-size:.92rem;min-height:1.6em}
+.state-msg b.bad{color:var(--crit)} .state-msg b.okk{color:var(--good-ink)}
+
+.good-list li::marker{color:var(--good)}
+.tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--surface);font-size:.8rem;line-height:1.45;padding:7px 9px;border-radius:5px;max-width:240px;opacity:0;transform:translateY(4px);transition:opacity .12s, transform .12s}
+.tip.on{opacity:1;transform:none}
+.tip b{font-family:var(--f-mono);font-weight:600}
+footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);font-size:.84rem;color:var(--muted)}
+@media (max-width:560px){
+  body{font-size:15.5px}
+  .fig .v{font-size:1.8rem}
+  article.f{border-radius:8px}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">기술 포스트모템 · 졸업 작품 · 2024.03 – 2024.11</div>
+  <h1>LostRuins 기술 포스트모템</h1>
+  <p class="lede">플레이어 4개 직업 코드와 그 위에 얹힌 멀티플레이 동기화 코드를 원본 저장소 기준으로 진단했습니다. 당시 체감했던 증상(일부 플레이어 2~3초 지연, 데미지·이펙트 불일치, 굼뜬 점프)이 어느 줄에서 나오는지, 현업이라면 어떻게 고치는지, 고치면 수치가 어떻게 달라지는지를 정리했습니다.</p>
+  <div class="meta">
+    <span><b>Unity</b> 2021.3.20f1</span><span><b>네트워크</b> Photon PUN 2 + Voice</span><span><b>룸</b> 최대 3인</span>
+    <span><b>프레임</b> 기본 60fps (30/60/90/120 선택)</span><span><b>물리</b> 50Hz</span><span><b>기준 커밋</b> b58a402</span><span><b>2편</b> <a href="redesign.html">LostRuins 재설계서</a></span><span><b>3편</b> <a href="guide.html">LostRuins 해설서</a> (어려운 부분 쉽게)</span><span><b>4편</b> <a href="classes.html">LostRuins 직업 재설계</a> (직업 코드 · 고민 노트)</span>
+  </div>
+</header>
+
+<section class="part" aria-labelledby="h-how">
+  <h2 id="h-how"><span class="num">00</span>이 문서를 읽는 법</h2>
+  <div class="col stack">
+    <p>모든 주장에는 근거의 종류를 붙였습니다. <b>이 문서의 어떤 수치도 Unity에서 실행해 측정한 값이 아닙니다.</b> 코드·설정에서 읽은 사실, 그 값으로 계산한 이론치, 이 페이지 안의 시뮬레이션, 증상과의 연결을 추론한 추정을 구분했습니다. 추정은 각 항목 끝의 검증 방법으로 확인해야 합니다.</p>
+    <div class="legend-ev">
+      <div><span class="ev ev-fact">코드 확인</span><span>해당 줄을 직접 읽고 확인</span></div>
+      <div><span class="ev ev-fact">설정 확인</span><span>설정·프리팹·애니메이션 파일에서 확인</span></div>
+      <div><span class="ev ev-calc">계산</span><span>코드·설정 값으로 산출한 이론치</span></div>
+      <div><span class="ev ev-sim">시뮬레이션</span><span>이 페이지의 모델로 재현한 값</span></div>
+      <div><span class="ev ev-est">추정</span><span>코드 흐름과 증상으로 추론, 실행 미검증</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="part" aria-labelledby="h-sum">
+  <h2 id="h-sum"><span class="num">01</span>요약</h2>
+  <div class="figs">
+    <div class="fig"><div class="v">60<small>회/초</small></div><div class="l">조준하지 않고 서 있는 궁수 한 명이 보내는 RPC</div><div class="ref"><span class="ev ev-calc">계산</span>F1</div></div>
+    <div class="fig"><div class="v">0.45<small>초</small></div><div class="l">점프 키 입력부터 몸이 실제로 뜨기까지</div><div class="ref"><span class="ev ev-fact">설정 확인</span><span class="ev ev-calc">계산</span>F4</div></div>
+    <div class="fig"><div class="v">58<small>%</small></div><div class="l">120fps에서 캐릭터 위치가 갱신되지 않는 화면 프레임</div><div class="ref"><span class="ev ev-calc">계산</span>F5</div></div>
+    <div class="fig"><div class="v">90<small>%</small></div><div class="l">저장소 파일 75,422개 중 외부 아트·사운드 에셋</div><div class="ref"><span class="ev ev-fact">저장소 확인</span>F11</div></div>
+  </div>
+  <div class="col stack">
+    <p>가장 큰 문제는 네트워크입니다. <b>상태가 바뀌지 않아도 매 프레임 RPC를 보내는 경로</b>가 두 곳 있고, 서버 설정은 <b>TCP</b>로 저장돼 있습니다. 둘이 겹치면 손실이 있는 한 명의 연결에서 데이터가 줄줄이 막힙니다. "가까이 있는데 2~3초 늦던" 현상과 가장 잘 맞는 설명입니다. 데미지·이펙트가 어긋난 이유는 <b>판정 주체가 정해지지 않은 설계</b>이고, 점프가 굼뜬 이유는 <b>이륙을 애니메이션 이벤트에 맡긴 것</b>입니다.</p>
+    <p>코드 구조 문제(상속 복사, bool 상태, 매직 인덱스)는 그 자체로도 비용이지만, 더 중요한 건 <b>네트워크 버그의 직접 원인이 됐다</b>는 점입니다. 입력이 부모 클래스 안에 박혀 있어서 멀티 담당이 하위 클래스를 하나 더 만들어야 했고, 그 하위 클래스가 매 프레임 호출되는 함수에 RPC를 넣었습니다.</p>
+  </div>
+  <div class="tbl-wrap">
+    <table class="idx">
+      <thead><tr><th>ID</th><th>문제</th><th>체감 증상</th><th>심각도</th><th>고치는 비용</th></tr></thead>
+      <tbody>
+        <tr><td>F1</td><td><a href="#f1">매 프레임 RPC 전송</a></td><td>2~3초 지연</td><td><span class="sev sev-crit"><svg viewBox="0 0 12 12"><path d="M3.5 0h5L12 3.5v5L8.5 12h-5L0 8.5v-5z"/></svg>치명</span></td><td>낮음 · 조건문 몇 개</td></tr>
+        <tr><td>F2</td><td><a href="#f2">TCP 전송 설정</a></td><td>특정 플레이어만 수 초 지연</td><td><span class="sev sev-crit"><svg viewBox="0 0 12 12"><path d="M3.5 0h5L12 3.5v5L8.5 12h-5L0 8.5v-5z"/></svg>치명</span></td><td>매우 낮음 · 설정 1개</td></tr>
+        <tr><td>F3</td><td><a href="#f3">판정 주체 분열</a></td><td>데미지·이펙트 불일치</td><td><span class="sev sev-serious"><svg viewBox="0 0 12 12"><path d="M6 0l6 11H0z"/></svg>심각</span></td><td>중간</td></tr>
+        <tr><td>F4</td><td><a href="#f4">점프 지연·물리 주도권 분산</a></td><td>점프가 굼뜸, 경사면에서 튐</td><td><span class="sev sev-serious"><svg viewBox="0 0 12 12"><path d="M6 0l6 11H0z"/></svg>심각</span></td><td>중간~높음</td></tr>
+        <tr><td>F5</td><td><a href="#f5">프레임레이트 의존</a></td><td>움직임 끊김, 감도 변화</td><td><span class="sev sev-serious"><svg viewBox="0 0 12 12"><path d="M6 0l6 11H0z"/></svg>심각</span></td><td>낮음 · 설정 + 1줄</td></tr>
+        <tr><td>F6</td><td><a href="#f6">원격 캐릭터 Lerp 보간</a></td><td>다른 플레이어가 출렁임</td><td><span class="sev sev-warn"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5"/></svg>보통</span></td><td>중간</td></tr>
+        <tr><td>F7</td><td><a href="#f7">bool 상태와 숨은 로직 버그</a></td><td>패시브·회복이 이상함</td><td><span class="sev sev-warn"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5"/></svg>보통</span></td><td>중간</td></tr>
+        <tr><td>F8</td><td><a href="#f8">상속 복사와 중복</a></td><td>한쪽만 고쳐지는 버그</td><td><span class="sev sev-warn"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5"/></svg>보통</span></td><td>높음</td></tr>
+        <tr><td>F9</td><td><a href="#f9">GC 할당</a></td><td>순간 프레임 드랍 가능성</td><td><span class="sev sev-warn"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5"/></svg>보통</span></td><td>낮음~중간</td></tr>
+        <tr><td>F10</td><td><a href="#f10">조준 IK 가중치</a></td><td>조준 시 상체가 툭 꺾임</td><td><span class="sev sev-low"><svg viewBox="0 0 12 12"><rect x="0" y="4.5" width="12" height="3" rx="1.5"/></svg>낮음</span></td><td>낮음</td></tr>
+        <tr><td>F11</td><td><a href="#f11">저장소 위생</a></td><td>저작권 경고, 주석 깨짐</td><td><span class="sev sev-warn"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5"/></svg>보통</span></td><td>낮음</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="part" aria-labelledby="h-chain">
+  <h2 id="h-chain"><span class="num">02</span>2~3초 지연은 네 단계가 겹친 결과입니다</h2>
+  <div class="col"><p>지연은 버그 하나에서 나오지 않았습니다. 아래 네 단계가 순서대로 겹쳤다고 보는 것이 코드와 가장 잘 맞습니다. 각 단계는 따로 고칠 수 있고, 효과가 큰 순서는 2단계, 1단계, 4단계, 3단계입니다. <span class="ev ev-est">추정</span></p></div>
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 980 250" role="img" aria-label="매 프레임 RPC가 메시지량을 키우고, TCP가 손실 한 번에 전체 흐름을 멈추고, 10Hz Lerp와 서버 왕복이 지연을 더해 2~3초 지연이 된다">
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="10" y="40" width="200" height="110" rx="8"/>
+          <rect x="260" y="40" width="200" height="110" rx="8" style="stroke:var(--crit)" stroke-width="2"/>
+          <rect x="510" y="40" width="200" height="110" rx="8"/>
+          <rect x="760" y="40" width="210" height="110" rx="8"/>
+          <path d="M210 95H256" marker-end="url(#ah)"/><path d="M460 95H506" marker-end="url(#ah)"/><path d="M710 95H756" marker-end="url(#ah)"/>
+        </g>
+        <text x="22" y="30" class="m sub" font-size="11">1단계 · F1</text>
+        <text x="272" y="30" class="m sub" font-size="11">2단계 · F2</text>
+        <text x="522" y="30" class="m sub" font-size="11">3단계 · F6</text>
+        <text x="772" y="30" class="m sub" font-size="11">4단계 · F3</text>
+        <text x="26" y="70" font-size="15" font-weight="700">매 프레임 RPC</text>
+        <text x="26" y="94" font-size="12.5">조준 안 하는 궁수 60회/초</text>
+        <text x="26" y="113" font-size="12.5">패시브 대기 힐러 60회/초</text>
+        <text x="26" y="137" font-size="12.5" class="sub">룸 메시지 최대 582/초</text>
+        <text x="276" y="70" font-size="15" font-weight="700">TCP 순서 보장</text>
+        <text x="276" y="94" font-size="12.5">패킷 1개 손실 → 뒤의</text>
+        <text x="276" y="113" font-size="12.5">모든 데이터가 재전송 대기</text>
+        <text x="276" y="137" font-size="12.5" class="sub">재손실 시 대기 두 배씩</text>
+        <text x="526" y="70" font-size="15" font-weight="700">10Hz + Lerp</text>
+        <text x="526" y="94" font-size="12.5">0.1초 간격 스냅샷을</text>
+        <text x="526" y="113" font-size="12.5">지수 감쇠로 추적</text>
+        <text x="526" y="137" font-size="12.5" class="sub">약 +0.15초, 속도 출렁임</text>
+        <text x="776" y="70" font-size="15" font-weight="700">AllViaServer</text>
+        <text x="776" y="94" font-size="12.5">내 스킬도 서버를 돌아와야</text>
+        <text x="776" y="113" font-size="12.5">내 화면에서 실행</text>
+        <text x="776" y="137" font-size="12.5" class="sub">입력 반응 +왕복 시간</text>
+        <path d="M110 150V200H865V150" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".45"/>
+        <text x="490" y="226" font-size="14" font-weight="700" text-anchor="middle">손실이 있는 플레이어 연결에서 체감 지연 수백 ms ~ 수 초</text>
+      </svg>
+    </div>
+    <figcaption>빨간 테두리가 가장 큰 단일 원인입니다. 1단계의 메시지 폭주는 2단계에서 막힌 데이터의 양을 키워 회복을 늦춥니다. 3·4단계는 수 초를 만들지 못하지만, 0.1~0.3초를 더하고 체감 품질을 떨어뜨립니다.</figcaption>
+  </figure>
+</section>
+
+<section class="part" aria-labelledby="h-find">
+  <h2 id="h-find"><span class="num">03</span>항목별 진단</h2>
+
+<!-- F1 -->
+<article class="f" id="f1">
+  <div class="f-head">
+    <div class="f-id"><span class="id">F1</span><span class="sev sev-crit"><svg viewBox="0 0 12 12"><path d="M3.5 0h5L12 3.5v5L8.5 12h-5L0 8.5v-5z"/></svg>치명</span><span class="cost">고치는 비용: 낮음</span></div>
+    <h3>상태가 바뀌지 않아도 매 프레임 RPC를 보냅니다</h3>
+    <p class="symptom"><b>증상</b> 멀티에서 전반적인 지연, 특정 상황(궁수·힐러가 있을 때)에서 악화</p>
+  </div>
+  <div class="two">
+    <div class="blk"><h4>근거 <span class="ev ev-fact">코드 확인</span></h4>
+<pre><span class="file">Dealer.cs · attack() — Update에서 매 프레임 호출</span>if (aim_set &amp;&amp; !isDodge) { ... }
+<mark>else { usualState(); }</mark>   <span class="cm">// 우클릭 안 하면 매 프레임</span>
+
+<span class="file">MultiDealer.cs:78</span>public override void usualState() {
+    base.usualState();
+    <mark>photonView.RPC("RPCReroadArrow",</mark>
+        <mark>RpcTarget.AllViaServer, false);</mark>
+}</pre>
+<pre><span class="file">MultiHealer.cs:88 · passive() — PlayerState.Update에서 매 프레임</span>if (coolTime[0] &gt;= stateObejct.skillCoolTime[0]) {
+    def = 1f;
+    <mark>photonView.RPC("RPCPassive",</mark>
+        <mark>RpcTarget.AllViaServer, true);</mark>  <span class="cm">// 피격 전까지 계속</span>
+}</pre>
+    </div>
+    <div class="blk"><h4>원인</h4>
+      <p>싱글용 <code>usualState()</code>는 매 프레임 호출돼도 문제없는 대입문 묶음이었습니다. 멀티용 override가 그 안에 네트워크 전송을 넣으면서 비용이 <b>프레임 수만큼 곱해졌습니다.</b> "상태를 적용하는 코드"와 "상태가 바뀌었는지 판단하는 코드"가 분리돼 있지 않았던 것이 근본 원인입니다.</p>
+      <p>같은 패턴이 작은 규모로 두 곳 더 있습니다. <code>MultiLancer.cs:59</code>의 검기 끄기와 <code>MultiDealer.cs:98</code>의 장전 화살은 <code>activeSelf</code>로 조건을 걸었지만, 그 값이 <b>서버를 돌아온 뒤에야</b> 바뀝니다. 그래서 왕복 시간 동안 같은 RPC를 매 프레임 반복합니다.</p>
+      <p>모든 RPC는 기본적으로 Reliable입니다. 버려지지 않고 쌓이고, 순서대로 처리됩니다.</p>
+    </div>
+  </div>
+  <div class="blk"><h4>해결</h4>
+<pre><span class="file">바뀔 때만, 내 화면은 즉시, 나머지에게만</span>bool reloadVisible;                       <span class="cm">// 마지막으로 보낸 값</span>
+void SetReloadVisible(bool v) {
+<mark class="ok">    if (reloadVisible == v) return;</mark>        <span class="cm">// 변화 감지</span>
+    reloadVisible = v;
+    reloadArrow.SetActive(v);              <span class="cm">// 서버 왕복을 기다리지 않음</span>
+<mark class="ok">    photonView.RPC(nameof(RPCReroadArrow), RpcTarget.Others, v);</mark>
+}</pre>
+    <ul>
+      <li>자주 바뀌는 시각 상태(장전 화살, 패시브 오라)는 RPC가 아니라 직렬화 스트림의 비트 플래그 1바이트로 보냅니다. 이 경우 F7의 <code>[Flags] enum : byte</code>가 실제로 쓰입니다.</li>
+      <li>RPC 이름 문자열 대신 <code>nameof()</code>를 쓰면 오타가 컴파일 에러가 됩니다.</li>
+    </ul>
+  </div>
+  <div class="blk"><h4>결과</h4>
+    <div class="tbl-wrap"><table class="res">
+      <thead><tr><th>지표</th><th>현재</th><th>개선 후</th><th>근거</th></tr></thead>
+      <tbody>
+        <tr><td>룸 전체 메시지량 (최악)</td><td>582 msg/s</td><td>102 msg/s</td><td><span class="ev ev-calc">계산</span></td></tr>
+        <tr><td>대기 중인 궁수의 RPC</td><td>60회/초</td><td>0회/초</td><td><span class="ev ev-calc">계산</span></td></tr>
+        <tr><td>패시브 대기 중인 힐러의 RPC</td><td>60회/초</td><td>변화 시 1회</td><td><span class="ev ev-calc">계산</span></td></tr>
+      </tbody>
+    </table></div>
+    <figure>
+      <div class="keys" aria-hidden="true"><span><i style="background:var(--s1)"></i>위치 동기화 (10Hz)</span><span><i style="background:var(--s2)"></i>궁수 매 프레임 RPC</span><span><i style="background:var(--s3)"></i>힐러 매 프레임 RPC</span><span><i style="background:var(--s4)"></i>행동 이벤트</span></div>
+      <div class="chart" id="ch-msg"></div>
+      <figcaption><b>룸 메시지량 (msg/s), 3인 룸.</b> Photon은 RPC 1건을 송신 1 + 수신자별 1로 셉니다. AllViaServer는 보낸 사람에게도 돌아오므로 3인 룸에서 1건당 4메시지입니다. 가정: 60fps(DisplayOption 기본값), 직렬화 10Hz(번들된 PUN 소스의 기본값, 코드에서 변경 없음), 행동 이벤트 1인당 초당 1회. 점선은 Photon 문서가 권장하는 룸당 상한입니다.</figcaption>
+    </figure>
+    <figure>
+      <div class="sim">
+        <canvas id="cv-flow" height="260" aria-label="클라이언트 세 명과 서버 사이의 메시지 흐름 애니메이션"></canvas>
+        <div class="sim-bar">
+          <div class="seg" role="group" aria-label="코드 버전"><button id="flow-cur" aria-pressed="true">현재 코드</button><button id="flow-fix" aria-pressed="false">개선 후</button></div>
+          <span class="grow"></span>
+          <button class="btn ghost" id="flow-play">일시정지</button>
+        </div>
+        <div class="readout">
+          <div><span class="k">룸 메시지량</span><span class="x" id="flow-total">582 msg/s</span></div>
+          <div><span class="k"><i style="background:var(--s2)"></i>궁수 RPC</span><span class="x" id="flow-a">60 /s</span></div>
+          <div><span class="k"><i style="background:var(--s3)"></i>힐러 RPC</span><span class="x" id="flow-h">60 /s</span></div>
+        </div>
+      </div>
+      <figcaption><b>메시지 흐름 애니메이션.</b> 점 하나가 메시지 하나입니다. 실제 속도의 1/4로 재생합니다. 개선 후에는 위치 동기화와 가끔의 행동 이벤트만 남습니다.</figcaption>
+    </figure>
+  </div>
+  <p class="verify"><b>검증 방법</b> Photon 대시보드의 룸당 msg/s 그래프, 또는 <code>PhotonNetwork.NetworkingClient.LoadBalancingPeer.TrafficStatsEnabled = true</code> 후 초당 송신 명령 수를 로그로 남겨 대기 중 궁수 1명이 있을 때와 없을 때를 비교합니다.</p>
+</article>
+
+<!-- F2 -->
+<article class="f" id="f2">
+  <div class="f-head">
+    <div class="f-id"><span class="id">F2</span><span class="sev sev-crit"><svg viewBox="0 0 12 12"><path d="M3.5 0h5L12 3.5v5L8.5 12h-5L0 8.5v-5z"/></svg>치명</span><span class="cost">고치는 비용: 매우 낮음</span></div>
+    <h3>서버 연결이 TCP로 설정돼 있습니다</h3>
+    <p class="symptom"><b>증상</b> 같은 방에서 특정 한 명만 유독 수 초씩 늦음 (무선 연결일 때 심함)</p>
+  </div>
+  <div class="two">
+    <div class="blk"><h4>근거 <span class="ev ev-fact">설정 확인</span></h4>
+<pre><span class="file">Photon/…/Resources/PhotonServerSettings.asset</span>AppSettings:
+  FixedRegion: asia
+<mark>  Protocol: 1</mark>                <span class="cm"># 0 = UDP (PUN 기본), 1 = TCP</span>
+  EnableProtocolFallback: 1</pre>
+      <p>코드에서는 <code>PhotonNetwork.ConnectUsingSettings()</code>만 호출하고 프로토콜을 바꾸는 곳이 없습니다(3곳 확인). 따라서 실제 연결은 TCP입니다.</p>
+    </div>
+    <div class="blk"><h4>원인</h4>
+      <p>TCP는 모든 바이트의 순서를 보장합니다. 패킷 하나가 손실되면 <b>재전송될 때까지 뒤따르는 모든 데이터가 대기</b>합니다(Head-of-line blocking). 위치 동기화처럼 "최신 값만 의미 있는" 데이터도 낡은 패킷을 기다립니다.</p>
+      <p>재전송은 중복 ACK로 빠르게 일어나면 약 0.2초, 재전송마저 손실되면 최소 0.2~0.3초부터 두 배씩 늘어납니다. 손실이 있는 한 명의 연결에서만 멈춤이 생기므로, "그 사람만 늦다"는 증상과 맞습니다. <span class="ev ev-est">추정</span></p>
+    </div>
+  </div>
+  <div class="blk"><h4>해결</h4>
+    <ul>
+      <li><code>Protocol: 0</code>(UDP)으로 바꿉니다. Photon은 UDP 위에서 Reliable과 Unreliable을 모두 제공합니다.</li>
+      <li>위치·회전은 <b>Unreliable</b>로 보냅니다. 손실돼도 다음 패킷이 덮어쓰므로 재전송이 필요 없습니다. PhotonView의 Observe 옵션을 <code>Unreliable On Change</code>로 둡니다.</li>
+      <li>스킬·피격·사망은 <b>Reliable 이벤트</b>로 보냅니다. Photon의 Reliable UDP도 채널 안에서는 순서를 지키므로, 잦은 이벤트와 드문 이벤트는 채널을 나눕니다.</li>
+    </ul>
+  </div>
+  <div class="blk"><h4>결과</h4>
+    <div class="tbl-wrap"><table class="res">
+      <thead><tr><th>지표 (손실률 <span id="loss-lbl">2</span>%)</th><th>현재 (TCP)</th><th>개선 후 (UDP)</th><th>근거</th></tr></thead>
+      <tbody>
+        <tr><td>받은 위치 데이터의 나이 p95</td><td id="tcp-p95">–</td><td id="udp-p95">–</td><td><span class="ev ev-sim">시뮬레이션</span></td></tr>
+        <tr><td>가장 긴 정지</td><td id="tcp-max">–</td><td id="udp-max">–</td><td><span class="ev ev-sim">시뮬레이션</span></td></tr>
+      </tbody>
+    </table></div>
+    <figure>
+      <div class="sim">
+        <div style="padding:12px 12px 0"><div class="keys" aria-hidden="true"><span><i class="ln" style="background:var(--s2)"></i>TCP (현재)</span><span><i class="ln" style="background:var(--s1)"></i>UDP Unreliable (개선)</span></div></div>
+        <div class="chart" id="ch-tcp" style="padding:4px 8px 8px"></div>
+        <div class="sim-bar">
+          <label class="rng" for="loss">패킷 손실률 <input type="range" id="loss" min="0" max="10" step="0.5" value="2"><span class="mono" id="loss-v">2.0%</span></label>
+          <span class="grow"></span>
+          <button class="btn ghost" id="tcp-seed">다른 손실 패턴</button>
+        </div>
+      </div>
+      <figcaption><b>원격 플레이어의 "가장 최근에 받은 위치"가 몇 ms 전 것인지, 20초 동안.</b> 모델: 33ms마다 송신(PUN 기본 SendRate 30), 편도 40ms, 손실은 무작위. TCP의 첫 재전송은 중복 ACK 3개 + 왕복, 재손실부터는 300ms에서 두 배씩. 이 모델은 회선 포화(F1의 메시지 폭주)를 넣지 않았으므로, 실제 정지는 이보다 길어질 수 있습니다.</figcaption>
+    </figure>
+  </div>
+  <p class="verify"><b>검증 방법</b> Windows의 Clumsy로 한 클라이언트에만 손실 2~5%를 주고, TCP와 UDP 설정에서 같은 동선을 녹화해 비교합니다. <code>PhotonNetwork.GetPing()</code>과 직렬화 수신 간격을 로그로 남기면 정지 구간이 숫자로 보입니다.</p>
+</article>
+
+<!-- F3 -->
+<article class="f" id="f3">
+  <div class="f-head">
+    <div class="f-id"><span class="id">F3</span><span class="sev sev-serious"><svg viewBox="0 0 12 12"><path d="M6 0l6 11H0z"/></svg>심각</span><span class="cost">고치는 비용: 중간</span></div>
+    <h3>누가 명중과 데미지를 결정하는지 정해지지 않았습니다</h3>
+    <p class="symptom"><b>증상</b> 내 화면에선 맞았는데 데미지가 안 들어감, 이펙트가 사람마다 다른 위치에 나오거나 두 번 나옴</p>
+  </div>
+  <div class="two">
+    <div class="blk"><h4>근거 <span class="ev ev-fact">코드 확인</span></h4>
+<pre><span class="file">MultiDealer.cs:147 · 발사 RPC — 방향이 없음</span>photonView.RPC("RPCArcherBasic", RpcTarget.AllViaServer,
+    pos.x, pos.y, pos.z, arrowSpeed, shoot_count);
+
+<span class="file">MultiDealer.cs:243 · 받는 쪽</span>Instantiate(arrow, pos,
+<mark>    Quaternion.LookRotation(arrow_dir));</mark> <span class="cm">// 각자 10Hz로 받은 값</span>
+if (PhotonNetwork.IsMasterClient)
+    baseArrow.damage = set_damage(...); <span class="cm">// 나머지 화살은 데미지 0</span>
+
+<span class="file">MultiMonsterState.cs:65</span>if (!PhotonNetwork.IsMasterClient) return;</pre>
+<pre><span class="file">MultiWarrior.cs:258 · 전사는 공격자가 판정</span>pv.RPC("TakeDamage", RpcTarget.MasterClient, set_damage(n));
+<mark>hitEffect = warriorEffect.ELightHitVFX();</mark>   <span class="cm">// 내 화면 1번</span>
+<mark>photonView.RPC("HitVfx", RpcTarget.AllViaServer, ...);</mark> <span class="cm">// 나에게도 1번 더</span></pre>
+    </div>
+    <div class="blk"><h4>원인</h4>
+      <p>발사라는 <b>입력</b>만 공유하고 명중이라는 <b>결과</b>는 공유하지 않았습니다. 그래서 세 화면이 서로 다른 화살로 서로 다른 물리 시뮬레이션을 돌리고, 그중 마스터 화면의 결과만 데미지가 됩니다.</p>
+      <ul>
+        <li>화살 방향은 RPC에 없고 각 화면이 10Hz로 받은 <code>arrow_dir</code>을 씁니다. 조준을 움직이는 중이면 최대 0.1초 이상 묵은 방향입니다.</li>
+        <li>궁수와 전사의 판정 방식이 다릅니다. 궁수는 마스터 화면의 화살이, 전사는 공격한 본인이 판정합니다.</li>
+        <li>궁수 패시브(3발마다 치명타)는 쏜 사람 화면의 <code>ctr</code>만 바꿉니다. 데미지는 마스터가 계산하므로, 쏜 사람이 마스터가 아니면 패시브가 적용되지 않습니다. <span class="ev ev-est">추정 · 코드 흐름</span></li>
+      </ul>
+    </div>
+  </div>
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 980 360" role="img" aria-label="현재는 발사 위치만 보내고 각 화면이 자기 방향으로 화살을 만들어 마스터 화면만 데미지를 준다. 개선 후에는 발사 이벤트에 방향까지 담고, 마스터 한 곳이 명중을 판정해 결과를 방송한다.">
+        <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <text x="20" y="22" font-size="14" font-weight="700">현재</text>
+        <text x="510" y="22" font-size="14" font-weight="700">개선 후</text>
+        <g font-size="12" class="m">
+          <text x="40" y="52" text-anchor="middle">쏜 사람</text><text x="170" y="52" text-anchor="middle">서버</text><text x="300" y="52" text-anchor="middle">마스터</text><text x="420" y="52" text-anchor="middle">다른 사람</text>
+          <text x="530" y="52" text-anchor="middle">쏜 사람</text><text x="660" y="52" text-anchor="middle">서버</text><text x="790" y="52" text-anchor="middle">마스터</text><text x="910" y="52" text-anchor="middle">다른 사람</text>
+        </g>
+        <g stroke="currentColor" stroke-opacity=".3" stroke-width="1">
+          <path d="M40 62V340M170 62V340M300 62V340M420 62V340"/>
+          <path d="M530 62V340M660 62V340M790 62V340M910 62V340"/>
+        </g>
+        <line x1="490" y1="10" x2="490" y2="350" stroke="currentColor" stroke-opacity=".18"/>
+        <g fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M40 84L166 104" marker-end="url(#ah2)"/>
+          <path d="M170 106L296 126" marker-end="url(#ah2)"/><path d="M170 106L416 136" marker-end="url(#ah2)"/><path d="M170 106L44 136" marker-end="url(#ah2)"/>
+          <path d="M530 84L656 104" marker-end="url(#ah2)"/>
+          <path d="M660 106L786 126" marker-end="url(#ah2)"/><path d="M660 106L906 126" marker-end="url(#ah2)"/><path d="M660 106L534 126" marker-end="url(#ah2)"/>
+          <path d="M790 210L664 230" marker-end="url(#ah2)"/>
+          <path d="M660 232L534 254" marker-end="url(#ah2)"/><path d="M660 232L786 254" marker-end="url(#ah2)"/><path d="M660 232L906 254" marker-end="url(#ah2)"/>
+        </g>
+        <text x="58" y="80" font-size="11.5">위치·속도·카운트</text>
+        <text x="548" y="80" font-size="11.5">ShotEvent: 원점·방향·충전량·번호·시각</text>
+        <g font-size="11.5">
+          <text x="48" y="160">화살 A</text><text x="48" y="176" class="sub">내 방향</text>
+          <text x="308" y="150">화살 B</text><text x="308" y="166" class="sub">10Hz로 받은 방향</text><text x="308" y="190" font-weight="700" style="fill:var(--crit)">이 화살만 데미지</text>
+          <text x="428" y="160">화살 C</text><text x="428" y="176" class="sub">10Hz 방향</text><text x="428" y="192" class="sub">데미지 0</text>
+          <text x="48" y="228">A 명중?</text><text x="308" y="228">B 명중?</text><text x="428" y="228">C 명중?</text>
+          <text x="48" y="250" class="sub">결과가 화면마다 다름</text>
+          <text x="48" y="300" class="sub">이펙트도 각자의 화살 기준</text>
+          <text x="538" y="150">같은 화살</text><text x="538" y="166" class="sub">연출 전용</text>
+          <text x="798" y="150">같은 화살</text><text x="798" y="166" font-weight="700">유일한 판정</text>
+          <text x="918" y="150">같은 화살</text><text x="918" y="166" class="sub">연출 전용</text>
+          <text x="798" y="200">명중 확정 · 데미지 계산</text>
+          <text x="672" y="226">HitEvent: 대상·데미지·치명·위치</text>
+          <text x="538" y="282" class="sub">데미지 숫자와 피격 이펙트는</text>
+          <text x="538" y="298" class="sub">HitEvent를 받았을 때만 생성</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>궁수 기본 공격 한 발의 흐름.</b> 왼쪽은 화살 3개가 각자 판정하고 그중 하나만 인정되는 구조입니다. 오른쪽은 판정이 마스터 한 곳에 있고, 나머지 화면은 같은 값으로 연출만 합니다.</figcaption>
+  </figure>
+  <div class="blk"><h4>해결</h4>
+<pre><span class="file">권한 모델 하나: 입력은 공유, 판정은 한 곳, 결과는 방송</span>struct ShotEvent { Vector3 origin; Vector3 dir; float charge; ushort shotId; double serverTime; }
+struct HitEvent  { int targetViewId; int damage; bool crit; Vector3 point; ushort shotId; }
+
+<span class="cm">// 쏜 사람: 로컬 연출은 즉시, 이벤트는 Others</span>
+<span class="cm">// 마스터: ShotEvent로 판정 → 데미지·치명타 난수도 여기서만 → HitEvent 방송</span>
+<span class="cm">// 모두: HitEvent에서만 데미지 숫자·피격 이펙트 생성</span></pre>
+    <ul>
+      <li>궁수·전사·창술사·힐러 모두 같은 흐름을 씁니다. 근접 공격은 ShotEvent 대신 "공격 시작 시각 + 방향"을 보내고 마스터가 판정 구간에서 겹침 검사를 합니다.</li>
+      <li>쏜 사람 화면에서 먼저 맞는 것처럼 보이고 싶다면 피격 연출만 예측해서 띄우고, 데미지 숫자는 HitEvent를 기다립니다.</li>
+    </ul>
+  </div>
+  <div class="blk"><h4>결과</h4>
+    <div class="tbl-wrap"><table class="res">
+      <thead><tr><th>지표</th><th>현재</th><th>개선 후</th><th>근거</th></tr></thead>
+      <tbody>
+        <tr><td>명중 판정을 하는 화살 인스턴스</td><td>3 (그중 1개만 유효)</td><td>1</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+        <tr><td>화살 방향의 출처</td><td>화면마다 다름</td><td>이벤트 1개</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+        <tr><td>전사 피격 이펙트 (내 화면)</td><td>2회 생성</td><td>1회</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+        <tr><td>직업별 판정 방식</td><td>2종</td><td>1종</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+        <tr><td>비마스터 궁수의 패시브 치명타</td><td>미적용</td><td>적용</td><td><span class="ev ev-est">추정</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p class="verify"><b>검증 방법</b> 두 클라이언트 중 하나에 Clumsy로 100ms 지연을 주고, 조준을 돌리면서 쏜 장면을 양쪽에서 녹화합니다. 마스터에서만 <code>shotId, hit, damage</code>를 로그로 남기면 화면별 결과와 실제 판정을 대조할 수 있습니다.</p>
+</article>
+
+<!-- F4 -->
+<article class="f" id="f4">
+  <div class="f-head">
+    <div class="f-id"><span class="id">F4</span><span class="sev sev-serious"><svg viewBox="0 0 12 12"><path d="M6 0l6 11H0z"/></svg>심각</span><span class="cost">고치는 비용: 중간~높음</span></div>
+    <h3>점프는 0.45초 늦게 뜨고, Rigidbody를 여섯 곳에서 조작합니다</h3>
+    <p class="symptom"><b>증상</b> 점프가 굼뜸, 경사면에서 점프가 씹히거나 튐, 몬스터 위에서 미끄러짐</p>
+  </div>
+  <div class="two">
+    <div class="blk"><h4>근거 <span class="ev ev-fact">코드·설정 확인</span></h4>
+<pre><span class="file">PlayerState.cs:191 · 입력은 트리거만 건다</span>if (Input.GetButtonDown("Jump") &amp;&amp; ... &amp;&amp; isGrounded) {
+    animator.SetTrigger("jump");
+    isJump = true;
+}
+
+<span class="file">SwordGuy@Jumping.fbx.meta · JumpStart (프레임 4–20)</span>- time: <mark>0.83589506</mark>          <span class="cm"># 클립 83.6% 지점</span>
+  functionName: <mark>force_jump</mark>     <span class="cm"># 여기서 비로소 AddForce</span></pre>
+      <p>16프레임 ÷ 30fps = 0.533초, 그 83.6%는 <b>0.446초</b>입니다. 60fps 화면 기준 27프레임 동안 아무 반응이 없습니다. <span class="ev ev-calc">계산 · Mixamo 30fps 가정</span></p>
+    </div>
+    <div class="blk"><h4>원인</h4>
+      <p>이동을 결정하는 주체가 <b>물리 엔진, 애니메이션, 직접 대입</b>으로 나뉘어 있습니다. 같은 프레임 안에서 서로의 결과를 덮어씁니다.</p>
+      <p>예를 들어 경사면에 서 있으면 <code>slopeWithComponent()</code>가 Update마다 <code>rig.velocity = Vector3.zero</code>를 실행합니다. 점프 힘이 들어간 다음 프레임에도 지면 판정 반경(0.2m) 안에 있으면 상승 속도가 지워질 수 있습니다. <span class="ev ev-est">추정 · 코드 흐름</span></p>
+      <p>점프를 애니메이션에 맡긴 건 자연스러움을 위해서였겠지만, 액션 게임에서는 <b>반응성이 사실감보다 우선</b>합니다. 예비 동작은 입력 직후 2~3프레임 안에서 끝내거나, 이륙 후 공중 자세로 보여줍니다.</p>
+    </div>
+  </div>
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 980 300" role="img" aria-label="Rigidbody 하나에 FixedUpdate, Update, 애니메이션 이벤트, 충돌 콜백 여섯 곳이 쓰기를 한다. 개선 후에는 모터 하나만 쓴다.">
+        <defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <text x="20" y="24" font-size="14" font-weight="700">현재 · 쓰는 곳 6</text>
+        <text x="640" y="24" font-size="14" font-weight="700">개선 후 · 쓰는 곳 1</text>
+        <rect x="380" y="118" width="170" height="64" rx="8" fill="none" stroke="var(--crit)" stroke-width="2"/>
+        <text x="465" y="146" font-size="14" font-weight="700" text-anchor="middle">Rigidbody</text>
+        <text x="465" y="166" font-size="11.5" text-anchor="middle" class="sub">+ Transform</text>
+        <g font-size="12">
+          <text x="20" y="62" class="m sub">FixedUpdate</text><text x="20" y="80">MovePosition 위치 강제</text>
+          <text x="20" y="118" class="m sub">애니메이션 이벤트</text><text x="20" y="136">AddForce 점프 힘</text>
+          <text x="20" y="174" class="m sub">Update · 경사면</text><text x="20" y="192">velocity = 0, 중력 끄기</text>
+          <text x="20" y="230" class="m sub">Update · 경사면</text><text x="20" y="248">ConstantForce 켜기/끄기</text>
+          <text x="20" y="276" class="m sub">Update</text><text x="20" y="294">rotation = RotateTowards</text>
+          <text x="590" y="276" class="m sub" text-anchor="end">OnCollisionStay</text><text x="590" y="294" text-anchor="end">position 직접 Lerp</text>
+        </g>
+        <g fill="none" stroke="currentColor" stroke-width="1.3">
+          <path d="M210 74L376 128" marker-end="url(#ah3)"/>
+          <path d="M210 130L376 140" marker-end="url(#ah3)"/>
+          <path d="M210 186L376 156" marker-end="url(#ah3)"/>
+          <path d="M210 242L376 170" marker-end="url(#ah3)"/>
+          <path d="M210 286L400 186" marker-end="url(#ah3)"/>
+          <path d="M520 268L490 188" marker-end="url(#ah3)"/>
+        </g>
+        <line x1="615" y1="10" x2="615" y2="300" stroke="currentColor" stroke-opacity=".18"/>
+        <g font-size="12">
+          <rect x="650" y="56" width="140" height="44" rx="7" fill="none" stroke="currentColor"/><text x="720" y="83" text-anchor="middle">입력 의도</text>
+          <rect x="650" y="128" width="140" height="44" rx="7" fill="none" stroke="currentColor"/><text x="720" y="155" text-anchor="middle">상태 머신</text>
+          <rect x="820" y="128" width="140" height="44" rx="7" fill="none" stroke="var(--good)" stroke-width="2"/><text x="890" y="149" text-anchor="middle" font-weight="700">Motor</text><text x="890" y="165" text-anchor="middle" class="m sub" font-size="10.5">FixedUpdate</text>
+          <rect x="820" y="220" width="140" height="44" rx="7" fill="none" stroke="currentColor"/><text x="890" y="247" text-anchor="middle">Rigidbody</text>
+          <rect x="650" y="220" width="140" height="44" rx="7" fill="none" stroke="currentColor"/><text x="720" y="247" text-anchor="middle">Animator</text>
+        </g>
+        <g fill="none" stroke="currentColor" stroke-width="1.3">
+          <path d="M720 100V124" marker-end="url(#ah3)"/>
+          <path d="M790 150H816" marker-end="url(#ah3)"/>
+          <path d="M890 172V216" marker-end="url(#ah3)"/>
+          <path d="M820 242H794" marker-end="url(#ah3)" stroke-dasharray="4 3"/>
+        </g>
+        <text x="900" y="198" font-size="11" class="sub">유일한 쓰기</text>
+        <text x="760" y="212" font-size="11" class="sub" text-anchor="middle">속도 읽기만</text>
+      </svg>
+    </div>
+    <figcaption><b>이동에 관여하는 코드.</b> 현재는 서로 다른 타이밍(Update, FixedUpdate, 애니메이션 이벤트, 충돌 콜백)에서 같은 물체를 바꿉니다. 개선 후에는 Motor가 FixedUpdate에서 한 번만 쓰고, Animator는 그 결과 속도를 읽기만 합니다.</figcaption>
+  </figure>
+  <div class="blk"><h4>해결</h4>
+<pre><span class="file">입력 프레임에 이륙, 중력과 경사면은 Motor 한 곳에서</span>void FixedUpdate() {
+    grounded = ProbeGround(out var normal);         <span class="cm">// SphereCast</span>
+    if (grounded) lastGroundedTime = Time.time;
+<mark class="ok">    bool coyote = Time.time - lastGroundedTime &lt; 0.10f;</mark>
+<mark class="ok">    bool buffered = Time.time - lastJumpPressed &lt; 0.10f;</mark>
+    if (buffered &amp;&amp; coyote) {
+<mark class="ok">        vel.y = Mathf.Sqrt(2f * gravity * jumpHeight);</mark>  <span class="cm">// 즉시 이륙</span>
+        lastJumpPressed = -1f;
+    }
+    var move = grounded ? Vector3.ProjectOnPlane(wish, normal) : wish;
+    vel = new Vector3(move.x * speed, vel.y - gravity * Time.fixedDeltaTime, move.z * speed);
+    rb.velocity = vel;                                <span class="cm">// 쓰는 곳은 여기 하나</span>
+}</pre>
+    <ul>
+      <li>이동 주체는 둘 중 하나로 정합니다. Kinematic 캐릭터 컨트롤러(속도·중력 직접 적분, CapsuleCast로 충돌 해소)는 액션 게임에서 가장 흔하고, Dynamic Rigidbody를 유지한다면 <code>velocity</code>를 한 곳에서만 씁니다.</li>
+      <li>경사면에서는 이동 방향만 법선에 투영합니다. 중력을 껐다 켰다 하지 않습니다.</li>
+      <li>몬스터 머리 위 처리는 위치를 직접 옮기지 않고, 몬스터 콜라이더에 마찰 0 재질과 위쪽 경사를 줘서 물리로 미끄러지게 합니다.</li>
+      <li>점프 애니메이션은 이륙 후 공중 자세(InAir)에서 시작하고, 예비 동작은 2~3프레임 이내로 줄입니다.</li>
+    </ul>
+  </div>
+  <div class="blk"><h4>결과</h4>
+    <div class="tbl-wrap"><table class="res">
+      <thead><tr><th>지표</th><th>현재</th><th>개선 후</th><th>근거</th></tr></thead>
+      <tbody>
+        <tr><td>입력 → 이륙</td><td>0.446초 (27프레임)</td><td>≤ 0.02초 (1 물리 스텝)</td><td><span class="ev ev-calc">계산</span></td></tr>
+        <tr><td>Rigidbody·Transform을 쓰는 곳</td><td>6곳</td><td>1곳</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+        <tr><td>코요테 타임 / 점프 버퍼</td><td>없음 / 없음</td><td>0.1초 / 0.1초</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+        <tr><td>경사면 점프 취소 경로</td><td>있음</td><td>없음</td><td><span class="ev ev-est">추정</span></td></tr>
+      </tbody>
+    </table></div>
+    <figure>
+      <div class="sim">
+        <canvas id="cv-jump" height="250" tabindex="0" aria-label="점프 입력 비교. 스페이스나 버튼으로 점프를 입력하면 현재 방식과 개선 방식의 이륙 시점이 나란히 재생된다"></canvas>
+        <div class="sim-bar">
+          <button class="btn" id="jump-go">점프 입력</button>
+          <span class="muted">캔버스를 선택한 상태에서는 스페이스바로도 입력할 수 있어요</span>
+        </div>
+        <div class="readout">
+          <div><span class="k"><i style="background:var(--s2)"></i>현재 · 이륙까지</span><span class="x" id="jump-a">446 ms</span></div>
+          <div><span class="k"><i style="background:var(--s1)"></i>개선 · 이륙까지</span><span class="x" id="jump-b">20 ms</span></div>
+          <div><span class="k">60fps 프레임 수</span><span class="x" id="jump-f">27 → 2</span></div>
+        </div>
+      </div>
+      <figcaption><b>같은 입력, 다른 이륙 시점.</b> 위 레인은 트리거 → 전이(0.1초) → JumpStart 재생 → 83.6% 지점 이벤트에서 이륙합니다. 아래 레인은 다음 물리 스텝에서 이륙합니다. 점프 높이와 체공 시간은 둘이 같습니다.</figcaption>
+    </figure>
+  </div>
+  <p class="verify"><b>검증 방법</b> 60fps로 화면을 녹화하고 입력 프레임과 발이 지면에서 떨어지는 프레임의 차이를 셉니다. 코드로는 입력 시각과 <code>rig.velocity.y &gt; 0</code>이 처음 된 시각을 함께 로그로 남깁니다. 경사면 점프는 15°, 30° 경사에서 20회씩 시도해 실패 횟수를 셉니다.</p>
+</article>
+
+<!-- F5 -->
+<article class="f" id="f5">
+  <div class="f-head">
+    <div class="f-id"><span class="id">F5</span><span class="sev sev-serious"><svg viewBox="0 0 12 12"><path d="M6 0l6 11H0z"/></svg>심각</span><span class="cost">고치는 비용: 낮음</span></div>
+    <h3>움직임과 마우스 감도가 프레임레이트에 따라 달라집니다</h3>
+    <p class="symptom"><b>증상</b> 카메라가 따라가는 내 캐릭터가 미세하게 덜컥거림, 설정에서 FPS를 바꾸면 감도가 바뀜</p>
+  </div>
+  <div class="two">
+    <div class="blk"><h4>근거 <span class="ev ev-fact">설정·코드 확인</span></h4>
+<pre><span class="file">Archer / Warrior / Lancer / Healer.prefab · Rigidbody</span>m_IsKinematic: 0
+<mark>m_Interpolate: 0</mark>            <span class="cm"># None: 4개 모두</span>
+m_Constraints: 112          <span class="cm"># 회전 XYZ 고정</span>
+m_CollisionDetection: 1 / 1 / 0 / 0   <span class="cm"># 직업마다 다름</span>
+
+<span class="file">PlayerState.cs:152 · CameraRotation() — Update</span>mousePointer = new Vector2(Input.GetAxis("Mouse X"), ...);
+<mark>rotationY += mousePointer.x * rotationSpeed * Time.deltaTime;</mark></pre>
+    </div>
+    <div class="blk"><h4>원인</h4>
+      <p><b>A. 렌더 보간 꺼짐.</b> 물리는 초당 50번, 화면은 60~120번 그려집니다. 보간이 없으면 물리 스텝이 없는 프레임에는 위치가 그대로라서, 카메라가 따라가는 캐릭터가 계단식으로 움직입니다. 120fps에서는 화면 프레임의 58%가 이전 위치를 다시 그립니다.</p>
+      <p><b>B. 마우스에 deltaTime 곱.</b> <code>Mouse X</code> 축 값은 이미 "이번 프레임의 이동량"입니다. 여기에 deltaTime을 곱하면 감도가 fps에 반비례합니다. 설정 메뉴의 30/60/90/120fps 옵션 사이에서 같은 손 움직임의 회전량이 최대 4배 다릅니다.</p>
+      <p>덧붙여 <code>FreezeRotation()</code>이 매 FixedUpdate마다 각속도를 0으로 만들지만, 프리팹에서 이미 회전이 고정돼 있어 할 일이 없는 코드입니다.</p>
+    </div>
+  </div>
+  <div class="two">
+    <figure><div class="chart" id="ch-stale"></div><figcaption><b>A. 위치가 갱신되지 않는 화면 프레임 비율.</b> 1 − 50/fps. 보간을 켜면 모든 fps에서 0%입니다. <span class="ev ev-calc">계산</span></figcaption></figure>
+    <figure><div class="chart" id="ch-sens"></div><figcaption><b>B. 마우스 1단위당 회전 (°).</b> 250 × (1/fps), rotationSpeed 250 기준. 고치면 fps와 무관하게 같은 값입니다. <span class="ev ev-calc">계산</span></figcaption></figure>
+  </div>
+  <div class="blk"><h4>해결</h4>
+<pre><span class="file">감도는 델타에 상수만 곱하고, 카메라는 LateUpdate에서</span>void LateUpdate() {
+    Vector2 d = look.ReadValue&lt;Vector2&gt;();       <span class="cm">// 마우스: 이번 프레임 이동량</span>
+<mark class="ok">    yaw   += d.x * sensitivity;</mark>                  <span class="cm">// deltaTime 없음</span>
+<mark class="ok">    pitch  = Mathf.Clamp(pitch - d.y * sensitivity, -45f, 45f);</mark>
+    <span class="cm">// 게임패드 스틱(속도 입력)일 때만 * Time.deltaTime</span>
+}
+<span class="cm">// 프리팹: Rigidbody.interpolation = RigidbodyInterpolation.Interpolate</span></pre>
+    <ul>
+      <li>네 직업 프리팹의 Collision Detection도 하나로 맞춥니다. 빠른 구르기가 있으면 Continuous Speculative가 무난합니다.</li>
+      <li>Input System으로 옮긴 리팩터링 시도(<code>PlayerInputManager</code>)에서는 마우스를 Delta 바인딩으로 받으면 같은 원칙이 적용됩니다.</li>
+    </ul>
+  </div>
+  <div class="blk"><h4>결과</h4>
+    <div class="tbl-wrap"><table class="res">
+      <thead><tr><th>지표</th><th>현재</th><th>개선 후</th><th>근거</th></tr></thead>
+      <tbody>
+        <tr><td>위치 갱신 없는 프레임 (120fps)</td><td>58.3%</td><td>0%</td><td><span class="ev ev-calc">계산</span></td></tr>
+        <tr><td>위치 갱신 없는 프레임 (60fps)</td><td>16.7%</td><td>0%</td><td><span class="ev ev-calc">계산</span></td></tr>
+        <tr><td>30fps 대비 120fps 회전량</td><td>1/4</td><td>같음</td><td><span class="ev ev-calc">계산</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p class="verify"><b>검증 방법</b> 120fps로 설정하고 프레임마다 <code>transform.position</code>을 기록해 직전 프레임과 같은 값의 비율을 셉니다. 감도는 30fps와 120fps에서 마우스를 같은 거리(자로 10cm) 움직였을 때 <code>rotationY</code> 변화량을 비교합니다.</p>
+</article>
+
+<!-- F6 -->
+<article class="f" id="f6">
+  <div class="f-head">
+    <div class="f-id"><span class="id">F6</span><span class="sev sev-warn"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5"/></svg>보통</span><span class="cost">고치는 비용: 중간</span></div>
+    <h3>원격 캐릭터를 Lerp로 쫓아가서 속도가 출렁입니다</h3>
+    <p class="symptom"><b>증상</b> 다른 플레이어가 순간적으로 빨라졌다 느려짐, 회피할 때 모서리를 잘라먹음</p>
+  </div>
+  <div class="two">
+    <div class="blk"><h4>근거 <span class="ev ev-fact">코드 확인</span></h4>
+<pre><span class="file">MultiDealer.cs:64 · 4개 Multi 클래스 모두 동일</span>else {   <span class="cm">// 원격 캐릭터</span>
+<mark>    transform.position = Vector3.Lerp(transform.position,</mark>
+<mark>        receivePos, Time.deltaTime * damping);</mark>   <span class="cm">// damping = 10</span>
+    transform.rotation = Quaternion.Slerp(...);
+}</pre>
+      <p>직렬화 주기는 번들된 PUN 소스의 기본값 100ms(10Hz)이고, 코드에서 바꾸는 곳이 없습니다.</p>
+    </div>
+    <div class="blk"><h4>원인</h4>
+      <p>0.1초마다 한 번 바뀌는 목표를 지수 감쇠로 쫓으면, 패킷 직후에는 빠르고 다음 패킷 직전에는 느립니다. 이론상 시간 지연은 1/k = 0.1초에 갱신 간격 절반 0.05초를 더한 값입니다.</p>
+      <p>냉정하게 말하면 <b>Lerp는 지연의 주범이 아닙니다.</b> 수 초짜리 지연은 F1·F2에서 나옵니다. Lerp의 진짜 문제는 움직임의 모양(속도 리듬, 경로)을 망가뜨린다는 점이고, 그 결과 마스터가 판정하는 위치와 다른 사람 화면의 위치가 달라집니다.</p>
+    </div>
+  </div>
+  <figure>
+    <div class="sim">
+      <canvas id="cv-interp" height="340" aria-label="원격 캐릭터 보간 비교 애니메이션. 실제 위치, 10Hz 스냅샷, Lerp 추적, 보간 버퍼를 나란히 보여준다"></canvas>
+      <div class="sim-bar">
+        <div class="seg" role="group" aria-label="이동 속도"><button id="sp-5" aria-pressed="false">걷기 5m/s</button><button id="sp-10" aria-pressed="true">질주 10m/s</button></div>
+        <div class="keys" aria-hidden="true"><span><i class="ring"></i>실제 위치</span><span><i style="background:var(--muted);border-radius:50%"></i>스냅샷</span><span><i class="ln" style="background:var(--s2)"></i>Lerp (현재)</span><span><i class="ln" style="background:var(--s1)"></i>보간 버퍼 (개선)</span></div>
+        <span class="grow"></span>
+        <button class="btn ghost" id="interp-play">일시정지</button>
+      </div>
+      <div class="readout">
+        <div><span class="k"><i style="background:var(--s2)"></i>속도 변동계수 · Lerp</span><span class="x" id="ip-cv-l">–</span></div>
+        <div><span class="k"><i style="background:var(--s1)"></i>속도 변동계수 · 버퍼</span><span class="x" id="ip-cv-b">–</span></div>
+        <div><span class="k"><i style="background:var(--s2)"></i>경로 이탈 최대 · Lerp</span><span class="x" id="ip-ct-l">–</span></div>
+        <div><span class="k"><i style="background:var(--s1)"></i>경로 이탈 최대 · 버퍼</span><span class="x" id="ip-ct-b">–</span></div>
+      </div>
+    </div>
+    <figcaption><b>7.3m 정사각형을 도는 원격 캐릭터.</b> 모델: 10Hz 스냅샷, 편도 50ms, Lerp k = 10, 보간 버퍼 100ms, 60fps. 아래 판독값은 최근 4초 기준이라 30초 평균인 결과 표와 조금 다를 수 있습니다. 버퍼도 모서리를 조금 자르는 건 스냅샷 사이를 직선으로 잇기 때문입니다.</figcaption>
+  </figure>
+  <div class="blk"><h4>해결</h4>
+<pre><span class="file">스냅샷에 서버 시각을 붙이고, 100ms 과거를 보간</span>public void OnPhotonSerializeView(PhotonStream s, PhotonMessageInfo info) {
+    if (s.IsWriting) { s.SendNext(transform.position); s.SendNext(yaw); }
+    else buffer.Add(new Snap(<mark class="ok">info.SentServerTime</mark>, (Vector3)s.ReceiveNext(), (float)s.ReceiveNext()));
+}
+void Update() {
+    if (photonView.IsMine) return;
+<mark class="ok">    double renderTime = PhotonNetwork.Time - 0.1;</mark>    <span class="cm">// 스냅샷 간격만큼 과거</span>
+    if (buffer.TryGetPair(renderTime, out var a, out var b, out float u))
+        transform.SetPositionAndRotation(Vector3.Lerp(a.pos, b.pos, u),
+            Quaternion.Euler(0, Mathf.LerpAngle(a.yaw, b.yaw, u), 0));
+}</pre>
+    <ul>
+      <li>내 캐릭터는 보간하지 않고 입력 즉시 움직입니다(클라이언트 예측). 보간은 원격 캐릭터에만 씁니다.</li>
+      <li>패킷이 늦어 버퍼가 비면 마지막 속도로 짧게(최대 0.2초) 외삽하고, 그 이상이면 멈춥니다.</li>
+    </ul>
+  </div>
+  <div class="blk"><h4>결과 <span class="ev ev-sim">시뮬레이션 · 질주 10m/s</span></h4>
+    <div class="tbl-wrap"><table class="res">
+      <thead><tr><th>지표</th><th>현재 (Lerp)</th><th>개선 후 (버퍼)</th><th>근거</th></tr></thead>
+      <tbody>
+        <tr><td>속도 변동계수</td><td>32.5%</td><td>8.3%</td><td><span class="ev ev-sim">시뮬레이션</span></td></tr>
+        <tr><td>방향 전환 시 경로 이탈 최대</td><td>0.36m</td><td>0.25m</td><td><span class="ev ev-sim">시뮬레이션</span></td></tr>
+        <tr><td>실제 위치와의 평균 거리</td><td>1.70m</td><td>1.43m</td><td><span class="ev ev-sim">시뮬레이션</span></td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">마지막 줄이 크게 줄지 않는 게 정상입니다. 보간 버퍼는 지연을 줄이는 기술이 아니라 <b>움직임을 정확하게 재현하는</b> 기술입니다. 지연은 F1·F2와 클라이언트 예측으로 줄입니다.</p>
+  </div>
+  <p class="verify"><b>검증 방법</b> 원격 캐릭터의 프레임별 이동 거리를 기록해 속도의 표준편차/평균을 구합니다. 마스터 화면과 다른 화면에서 같은 서버 시각의 위치를 기록해 차이를 비교합니다.</p>
+</article>
+
+<!-- F7 -->
+<article class="f" id="f7">
+  <div class="f-head">
+    <div class="f-id"><span class="id">F7</span><span class="sev sev-warn"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5"/></svg>보통</span><span class="cost">고치는 비용: 중간</span></div>
+    <h3>bool 10개와 매직 인덱스가 상태 머신 역할을 하고, 그 틈에서 버그가 생겼습니다</h3>
+    <p class="symptom"><b>증상</b> 패시브가 엉뚱한 발에 적용됨, 회복량이 항상 같음, 일부 직업에서 스킬트리가 안 열림</p>
+  </div>
+  <div class="two">
+    <div class="blk"><h4>근거 <span class="ev ev-fact">코드 확인</span></h4>
+      <ul>
+        <li>상태 bool: <code>PlayerState</code> 7개(isAttack, isDodge, isGrounded, isJump, isDied, isStop, isSlope), <code>Dealer</code> 3개(isAim, aim_set, isDrawing)</li>
+        <li>플레이어 코드 전체에서 <code>!isAttack</code> 22곳, <code>!isDodge</code> 20곳, <code>isDied</code> 20곳, <code>isGrounded</code> 16곳, <code>!isJump</code> 10곳. 합계 88곳</li>
+        <li>매직 인덱스: <code>skill_index</code> 3 = 기본 공격, 2 = F 충전. <code>coolTime[4]</code> = 구르기. 의미는 주석에만 있습니다.</li>
+      </ul>
+    </div>
+    <div class="blk"><h4>원인</h4>
+      <p>동시에 참이면 안 되는 상태(공격·구르기·점프·사망)를 독립 변수로 뒀습니다. 그래서 "지금 무엇을 하고 있는가"를 매번 조건 5개로 다시 계산합니다. 조건을 하나 빼먹으면 그게 곧 버그입니다.</p>
+      <p>비트 플래그로 묶는 발상은 맞지만 이 문제의 답은 아닙니다. 비트로 묶어도 <code>isDodge &amp;&amp; isAttack</code> 같은 잘못된 조합은 그대로 만들어집니다. 그리고 C#의 <code>char</code>는 8비트가 아니라 16비트(UTF-16)입니다. 1바이트가 필요하면 <code>byte</code>를 씁니다.</p>
+    </div>
+  </div>
+  <figure>
+    <div class="sim" style="padding:16px 16px 14px;display:flex;flex-direction:column;gap:12px">
+      <div class="toggles" id="tg" role="group" aria-label="상태 bool 토글"></div>
+      <div class="cells" id="cells" aria-hidden="true"></div>
+      <p class="state-msg" id="state-msg" aria-live="polite"></p>
+    </div>
+    <figcaption><b>bool 6개가 만드는 64가지 조합.</b> 파란 칸만 의미가 있습니다. 규칙: 동작(공격·구르기·점프·사망·정지)은 동시에 하나까지, 사망과 구르기는 지면 위에서만. 이 규칙에서 유효한 조합은 10개이고 54개는 코드가 막아야 하는 조합입니다. 버튼을 눌러 현재 칸을 옮겨 보세요. <span class="ev ev-calc">계산</span></figcaption>
+  </figure>
+  <div class="blk"><h4>이 구조에서 생긴 로직 버그 <span class="ev ev-est">코드 흐름 · 실행 미검증</span></h4>
+    <ol>
+      <li><b>궁수 패시브가 4번째 화살에 적용됩니다.</b> <code>Shoot()</code>은 3번째 화살의 데미지를 먼저 계산(<code>ShootBasicArrow</code>)하고, 그 뒤에 <code>passive()</code>가 <code>ctr = 1</code>을 설정합니다. 치명타 확률 100%는 다음 발사에 적용됩니다. <span class="mono muted">Dealer.cs:258–296</span></li>
+      <li><b>회복량 인자가 무시됩니다.</b> <code>RestoreHealth(int heal)</code>은 <code>heal</code>을 쓰지 않고 항상 +30입니다. <span class="mono muted">PlayerState.cs:286</span></li>
+      <li><b>전사·힐러는 K(스킬트리)가 열리지 않습니다.</b> <code>skill_tree()</code> 호출은 Dealer·Lancer가 복사한 Update에만 있고, 부모 Update에는 없습니다. <span class="mono muted">PlayerState.cs:457, Dealer.cs:71, Lancer.cs:50</span></li>
+      <li><b>실드 값이 UI 슬라이더 안에 저장됩니다.</b> <code>Shield.value</code>가 게임 데이터입니다. 화면 위젯 없이는 판정도, 저장도, 테스트도 할 수 없습니다. <span class="mono muted">PlayerState.cs:306</span></li>
+    </ol>
+  </div>
+  <div class="blk"><h4>해결</h4>
+<pre><span class="file">배타적 상태는 하나의 값, 동시에 성립하는 조건만 플래그</span>public enum Action : byte { Idle, Move, Jump, Fall, Dodge, Attack, Dead }
+[Flags] public enum Cond : byte { None = 0, Grounded = 1, Invincible = 2, InputLocked = 4, Aiming = 8 }
+
+<span class="cm">// 전이 규칙이 한 곳에 모임</span>
+bool CanEnter(Action next) =&gt; next switch {
+    Action.Dodge  =&gt; action is Action.Idle or Action.Move &amp;&amp; cond.HasFlag(Cond.Grounded),
+    Action.Jump   =&gt; action is Action.Idle or Action.Move or Action.Attack,
+    _             =&gt; action != Action.Dead,
+};
+<span class="cm">// 네트워크: (byte)action, (byte)cond → 2바이트</span>
+
+public enum Skill : byte { Basic, Q, E, F }        <span class="cm">// skill_index 3, 2 대신</span>
+public enum Cooldown : byte { Passive, Q, E, F, Dodge }   <span class="cm">// coolTime[4] 대신</span></pre>
+    <ul>
+      <li>체력·실드는 순수 C# 클래스(<code>Health</code>)에 두고, UI는 <code>Changed</code> 이벤트를 구독해 그리기만 합니다. 그러면 Unity 없이 단위 테스트가 됩니다.</li>
+    </ul>
+  </div>
+  <div class="blk"><h4>결과</h4>
+    <div class="tbl-wrap"><table class="res">
+      <thead><tr><th>지표</th><th>현재</th><th>개선 후</th><th>근거</th></tr></thead>
+      <tbody>
+        <tr><td>표현 가능한 무효 상태</td><td>54 / 64</td><td>0 (동작 중복은 타입이, 지면 조건은 전이 규칙이 막음)</td><td><span class="ev ev-calc">계산</span></td></tr>
+        <tr><td>상태 bool을 읽는 조건식</td><td>88곳</td><td>전이 규칙 1곳</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+        <tr><td>네트워크로 보내는 상태 크기</td><td>bool별 RPC</td><td>2바이트</td><td><span class="ev ev-calc">계산</span></td></tr>
+        <tr><td>발견된 로직 버그</td><td>4건</td><td>테스트로 고정</td><td><span class="ev ev-est">추정</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p class="verify"><b>검증 방법</b> <code>Health</code>를 순수 클래스로 분리한 뒤 Unity Test Framework의 Edit Mode 테스트로 회복·실드·사망을 검사합니다. 패시브는 마스터에서 발사 번호별 치명타 여부를 로그로 남겨 확인합니다.</p>
+</article>
+
+<!-- F8 -->
+<article class="f" id="f8">
+  <div class="f-head">
+    <div class="f-id"><span class="id">F8</span><span class="sev sev-warn"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5"/></svg>보통</span><span class="cost">고치는 비용: 높음</span></div>
+    <h3>기능을 상속으로 덧붙이면서 메서드를 통째로 복사했습니다</h3>
+    <p class="symptom"><b>증상</b> 부모를 고쳐도 일부 직업에만 반영됨, 멀티 버전과 싱글 버전이 따로 놂</p>
+  </div>
+  <div class="two">
+    <div class="blk"><h4>근거 <span class="ev ev-fact">코드 확인</span></h4>
+<pre><span class="file">diff PlayerState.Move()  Dealer.Move()</span>  float h = Input.GetAxisRaw("Horizontal");
+  float v = Input.GetAxisRaw("Vertical");
+  ... 부모와 같은 18줄 ...
+<mark class="ok">+ animator.SetFloat("moveX", h, 0.2f, Time.deltaTime);</mark>
+<mark class="ok">+ animator.SetFloat("moveY", v, 0.2f, Time.deltaTime);</mark>
+<span class="cm">  빠진 줄 0, 추가된 줄 2</span></pre>
+      <p>"부모 Move에서 필요 없는 건 빼고 필요한 것만 넣으려고 복사했다"고 기억하셨는데, 실제 diff 결과 <b>빠진 줄은 없습니다.</b> <code>base.Move()</code>를 호출하고 두 줄을 더하면 충분했습니다.</p>
+    </div>
+    <div class="blk"><h4>원인</h4>
+      <p>입력(<code>Input.GetKey</code>)이 부모 클래스 안에 박혀 있습니다. 그래서 멀티 담당이 원격 캐릭터의 입력을 끄려면 직업마다 하위 클래스를 하나씩 더 만들어 Update를 가로채는 방법밖에 없었습니다. 상속 깊이는 <code>MonoBehaviour → PlayerState → Dealer → MultiDealer</code> 4단입니다.</p>
+      <p>결합의 비용이 다른 사람에게 넘어간 사례입니다. F1의 매 프레임 RPC도 이 하위 클래스에서 생겼습니다.</p>
+      <p>Update를 복사한 Dealer·Lancer와 복사하지 않은 Warrior·Healer의 동작이 달라진 것(F7의 스킬트리 버그)이 복사의 직접 비용입니다.</p>
+    </div>
+  </div>
+  <div class="two">
+    <figure><div class="chart" id="ch-dup"></div><figcaption><b>Multi 클래스별 중복 비율.</b> 각 파일의 코드 줄 중 4개 파일 가운데 3개 이상에 똑같이 있는 줄의 비율입니다. <code>Die()</code>는 12줄 중 11~12줄, <code>OnEnable()</code>은 8줄이 모두 같습니다. <span class="ev ev-fact">코드 확인</span></figcaption></figure>
+    <figure>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>파일</th><th class="num">코드 줄</th><th class="num">분기</th><th class="num">Input</th><th class="num">RPC</th></tr></thead>
+        <tbody id="loc-body"></tbody>
+      </table></div>
+      <figcaption><b>큰 파일 9개.</b> 코드 줄은 주석·빈 줄·중괄호만 있는 줄을 뺀 값, 분기는 if·case·&amp;&amp;·|| 등의 개수입니다. Input 호출이 9개 파일 중 8개에 흩어져 있습니다. <span class="ev ev-fact">코드 확인</span></figcaption>
+    </figure>
+  </div>
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 980 330" role="img" aria-label="현재는 직업마다 싱글 클래스와 멀티 클래스가 상속으로 두 단씩 쌓여 있다. 개선 후에는 하나의 PlayerCharacter가 입력 소스, 모터, 스킬 세트, 체력, 동기화 컴포넌트를 조합하고 직업 차이는 데이터로 표현한다.">
+        <defs><marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <text x="20" y="24" font-size="14" font-weight="700">현재 · 상속 4단, 클래스 9개</text>
+        <text x="560" y="24" font-size="14" font-weight="700">개선 후 · 조합</text>
+        <g font-size="12" fill="none" stroke="currentColor" stroke-width="1.3">
+          <rect x="160" y="44" width="200" height="36" rx="6"/>
+          <rect x="20" y="124" width="110" height="36" rx="6"/><rect x="140" y="124" width="110" height="36" rx="6"/><rect x="260" y="124" width="110" height="36" rx="6"/><rect x="380" y="124" width="110" height="36" rx="6"/>
+          <rect x="20" y="214" width="110" height="36" rx="6" style="stroke:var(--crit)"/><rect x="140" y="214" width="110" height="36" rx="6" style="stroke:var(--crit)"/><rect x="260" y="214" width="110" height="36" rx="6" style="stroke:var(--crit)"/><rect x="380" y="214" width="110" height="36" rx="6" style="stroke:var(--crit)"/>
+          <path d="M75 124L230 84" marker-end="url(#ah4)"/><path d="M195 124L250 84" marker-end="url(#ah4)"/><path d="M315 124L270 84" marker-end="url(#ah4)"/><path d="M435 124L290 84" marker-end="url(#ah4)"/>
+          <path d="M75 214V164" marker-end="url(#ah4)"/><path d="M195 214V164" marker-end="url(#ah4)"/><path d="M315 214V164" marker-end="url(#ah4)"/><path d="M435 214V164" marker-end="url(#ah4)"/>
+        </g>
+        <g font-size="12" text-anchor="middle">
+          <text x="260" y="67">PlayerState · 535줄</text>
+          <text x="75" y="147">Dealer</text><text x="195" y="147">Warrior</text><text x="315" y="147">Lancer</text><text x="435" y="147">Healer</text>
+          <text x="75" y="237">MultiDealer</text><text x="195" y="237">MultiWarrior</text><text x="315" y="237">MultiLancer</text><text x="435" y="237">MultiHealer</text>
+          <text x="255" y="282" class="sub" font-size="11.5">입력·이동·카메라·UI·사운드·스탯·동기화가 한 줄기에</text>
+          <text x="255" y="300" class="sub" font-size="11.5">Multi 4개: 689줄, 그중 299줄이 3개 이상 파일에 반복</text>
+        </g>
+        <line x1="530" y1="10" x2="530" y2="320" stroke="currentColor" stroke-opacity=".18"/>
+        <g font-size="12" fill="none" stroke="currentColor" stroke-width="1.3">
+          <rect x="680" y="44" width="180" height="40" rx="6" style="stroke:var(--good)" stroke-width="2"/>
+          <rect x="560" y="140" width="120" height="44" rx="6"/><rect x="690" y="140" width="80" height="44" rx="6"/><rect x="780" y="140" width="80" height="44" rx="6"/><rect x="870" y="140" width="100" height="44" rx="6"/>
+          <rect x="560" y="240" width="120" height="44" rx="6" stroke-dasharray="4 3"/><rect x="690" y="240" width="170" height="44" rx="6" stroke-dasharray="4 3"/><rect x="870" y="240" width="100" height="44" rx="6" stroke-dasharray="4 3"/>
+          <path d="M720 84L630 136" marker-end="url(#ah4)"/><path d="M750 84L730 136" marker-end="url(#ah4)"/><path d="M790 84L820 136" marker-end="url(#ah4)"/><path d="M820 84L915 136" marker-end="url(#ah4)"/>
+          <path d="M620 184V236" marker-end="url(#ah4)"/><path d="M775 184V236" marker-end="url(#ah4)"/><path d="M920 184V236" marker-end="url(#ah4)"/>
+        </g>
+        <g font-size="12" text-anchor="middle">
+          <text x="770" y="69" font-weight="700">PlayerCharacter</text>
+          <text x="620" y="160">IInputSource</text><text x="620" y="176" class="sub" font-size="10.5">입력 의도</text>
+          <text x="730" y="160">Motor</text><text x="730" y="176" class="sub" font-size="10.5">F4</text>
+          <text x="820" y="160">SkillSet</text><text x="820" y="176" class="sub" font-size="10.5">스킬 목록</text>
+          <text x="920" y="160">Health</text><text x="920" y="176" class="sub" font-size="10.5">모델 · 이벤트</text>
+          <text x="620" y="260" font-size="11.5">Local / Network</text><text x="620" y="276" class="sub" font-size="10.5">원격 = 교체만</text>
+          <text x="775" y="260" font-size="11.5">SkillData 에셋</text><text x="775" y="276" class="sub" font-size="10.5">직업 차이는 데이터</text>
+          <text x="920" y="260" font-size="11.5">HealthView</text><text x="920" y="276" class="sub" font-size="10.5">UI는 구독만</text>
+          <text x="765" y="312" class="sub" font-size="11.5">+ NetworkSync 컴포넌트 1개 (Multi 클래스 4개 대체)</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>클래스 구조 비교.</b> 빨간 테두리는 입력을 끄기 위해서만 존재하는 클래스입니다. 개선 후에는 원격 캐릭터도 같은 프리팹을 쓰고 입력 소스만 <code>NetworkInputSource</code>로 바꿉니다.</figcaption>
+  </figure>
+  <div class="blk"><h4>해결</h4>
+<pre><span class="file">템플릿 메서드: 흐름은 부모가 고정, 다른 부분만 훅으로</span>public void Move() {                         <span class="cm">// virtual 아님</span>
+    Vector3 dir = input.MoveDir;              <span class="cm">// IInputSource: 로컬·네트워크 교체</span>
+    float speed = GetSpeed();
+    velocity = Constrain(dir * speed);        <span class="cm">// 경사면·벽 (공통)</span>
+    OnMoved(dir);
+}
+protected virtual float GetSpeed() =&gt; input.Sprint ? sprintSpeed : moveSpeed;
+protected virtual void  OnMoved(Vector3 dir) { }
+
+<span class="cm">// Archer</span>
+protected override float GetSpeed() =&gt; aiming ? 2f : charging ? 1f : base.GetSpeed();
+protected override void  OnMoved(Vector3 d) { anim.SetFloat(MoveX, d.x); anim.SetFloat(MoveY, d.z); }</pre>
+    <ul>
+      <li>장기적으로는 직업을 클래스가 아니라 데이터(스킬 에셋 목록 + 스탯 + 애니메이터)로 표현합니다. 새 직업을 추가할 때 코드보다 에셋을 만듭니다.</li>
+    </ul>
+  </div>
+  <div class="blk"><h4>결과</h4>
+    <div class="tbl-wrap"><table class="res">
+      <thead><tr><th>지표</th><th>현재</th><th>개선 후</th><th>근거</th></tr></thead>
+      <tbody>
+        <tr><td>Dealer.Move()의 부모 복사 줄</td><td>18 / 20</td><td>0</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+        <tr><td>멀티 전용 하위 클래스</td><td>4개 · 689줄</td><td>0개 (동기화 컴포넌트 1개)</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+        <tr><td>3개 이상 Multi 파일에 반복되는 줄</td><td>299줄</td><td>0</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+        <tr><td>새 직업 추가 시 손대는 클래스</td><td>2개 + 복사된 Update</td><td>스킬 에셋 + 프리팹</td><td><span class="ev ev-est">추정</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p class="verify"><b>검증 방법</b> 리팩터링 전후로 같은 입력 녹화(Input System의 InputEventTrace)를 재생해 위치·애니메이터 파라미터가 같은지 비교합니다. 동작이 같다는 걸 확인한 다음에 구조를 바꿉니다.</p>
+</article>
+
+<!-- F9 -->
+<article class="f" id="f9">
+  <div class="f-head">
+    <div class="f-id"><span class="id">F9</span><span class="sev sev-warn"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5"/></svg>보통</span><span class="cost">고치는 비용: 낮음~중간</span></div>
+    <h3>값이 안 바뀌어도 매 프레임 할당하고, 화살과 이펙트를 매번 만들고 부숩니다</h3>
+    <p class="symptom"><b>증상</b> 전투가 길어지면 주기적인 프레임 끊김 가능성 (GC 수집)</p>
+  </div>
+  <div class="two">
+    <div class="blk"><h4>근거 <span class="ev ev-fact">코드 확인</span></h4>
+<pre><span class="file">PlayerState.cs:378 · sync_state() — 매 프레임</span>HP.value = hp;
+<mark>hpText.text = hp + "/100";</mark>        <span class="cm">// 값이 같아도 새 문자열</span>
+<mark>mpText.text = mp + "/100";</mark>
+
+<span class="file">PlayerState.cs:427 · ui_coolTime() — 쿨타임 중 매 프레임</span><mark>coolTime_Text[i].text = (d - t).ToString("F1");</mark>
+
+<span class="file">arrow.cs · 화살 한 발</span>Destroy(gameObject, 3f);
+Instantiate(hit, transform.position, ...).Play();</pre>
+    </div>
+    <div class="blk"><h4>원인</h4>
+      <ul>
+        <li>플레이어·멀티 코드에 <code>Instantiate</code> 36곳, <code>Destroy</code> 17곳. 궁수 Q 한 번에 화살 4개를 만들고 5초 뒤 부숩니다.</li>
+        <li><code>new WaitForSeconds</code> 7곳, 충돌마다 <code>GetComponent&lt;MonsterState&gt;()</code>. 인터페이스 <code>IDamageable</code>을 만들어 두고도 구체 클래스를 찾습니다.</li>
+        <li>F1의 매 프레임 RPC도 호출마다 인자 배열을 할당합니다.</li>
+        <li><code>Camera.main</code> 17곳은 Unity 2020.2부터 내부 캐시를 써서 비용이 거의 없습니다. 고칠 대상이 아닙니다.</li>
+      </ul>
+      <p>측정 없이 고치면 추측이 됩니다. 순서는 Profiler의 GC Alloc 열 확인 → 큰 것부터 수정 → 다시 측정입니다.</p>
+    </div>
+  </div>
+  <div class="blk"><h4>해결</h4>
+<pre><span class="file">바뀔 때만 그리고, 할당 없는 API로</span>health.Changed += (hp, shield) =&gt;
+<mark class="ok">    hpText.SetText("{0}/100", hp);</mark>        <span class="cm">// TMP: 문자열 할당 없음</span>
+
+<span class="file">화살 풀</span>var arrows = new ObjectPool&lt;Arrow&gt;(() =&gt; Instantiate(prefab),
+    a =&gt; a.gameObject.SetActive(true), a =&gt; a.gameObject.SetActive(false),
+    defaultCapacity: 16);
+<span class="cm">// 명중·수명 종료 시 Destroy 대신 arrows.Release(this)</span>
+if (other.TryGetComponent(out IDamageable d)) d.TakeDamage(damage);</pre>
+  </div>
+  <div class="blk"><h4>결과</h4>
+    <div class="tbl-wrap"><table class="res">
+      <thead><tr><th>지표</th><th>현재</th><th>개선 후</th><th>근거</th></tr></thead>
+      <tbody>
+        <tr><td>정지 상태 프레임당 할당 지점</td><td>문자열 2개 이상 (+궁수 RPC 1건)</td><td>0</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+        <tr><td>궁수 Q 1회의 생성·파괴</td><td>4 + 4</td><td>0 (풀 예열 후)</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+        <tr><td>기본 화살 1발의 생성·파괴</td><td>화살 1 + 피격 이펙트 1</td><td>0</td><td><span class="ev ev-fact">코드 확인</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p class="verify"><b>검증 방법</b> Profiler의 CPU 모듈에서 GC Alloc 열을 켜고, 가만히 서 있는 상태와 궁수 Q 연사 상태의 프레임당 할당량(바이트)을 기록합니다. 목표는 정지 상태 0 B입니다.</p>
+</article>
+
+<!-- F10 -->
+<article class="f" id="f10">
+  <div class="f-head">
+    <div class="f-id"><span class="id">F10</span><span class="sev sev-low"><svg viewBox="0 0 12 12"><rect x="0" y="4.5" width="12" height="3" rx="1.5"/></svg>낮음</span><span class="cost">고치는 비용: 낮음</span></div>
+    <h3>조준 IK 가중치가 한 프레임 만에 바뀝니다</h3>
+    <p class="symptom"><b>증상</b> 조준 각도가 20° 안으로 들어오는 순간 상체가 툭 꺾임</p>
+  </div>
+  <div class="two">
+    <div class="blk"><h4>근거 <span class="ev ev-fact">코드 확인</span></h4>
+<pre><span class="file">Dealer.cs:492 · Animation Rigging</span>if (Mathf.Abs(angle) &lt; 20)
+<mark>    SetRigWeight(0.8f);</mark>          <span class="cm">// 0 → 0.8 즉시</span>
+
+<span class="file">Dealer.cs:227 · usualState() — 조준 안 하면 매 프레임</span><mark>SetRigWeight(0);</mark></pre>
+      <p>IK는 궁수 조준 한 곳에만 있습니다. 발 IK와 지면 정렬(<code>OnAnimatorIK</code>, TwoBoneIK)은 사용처가 없습니다.</p>
+    </div>
+    <div class="blk"><h4>원인과 해결</h4>
+      <p>가중치는 자세를 섞는 비율이라 순간 전환하면 자세가 순간이동합니다. 목표 가중치만 정하고 실제 값은 시간에 따라 따라가게 합니다.</p>
+<pre>rigWeight = Mathf.MoveTowards(rigWeight, target,
+<mark class="ok">                              Time.deltaTime / 0.15f);</mark>
+aimRig.weight = rigWeight;</pre>
+      <p>Multi-Aim Constraint를 척추·가슴·머리에 나눠 걸고(예: 0.3 / 0.3 / 0.4) 상체가 함께 돌게 하면 더 자연스럽습니다. 발 IK를 넣는다면 발밑 레이캐스트로 발 위치를, 두 발 중 낮은 쪽만큼 골반을 내립니다.</p>
+    </div>
+  </div>
+  <figure>
+    <div class="keys" aria-hidden="true"><span><i class="ln" style="background:var(--s2)"></i>현재 (즉시)</span><span><i class="ln" style="background:var(--s1)"></i>개선 (0.15초 블렌드)</span></div>
+    <div class="chart" id="ch-ik"></div>
+    <figcaption><b>조준 시작 후 IK 가중치.</b> 0.2초 시점에 조준 각이 20° 안으로 들어온다고 가정했습니다. <span class="ev ev-calc">계산</span></figcaption>
+  </figure>
+</article>
+
+<!-- F11 -->
+<article class="f" id="f11">
+  <div class="f-head">
+    <div class="f-id"><span class="id">F11</span><span class="sev sev-warn"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5"/></svg>보통</span><span class="cost">고치는 비용: 낮음</span></div>
+    <h3>저장소의 90%가 외부 에셋이고, 스크립트 인코딩이 섞여 있습니다</h3>
+    <p class="symptom"><b>증상</b> 공개 시 저작권 경고, 클론 14GB, 다른 환경에서 한글 주석이 깨짐</p>
+  </div>
+  <figure>
+    <div class="keys" aria-hidden="true"><span><i style="background:var(--s1)"></i>외부 아트·사운드 에셋</span><span><i style="background:var(--s2)"></i>SDK·라이브러리</span><span><i style="background:var(--s3)"></i>팀 폴더</span><span><i style="background:var(--s4)"></i>기타</span></div>
+    <div class="chart" id="ch-repo"></div>
+    <figcaption><b>추적 파일 75,422개의 구성.</b> 팀 폴더 안에도 스토어 에셋(발소리 팩, 아이콘 팩, 애니메이션 팩 등)이 섞여 있어 실제 외부 비율은 더 높습니다. <span class="ev ev-fact">저장소 확인</span></figcaption>
+  </figure>
+  <div class="two">
+    <figure>
+      <div class="keys" aria-hidden="true"><span><i style="background:var(--s1)"></i>UTF-8</span><span><i style="background:var(--s2)"></i>CP949</span></div>
+      <div class="chart" id="ch-enc"></div>
+      <figcaption><b>담당 영역별 스크립트 인코딩.</b> 194개 중 74개가 CP949입니다. 포트폴리오 저장소에서 주석이 깨져 보인 원인입니다. <span class="ev ev-fact">저장소 확인</span></figcaption>
+    </figure>
+    <div class="blk"><h4>근거와 원인</h4>
+      <ul>
+        <li>에셋 스토어 라이선스는 일반적으로 재배포를 허용하지 않습니다. 공개 저장소는 재배포에 해당하므로, 받으셨던 저작권 경고의 직접 원인으로 보입니다. <span class="ev ev-est">추정</span></li>
+        <li>폴더가 사람 이름 단위입니다. 실제 게임에 쓰이는 멀티 클래스가 <code>Test/</code> 폴더 안에 있고, 크래시 덤프와 <code>.DS_Store</code> 11개가 커밋돼 있습니다.</li>
+        <li>잘한 점: Unity용 <code>.gitignore</code>로 Library를 제외했고, PR 기반으로 협업했습니다(머지된 PR 번호 #628).</li>
+      </ul>
+    </div>
+  </div>
+  <div class="blk"><h4>해결</h4>
+    <ul>
+      <li>유료 에셋은 저장소 밖에 둡니다. 각자 에셋 스토어에서 임포트하거나, 비공개 저장소의 Git LFS나 팀 드라이브를 씁니다. 공개용 포트폴리오에는 자체 코드와 자체 제작 리소스만 넣습니다.</li>
+      <li><code>.editorconfig</code>에 <code>charset = utf-8</code>을 두고 기존 CP949 파일을 일괄 변환합니다.</li>
+      <li>폴더를 기능 단위(<code>Player/</code>, <code>Network/</code>, <code>Monster/</code>, <code>UI/</code>)로 나누고 Assembly Definition을 붙입니다. 소유자는 폴더 이름이 아니라 <code>CODEOWNERS</code>로 표시합니다.</li>
+    </ul>
+  </div>
+  <div class="blk"><h4>결과</h4>
+    <div class="tbl-wrap"><table class="res">
+      <thead><tr><th>지표</th><th>현재</th><th>개선 후</th><th>근거</th></tr></thead>
+      <tbody>
+        <tr><td>추적 파일 중 외부 에셋</td><td>90.2%</td><td>0%</td><td><span class="ev ev-fact">저장소 확인</span></td></tr>
+        <tr><td>CP949 스크립트</td><td>74 / 194</td><td>0</td><td><span class="ev ev-fact">저장소 확인</span></td></tr>
+        <tr><td>클론 크기</td><td>약 14GB</td><td>코드·설정·자체 리소스만</td><td><span class="ev ev-fact">저장소 확인</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</article>
+</section>
+
+<section class="part" aria-labelledby="h-good">
+  <h2 id="h-good"><span class="num">04</span>잘한 점과 멈춘 리팩터링</h2>
+  <div class="col stack">
+    <p>냉정하게 봐도 방향이 맞았던 부분이 있습니다. 면접에서는 이 부분을 출발점으로 삼아 "지금이라면"을 이어 말하면 됩니다.</p>
+    <ul class="good-list stack" style="padding-left:1.2em;margin:0;gap:8px">
+      <li><b>전사 콤보의 판정 구간.</b> <code>AnimationState</code> ScriptableObject에 <code>impactStartTime</code>을 두고 WindUp → Impact 단계로 판정을 엽니다. 현업에서 프레임 데이터로 공격 판정을 관리하는 방식과 같은 발상입니다.</li>
+      <li><b>경사면 처리.</b> <code>ProjectOnPlane</code>으로 이동 방향을 지면에 투영하고, 다음 위치를 미리 레이캐스트해 급경사를 막았습니다. 방향은 맞고, 중력 토글만 걷어내면 됩니다.</li>
+      <li><b>데이터 분리 시도.</b> 스탯과 쿨타임을 <code>State</code> ScriptableObject로 뺐고, 인터페이스 5종(IUnitStats, IMove, ISkill, IDamageable, IEffect)을 만들었습니다.</li>
+      <li><b>Animation Rigging 도입.</b> 궁수 조준에 리깅을 쓴 것 자체가 졸업 작품 수준에서는 드뭅니다(F10의 블렌드만 추가).</li>
+    </ul>
+  </div>
+  <div class="two">
+    <div class="blk"><h4>멈춘 리팩터링 · 방향은 정확</h4>
+      <p><code>RefactoringScript/Script/class/</code>에 시작했던 작업이 있습니다. Input System 기반 <code>PlayerInputManager</code>, 그리고 <code>PlayerMovement</code>·<code>SkillManager</code>·<code>HealthSystem</code>·<code>UIManager</code>·<code>CameraControl</code>로의 분리입니다. 단일 책임 원칙 방향으로 정확히 가고 있었습니다.</p>
+    </div>
+    <div class="blk"><h4>그 안에 남은 문제</h4>
+      <ul>
+        <li><b>람다 구독 해제 버그.</b> <code>Left.started -= i =&gt; { isLeft = true; };</code>는 새 델리게이트라 아무것도 해제하지 않습니다. 오브젝트가 꺼졌다 켜질 때마다 핸들러가 누적됩니다.</li>
+        <li><b>파일만 나뉘고 의존은 그대로.</b> Movement, Skill, Health가 서로를 <code>GetComponent</code>로 찾습니다. 의존 방향이 한쪽으로 흐르지 않습니다.</li>
+        <li><b>이름은 공통, 내용은 전사 전용.</b> <code>SkillManager</code>가 검 콜라이더를 직접 참조합니다.</li>
+        <li><b>입력을 유지값 bool로만 노출.</b> "이번 프레임에 눌림" 정보가 사라져 점프 버퍼 같은 기능을 만들기 어렵습니다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="part" aria-labelledby="h-plan">
+  <h2 id="h-plan"><span class="num">05</span>고치는 순서</h2>
+  <div class="col"><p>효과가 크고 비용이 작은 것부터입니다. 1~3번은 하루 안에 끝나고, 체감 문제의 대부분을 덮습니다.</p></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th class="num">순서</th><th>작업</th><th>항목</th><th>규모</th><th>기대 효과</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>Protocol을 UDP로, 위치는 Unreliable</td><td class="mono">F2</td><td>설정 1개</td><td>손실 시 정지 제거</td></tr>
+      <tr><td class="num">2</td><td>상태 변화 시에만 RPC, 내 화면은 즉시 적용</td><td class="mono">F1</td><td>조건문 수 개</td><td>메시지 582 → 102/s</td></tr>
+      <tr><td class="num">3</td><td>Rigidbody 보간 켜기, 마우스 deltaTime 제거</td><td class="mono">F5</td><td>프리팹 4개 + 1줄</td><td>끊김·감도 편차 제거</td></tr>
+      <tr><td class="num">4</td><td>ShotEvent / HitEvent로 판정 주체 통일</td><td class="mono">F3</td><td>직업별 공격 코드</td><td>데미지·이펙트 일치</td></tr>
+      <tr><td class="num">5</td><td>입력 즉시 이륙, 물리 쓰기 단일화</td><td class="mono">F4</td><td>이동 코드 재작성</td><td>점프 0.45 → 0.02초</td></tr>
+      <tr><td class="num">6</td><td>스냅샷 보간 버퍼</td><td class="mono">F6</td><td>동기화 컴포넌트</td><td>원격 움직임 안정</td></tr>
+      <tr><td class="num">7</td><td>상태 머신 + Flags, 버그 4건 테스트로 고정</td><td class="mono">F7</td><td>상태 코드</td><td>무효 상태 제거</td></tr>
+      <tr><td class="num">8</td><td>입력 소스 교체 구조, Multi 클래스 제거</td><td class="mono">F8</td><td>구조 변경</td><td>중복 299줄 제거</td></tr>
+      <tr><td class="num">9</td><td>오브젝트 풀, 이벤트 기반 UI</td><td class="mono">F9</td><td>중간</td><td>정지 상태 할당 0</td></tr>
+      <tr><td class="num">10</td><td>IK 가중치 블렌드</td><td class="mono">F10</td><td>3줄</td><td>상체 튐 제거</td></tr>
+      <tr><td class="num">—</td><td>유료 에셋 제거, UTF-8 통일</td><td class="mono">F11</td><td>공개 전 필수</td><td>저작권 위험 제거</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="part" aria-labelledby="h-scope">
+  <h2 id="h-scope"><span class="num">06</span>분석 범위와 한계</h2>
+  <div class="two">
+    <div class="col stack">
+      <ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px">
+        <li>원본 저장소 <code>SenierProject/Senier_Project</code>의 커밋 b58a402를 대상으로 했습니다.</li>
+        <li>읽은 범위: 플레이어 담당 폴더의 스크립트 전부, 멀티 래퍼 4종(<code>Multi*.cs</code>), 몬스터 동기화 1종, Photon 설정, 플레이어 프리팹 4개, 점프 애니메이션 메타, 애니메이터 컨트롤러 1개.</li>
+        <li>빌드·실행·프로파일링은 하지 않았습니다. 증상과 원인의 연결은 추정이며 각 항목의 검증 방법으로 확인해야 합니다.</li>
+        <li>다른 팀원의 코드는 플레이어 코드와 맞닿는 부분만 읽었습니다. 평가 대상은 사람이 아니라 구조입니다.</li>
+        <li>가정: 점프 클립 30fps(Mixamo 기본), PUN 송신 30Hz·직렬화 10Hz(번들 소스 기본값, 변경 코드 없음), 3인 룸, 60fps.</li>
+      </ul>
+    </div>
+    <figure>
+      <div class="chart" id="ch-team"></div>
+      <figcaption><b>담당 영역별 스크립트 규모 (코드 줄).</b> 공백 줄 제외. 플레이어에는 생성된 입력 클래스와 스토어 에셋 스크립트를 뺐고, 멈춘 리팩터링 폴더와 파쿠르 프로토타입은 포함했습니다. 기획·맵 담당 스크립트 1개는 생략했습니다.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<footer>LostRuins 기술 포스트모템 · 2026-11-05 작성 · 수치의 근거 종류는 각 표의 마지막 열을 따릅니다. · 이어지는 글: <a href="redesign.html">LostRuins 재설계서</a></footer>
+</div>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let C = {};
+  const readColors = () => { C = {ink:cssv('--ink'),ink2:cssv('--ink-2'),muted:cssv('--muted'),line:cssv('--line'),lineS:cssv('--line-strong'),surface:cssv('--surface'),surface2:cssv('--surface-2'),s1:cssv('--s1'),s2:cssv('--s2'),s3:cssv('--s3'),s4:cssv('--s4'),crit:cssv('--crit'),good:cssv('--good'),accent:cssv('--accent')}; };
+  readColors();
+  const redrawers = [];
+  const onTheme = () => { readColors(); redrawers.forEach(f => f()); };
+  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onTheme); } catch(e) {}
+  new MutationObserver(onTheme).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme','class']});
+
+  /* tooltip */
+  const tip = $('#tip');
+  document.addEventListener('pointermove', e => {
+    const t = e.target.closest && e.target.closest('[data-tip]');
+    if (!t) { tip.classList.remove('on'); return; }
+    tip.innerHTML = t.getAttribute('data-tip');
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    let x = e.clientX + 14, y = e.clientY - h - 10;
+    if (x + w > innerWidth - 8) x = e.clientX - w - 14;
+    if (y < 8) y = e.clientY + 16;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px'; tip.classList.add('on');
+  });
+  document.addEventListener('pointerleave', () => tip.classList.remove('on'));
+
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const fmt = (n, d=0) => n.toLocaleString('ko-KR', {minimumFractionDigits:d, maximumFractionDigits:d});
+  const svgEl = (w, h, inner, label) => `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${esc(label)}">${inner}</svg>`;
+  const roundTop = (x, y, w, h, r) => { r = Math.min(r, h, w/2); return `M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z`; };
+  const roundRight = (x, y, w, h, r) => { r = Math.min(r, w, h/2); return `M${x},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h-r}Q${x+w},${y+h} ${x+w-r},${y+h}H${x}Z`; };
+  const niceTicks = (max, n=4) => { const raw = max / n; const p = Math.pow(10, Math.floor(Math.log10(raw))); const m = raw / p; const step = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; const out=[]; for (let v=0; v<=max+1e-9; v+=step) out.push(+v.toFixed(6)); if (out[out.length-1] < max) out.push(+(out[out.length-1]+step).toFixed(6)); return out; };
+  const widthOf = el => Math.max(280, Math.round(el.clientWidth || 600));
+  const charts = [];
+  const chart = (id, fn) => { const el = document.getElementById(id); if (!el) return; const draw = () => { el.innerHTML = fn(widthOf(el)); }; charts.push(draw); redrawers.push(draw); draw(); };
+  let rto; addEventListener('resize', () => { clearTimeout(rto); rto = setTimeout(() => charts.forEach(f => f()), 120); });
+
+  /* horizontal bars, single series */
+  const hbar = (rows, {unit='', label, color='var(--s1)', max}) => W => {
+    const lw = Math.min(150, W * 0.32), rh = 34, top = 6, H = top + rows.length * rh + 22;
+    const mx = max || Math.max(...rows.map(r => r.v)); const ticks = niceTicks(mx, 4); const tmax = ticks[ticks.length-1];
+    const x0 = lw + 8, x1 = W - 54; const sx = v => x0 + (x1 - x0) * v / tmax;
+    let g = '';
+    ticks.forEach(t => { g += `<line class="grid" x1="${sx(t)}" x2="${sx(t)}" y1="${top}" y2="${H-20}"/><text class="tick" x="${sx(t)}" y="${H-5}" text-anchor="middle">${fmt(t)}</text>`; });
+    rows.forEach((r, i) => { const y = top + i * rh + 8, h = 18; const w = Math.max(2, sx(r.v) - x0);
+      g += `<text x="${lw}" y="${y+13}" text-anchor="end">${esc(r.k)}</text>`;
+      g += `<path d="${roundRight(x0, y, w, h, 4)}" fill="${r.c || color}" data-tip="${esc(r.k)}<br><b>${fmt(r.v, r.d||0)}${unit}</b>${r.t ? '<br>'+esc(r.t):''}"/>`;
+      g += `<text class="val" x="${x0 + w + 6}" y="${y+13}">${fmt(r.v, r.d||0)}${unit}</text>`; });
+    g = `<line class="axis" x1="${x0}" x2="${x0}" y1="${top}" y2="${H-20}"/>` + g;
+    return svgEl(W, H, g, label);
+  };
+
+  /* columns, single series */
+  const cols = (rows, {unit='', d=0, label, color='var(--s1)', max}) => W => {
+    const H = 220, l = 40, r = 10, top = 22, bot = 30; const mx = max || Math.max(...rows.map(x => x.v)); const ticks = niceTicks(mx, 4); const tmax = ticks[ticks.length-1];
+    const sy = v => top + (H - top - bot) * (1 - v / tmax); const band = (W - l - r) / rows.length; const bw = Math.min(28, band * 0.5);
+    let g = '';
+    ticks.forEach(t => { g += `<line class="grid" x1="${l}" x2="${W-r}" y1="${sy(t)}" y2="${sy(t)}"/><text class="tick" x="${l-6}" y="${sy(t)+4}" text-anchor="end">${fmt(t, t % 1 ? 1 : 0)}</text>`; });
+    rows.forEach((x, i) => { const cx = l + band * (i + .5); const y = sy(x.v); const h = Math.max(1, sy(0) - y);
+      g += `<path d="${roundTop(cx - bw/2, y, bw, h, 4)}" fill="${x.c || color}" data-tip="${esc(x.k)}<br><b>${fmt(x.v, d)}${unit}</b>"/>`;
+      g += `<text class="val" x="${cx}" y="${y - 6}" text-anchor="middle">${fmt(x.v, d)}${unit}</text>`;
+      g += `<text x="${cx}" y="${H - 10}" text-anchor="middle">${esc(x.k)}</text>`; });
+    g += `<line class="axis" x1="${l}" x2="${W-r}" y1="${sy(0)}" y2="${sy(0)}"/>`;
+    return svgEl(W, H, g, label);
+  };
+
+  /* F1 stacked columns */
+  const MSG = [
+    {k:'현재 코드 (최악)', parts:[90,240,240,12]},
+    {k:'개선 후', parts:[90,0,0,12]},
+  ];
+  const MSG_NAMES = ['위치 동기화 (10Hz)','궁수 매 프레임 RPC','힐러 매 프레임 RPC','행동 이벤트'];
+  chart('ch-msg', W => {
+    const H = 300, l = 44, r = 16, top = 24, bot = 30, tmax = 600; const sy = v => top + (H - top - bot) * (1 - v / tmax);
+    const band = (W - l - r) / 2, bw = Math.min(64, band * 0.42); const cols = ['var(--s1)','var(--s2)','var(--s3)','var(--s4)'];
+    let g = '';
+    [0,100,200,300,400,500,600].forEach(t => { g += `<line class="grid" x1="${l}" x2="${W-r}" y1="${sy(t)}" y2="${sy(t)}"/><text class="tick" x="${l-6}" y="${sy(t)+4}" text-anchor="end">${t}</text>`; });
+    MSG.forEach((m, i) => { const cx = l + band * (i + .5); let acc = 0; const nz = m.parts.map((v,j)=>[v,j]).filter(p=>p[0]>0); const lastJ = nz[nz.length-1][1];
+      m.parts.forEach((v, j) => { if (!v) return; const y0 = sy(acc), y1 = sy(acc + v); const h = y0 - y1 - (j === lastJ ? 0 : 2);
+        const d = j === lastJ ? roundTop(cx - bw/2, y1, bw, Math.max(1,h), 4) : `M${cx-bw/2},${y1+2}h${bw}v${Math.max(1,h)}h${-bw}z`;
+        g += `<path d="${d}" fill="${cols[j]}" data-tip="${m.k}<br>${MSG_NAMES[j]}<br><b>${v} msg/s</b>"/>`;
+        if (h > 22) g += `<text class="val-in" x="${cx}" y="${(y0+y1)/2 + 4}" text-anchor="middle" ${j===3?'style="fill:#0b0b0b"':''}>${v}</text>`;
+        acc += v; });
+      const tot = m.parts.reduce((a,b)=>a+b,0);
+      g += `<text class="val" x="${cx}" y="${sy(tot) - 8}" text-anchor="middle" font-weight="600">${tot}</text>`;
+      g += `<text x="${cx}" y="${H-10}" text-anchor="middle">${m.k}</text>`; });
+    g += `<line x1="${l}" x2="${W-r}" y1="${sy(500)}" y2="${sy(500)}" stroke="${C.crit}" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W-r}" y="${sy(500)-6}" text-anchor="end" style="fill:var(--ink)" font-size="11.5">Photon 권장 상한 500</text>`;
+    g += `<line class="axis" x1="${l}" x2="${W-r}" y1="${sy(0)}" y2="${sy(0)}"/>`;
+    return svgEl(W, H, g, '룸 메시지량: 현재 최악 582, 개선 후 102 msg/s');
+  });
+
+  chart('ch-stale', cols([{k:'60fps',v:16.7},{k:'90fps',v:44.4},{k:'120fps',v:58.3}], {unit:'%', d:1, max:70, label:'위치가 갱신되지 않는 프레임 비율: 60fps 16.7%, 90fps 44.4%, 120fps 58.3%'}));
+  chart('ch-sens', cols([{k:'30fps',v:8.33},{k:'60fps',v:4.17},{k:'90fps',v:2.78},{k:'120fps',v:2.08}], {unit:'°', d:2, max:10, label:'마우스 1단위당 회전: 30fps 8.33도, 120fps 2.08도'}));
+  chart('ch-dup', hbar([{k:'MultiDealer',v:39,t:'208줄 중 83줄'},{k:'MultiWarrior',v:40,t:'190줄 중 77줄'},{k:'MultiLancer',v:47,t:'144줄 중 68줄'},{k:'MultiHealer',v:48,t:'147줄 중 71줄'}], {unit:'%', max:60, label:'Multi 클래스 중복 비율 39~48%'}));
+  chart('ch-team', hbar([{k:'플레이어 (본인)',v:4130,t:'57개 파일'},{k:'멀티플레이',v:4288,t:'44개 파일'},{k:'몬스터',v:3948,t:'47개 파일'},{k:'UI·UX',v:2404,t:'42개 파일'}], {unit:'', label:'담당 영역별 코드 줄 수'}));
+
+  /* stacked horizontal bars: encoding */
+  chart('ch-enc', W => {
+    const rows = [{k:'플레이어',u:46,c:14},{k:'멀티플레이',u:36,c:8},{k:'몬스터',u:18,c:29},{k:'UI·UX',u:20,c:22},{k:'기획·맵',u:0,c:1}];
+    const lw = 76, rh = 32, top = 4, H = top + rows.length*rh + 22, x0 = lw + 8, x1 = W - 34, mx = 60; const sx = v => x0 + (x1-x0) * v / mx;
+    let g = '';
+    [0,20,40,60].forEach(t => { g += `<line class="grid" x1="${sx(t)}" x2="${sx(t)}" y1="${top}" y2="${H-20}"/><text class="tick" x="${sx(t)}" y="${H-5}" text-anchor="middle">${t}</text>`; });
+    rows.forEach((r,i) => { const y = top + i*rh + 7, h = 18; g += `<text x="${lw}" y="${y+13}" text-anchor="end">${r.k}</text>`;
+      const wu = sx(r.u) - x0, wc = sx(r.u + r.c) - sx(r.u);
+      if (r.u) g += `<path d="${r.c ? `M${x0},${y}h${Math.max(0,wu-2)}v${h}h${-Math.max(0,wu-2)}z` : roundRight(x0,y,wu,h,4)}" fill="var(--s1)" data-tip="${r.k} · UTF-8<br><b>${r.u}개</b>"/>`;
+      if (r.c) g += `<path d="${roundRight(x0 + wu, y, wc, h, 4)}" fill="var(--s2)" data-tip="${r.k} · CP949<br><b>${r.c}개</b>"/>`;
+      g += `<text class="val" x="${x0 + wu + wc + 6}" y="${y+13}">${r.c}/${r.u + r.c}</text>`; });
+    g += `<line class="axis" x1="${x0}" x2="${x0}" y1="${top}" y2="${H-20}"/>`;
+    return svgEl(W, H, g, '영역별 CP949 스크립트 수: 플레이어 14/60, 멀티 8/44, 몬스터 29/47, UI 22/42, 기획 1/1');
+  });
+
+  /* segmented bar: repo composition */
+  chart('ch-repo', W => {
+    const parts = [{k:'외부 아트·사운드 에셋',v:68014,c:'var(--s1)'},{k:'SDK·라이브러리',v:2733,c:'var(--s2)'},{k:'팀 폴더',v:4406,c:'var(--s3)'},{k:'기타',v:269,c:'var(--s4)'}];
+    const tot = parts.reduce((a,b)=>a+b.v,0), H = 76, x0 = 0, x1 = W, y = 6, h = 30; let x = x0, g = '';
+    parts.forEach((p, i) => { const w = (x1 - x0) * p.v / tot; const last = i === parts.length - 1; const ww = Math.max(1.5, w - (last ? 0 : 2));
+      g += `<rect x="${x}" y="${y}" width="${ww}" height="${h}" rx="${i===0||last?4:0}" fill="${p.c}" data-tip="${p.k}<br><b>${fmt(p.v)}개 · ${(p.v/tot*100).toFixed(1)}%</b>"/>`;
+      if (w > 120) g += `<text class="val-in" x="${x + 10}" y="${y + 20}">${(p.v/tot*100).toFixed(1)}%</text>`;
+      x += w; });
+    const small = parts.slice(1); let tx = W; let lab = '';
+    lab = small.map(p => `${p.k} ${(p.v/tot*100).toFixed(1)}%`).join('  ·  ');
+    g += `<text x="0" y="${y + h + 26}" font-size="12">${lab}</text>`;
+    return svgEl(W, H, g, '추적 파일 구성: 외부 에셋 90.2%, SDK 3.6%, 팀 폴더 5.8%, 기타 0.4%');
+  });
+
+  /* IK weight lines */
+  chart('ch-ik', W => {
+    const H = 190, l = 40, r = 14, top = 14, bot = 30, T = 0.6; const sx = t => l + (W - l - r) * t / T, sy = v => top + (H - top - bot) * (1 - v);
+    let g = '';
+    [0,0.2,0.4,0.6,0.8,1].forEach(v => { g += `<line class="grid" x1="${l}" x2="${W-r}" y1="${sy(v)}" y2="${sy(v)}"/><text class="tick" x="${l-6}" y="${sy(v)+4}" text-anchor="end">${v.toFixed(1)}</text>`; });
+    [0,0.1,0.2,0.3,0.4,0.5,0.6].forEach(t => { g += `<text class="tick" x="${sx(t)}" y="${H-10}" text-anchor="middle">${t.toFixed(1)}s</text>`; });
+    const step = `M${sx(0)},${sy(0)}H${sx(0.2)}V${sy(0.8)}H${sx(T)}`;
+    let ramp = `M${sx(0)},${sy(0)}H${sx(0.2)}`; for (let t = 0.2; t <= T + 1e-9; t += 0.01) ramp += `L${sx(t)},${sy(Math.min(0.8, (t - 0.2) / 0.15 * 1) )}`;
+    g += `<path d="${step}" fill="none" stroke="var(--s2)" stroke-width="2" stroke-linejoin="round"/>`;
+    g += `<path d="${ramp}" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round"/>`;
+    g += `<circle cx="${sx(0.2)}" cy="${sy(0.8)}" r="4" fill="var(--s2)" stroke="var(--surface)" stroke-width="2" data-tip="현재: 0.2초에 0 → 0.8 (1프레임)"/>`;
+    g += `<circle cx="${sx(0.32)}" cy="${sy(0.8)}" r="4" fill="var(--s1)" stroke="var(--surface)" stroke-width="2" data-tip="개선: 0.32초에 0.8 도달 (0.15초 블렌드)"/>`;
+    g += `<line class="axis" x1="${l}" x2="${W-r}" y1="${sy(0)}" y2="${sy(0)}"/>`;
+    return svgEl(W, H, g, '조준 IK 가중치: 현재는 0.2초에 즉시 0.8, 개선은 0.15초에 걸쳐 증가');
+  });
+
+  /* LOC table */
+  const LOC = [['Dealer.cs',346,82,11,0],['PlayerState.cs',329,60,8,0],['Warrior.cs',214,75,7,1],['MultiDealer.cs',208,50,3,11],['Lancer.cs',204,71,7,0],['MultiWarrior.cs',190,46,4,14],['Healer.cs',152,45,4,0],['MultiHealer.cs',147,17,0,10],['MultiLancer.cs',144,36,2,8]];
+  $('#loc-body').innerHTML = LOC.map(r => `<tr><td class="mono">${r[0]}</td><td class="num"><span class="bar-cell" style="justify-content:flex-end"><i style="width:${Math.round(r[1]/346*56)}px"></i>${r[1]}</span></td><td class="num">${r[2]}</td><td class="num">${r[3]}</td><td class="num">${r[4]}</td></tr>`).join('');
+
+  /* ---------- canvas helpers ---------- */
+  const setupCanvas = (cv) => { const dpr = Math.min(2, devicePixelRatio || 1); const w = cv.clientWidth; const h = +cv.getAttribute('height'); cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.height = h + 'px'; const ctx = cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx, w, h}; };
+  const vis = new Map();
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => vis.set(e.target, e.isIntersecting)), {rootMargin:'100px'}) : null;
+  const watch = cv => { vis.set(cv, true); io && io.observe(cv); };
+  const font = (px, mono) => `${px}px ${mono ? '"IBM Plex Mono", ui-monospace, monospace' : '"IBM Plex Sans KR", system-ui, sans-serif'}`;
+
+  /* ---------- F1 message flow ---------- */
+  (() => {
+    const cv = $('#cv-flow'); if (!cv) return; watch(cv);
+    let S = setupCanvas(cv); let mode = 'cur', playing = !reduce; const SPEED = 0.25;
+    const nodes = () => { const w = S.w, h = S.h; return { srv:{x:w/2,y:h/2,n:'서버'}, c:[{x:Math.max(70,w*0.14),y:h*0.28,n:'궁수'},{x:Math.max(70,w*0.14),y:h*0.74,n:'힐러'},{x:Math.min(w-70,w*0.86),y:h/2,n:'전사'}]}; };
+    let dots = [], acc = [0,0,0,0,0,0,0,0,0], t = 0;
+    const spawn = (from, kind) => { const N = nodes(); const a = N.c[from]; dots.push({x0:a.x,y0:a.y,x1:N.srv.x,y1:N.srv.y,p:0,k:kind,fan:true,from}); };
+    const rates = () => mode === 'cur' ? {ser:10, arc:60, heal:60, act:1} : {ser:10, arc:0, heal:0, act:1};
+    const colorOf = k => [C.s1, C.s2, C.s3, C.s4][k];
+    const step = dt => {
+      const R = rates(); const sdt = dt * SPEED; t += sdt;
+      for (let i = 0; i < 3; i++) { acc[i] += R.ser * sdt; while (acc[i] >= 1) { acc[i]--; spawn(i, 0); } acc[3+i] += R.act * sdt; while (acc[3+i] >= 1) { acc[3+i]--; spawn(i, 3); } }
+      acc[6] += R.arc * sdt; while (acc[6] >= 1) { acc[6]--; spawn(0, 1); }
+      acc[7] += R.heal * sdt; while (acc[7] >= 1) { acc[7]--; spawn(1, 2); }
+      const N = nodes(); const nd = [];
+      for (const d of dots) { d.p += sdt / 0.09; if (d.p >= 1) { if (d.fan) { const targets = (d.k === 0) ? N.c.filter((_, j) => j !== d.from) : N.c; for (const c of targets) nd.push({x0:N.srv.x,y0:N.srv.y,x1:c.x,y1:c.y,p:0,k:d.k,fan:false}); } } else nd.push(d); }
+      dots = nd;
+    };
+    const draw = () => {
+      const {ctx, w, h} = S; ctx.clearRect(0,0,w,h); const N = nodes();
+      ctx.strokeStyle = C.line; ctx.lineWidth = 1; N.c.forEach(c => { ctx.beginPath(); ctx.moveTo(c.x,c.y); ctx.lineTo(N.srv.x,N.srv.y); ctx.stroke(); });
+      for (const d of dots) { const x = d.x0 + (d.x1-d.x0)*d.p, y = d.y0 + (d.y1-d.y0)*d.p; ctx.fillStyle = colorOf(d.k); ctx.beginPath(); ctx.arc(x,y,3.2,0,Math.PI*2); ctx.fill(); }
+      const box = (n, big) => { const bw = big ? 76 : 64, bh = 34; ctx.fillStyle = C.surface; ctx.strokeStyle = big ? C.ink : C.lineS; ctx.lineWidth = big ? 1.5 : 1; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(n.x-bw/2,n.y-bh/2,bw,bh,7) : ctx.rect(n.x-bw/2,n.y-bh/2,bw,bh); ctx.fill(); ctx.stroke(); ctx.fillStyle = C.ink; ctx.font = font(13); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(n.n, n.x, n.y+1); };
+      N.c.forEach(c => box(c)); box(N.srv, true);
+      ctx.fillStyle = C.muted; ctx.font = font(11, true); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(mode === 'cur' ? '현재 코드 · 1/4 속도' : '개선 후 · 1/4 속도', 12, h - 12);
+    };
+    const updateReadout = () => { const cur = mode === 'cur'; $('#flow-total').textContent = (cur ? 582 : 102) + ' msg/s'; $('#flow-a').textContent = (cur ? 60 : 0) + ' /s'; $('#flow-h').textContent = (cur ? 60 : 0) + ' /s'; };
+    const warm = () => { dots = []; acc = acc.map((_, i) => (i * 0.37) % 1); for (let i = 0; i < 360; i++) step(1/60); };
+    const setMode = m => { mode = m; $('#flow-cur').setAttribute('aria-pressed', m==='cur'); $('#flow-fix').setAttribute('aria-pressed', m==='fix'); updateReadout(); if (!playing) { warm(); draw(); } };
+    $('#flow-cur').onclick = () => setMode('cur'); $('#flow-fix').onclick = () => setMode('fix');
+    const pb = $('#flow-play'); pb.textContent = playing ? '일시정지' : '재생'; pb.onclick = () => { playing = !playing; pb.textContent = playing ? '일시정지' : '재생'; };
+    warm(); draw();
+    let last = performance.now();
+    const loop = now => { const dt = Math.min(0.05, (now - last)/1000); last = now; if (playing && vis.get(cv) !== false) { step(dt); draw(); } requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+    redrawers.push(() => draw());
+    let lastW = cv.clientWidth;
+    addEventListener('resize', () => { if (cv.clientWidth === lastW) return; lastW = cv.clientWidth; S = setupCanvas(cv); warm(); draw(); });
+  })();
+
+  /* ---------- F2 TCP vs UDP ---------- */
+  (() => {
+    const el = $('#ch-tcp'); if (!el) return;
+    let seed = 7;
+    const rng = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const simulate = (loss, sd) => {
+      const R = rng(sd), dur = 20000, iv = 1000/30, ow = 40, rtt = 80; const n = Math.floor(dur/iv);
+      const sendT = [], tcpArr = [], udpArr = [];
+      let prevDel = 0;
+      for (let i = 0; i < n; i++) { const s = i*iv; sendT.push(s);
+        let lost = R() < loss; udpArr.push(lost ? Infinity : s + ow);
+        let arrive = s + ow;
+        if (lost) { let t0 = s + 3*iv + rtt; let rto = 300; let k = 0; arrive = t0 + ow; while (R() < loss && k < 6) { arrive = t0 + rto + ow; t0 += rto; rto *= 2; k++; } }
+        const del = Math.max(arrive, prevDel); tcpArr.push(del); prevDel = del; }
+      const age = arr => { const out = []; let j = 0, newest = -Infinity; const evts = arr.map((a,i)=>[a,sendT[i]]).filter(e=>isFinite(e[0])).sort((a,b)=>a[0]-b[0]); let p = 0;
+        for (let t = 1000; t <= dur; t += 10) { while (p < evts.length && evts[p][0] <= t) { newest = Math.max(newest, evts[p][1]); p++; } out.push([t, t - newest]); } return out; };
+      return {tcp: age(tcpArr), udp: age(udpArr)};
+    };
+    const pct = (a, q) => { const s = a.map(x=>x[1]).sort((x,y)=>x-y); return s[Math.min(s.length-1, Math.floor(q*s.length))]; };
+    let data;
+    const recompute = () => { const loss = +$('#loss').value/100; data = simulate(loss, seed); $('#loss-v').textContent = (+$('#loss').value).toFixed(1) + '%'; $('#loss-lbl').textContent = (+$('#loss').value).toFixed(1).replace('.0','');
+      const t95 = pct(data.tcp,.95), u95 = pct(data.udp,.95), tmx = Math.max(...data.tcp.map(x=>x[1])), umx = Math.max(...data.udp.map(x=>x[1]));
+      $('#tcp-p95').textContent = Math.round(t95) + ' ms'; $('#udp-p95').textContent = Math.round(u95) + ' ms'; $('#tcp-max').textContent = Math.round(tmx) + ' ms'; $('#udp-max').textContent = Math.round(umx) + ' ms'; draw(); };
+    const draw = () => { const W = widthOf(el), H = 230, l = 46, r = 10, top = 10, bot = 26;
+      const ymax = Math.max(400, Math.ceil(Math.max(...data.tcp.map(x=>x[1]))/200)*200); const sx = t => l + (W-l-r) * (t-1000)/19000, sy = v => top + (H-top-bot) * (1 - Math.min(v,ymax)/ymax);
+      let g = ''; niceTicks(ymax, 4).forEach(v => { if (v > ymax) return; g += `<line class="grid" x1="${l}" x2="${W-r}" y1="${sy(v)}" y2="${sy(v)}"/><text class="tick" x="${l-6}" y="${sy(v)+4}" text-anchor="end">${v}</text>`; });
+      [1,5,10,15,20].forEach(s => g += `<text class="tick" x="${sx(s*1000)}" y="${H-8}" text-anchor="middle">${s}s</text>`);
+      const path = arr => arr.map((p,i)=>`${i?'L':'M'}${sx(p[0]).toFixed(1)},${sy(p[1]).toFixed(1)}`).join('');
+      g += `<path d="${path(data.udp)}" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round"/>`;
+      g += `<path d="${path(data.tcp)}" fill="none" stroke="var(--s2)" stroke-width="2" stroke-linejoin="round"/>`;
+      g += `<text class="tick" x="${l}" y="${top+2}" dy="-2">ms</text>`;
+      g += `<line class="axis" x1="${l}" x2="${W-r}" y1="${sy(0)}" y2="${sy(0)}"/>`;
+      el.innerHTML = svgEl(W, H, g, 'TCP는 손실 때마다 수백 ms 정지, UDP는 거의 일정'); };
+    $('#loss').addEventListener('input', recompute); $('#tcp-seed').onclick = () => { seed = (seed * 48271) % 2147483647; recompute(); };
+    recompute(); redrawers.push(draw); charts.push(draw);
+  })();
+
+  /* ---------- F4 jump ---------- */
+  (() => {
+    const cv = $('#cv-jump'); if (!cv) return; watch(cv);
+    let S = setupCanvas(cv); let t0 = null; const DA = 0.446, DB = 0.02, AIR = 0.62, Hj = 1;
+    const lanes = [{n:'현재 · 애니메이션 이벤트', d:DA, c:()=>C.s2, marks:[[0,'입력'],[0.1,'전이 끝'],[DA,'이륙']]},{n:'개선 · 입력 프레임', d:DB, c:()=>C.s1, marks:[[0,'입력'],[DB,'이륙']]}];
+    const draw = (now) => { const {ctx,w,h} = S; ctx.clearRect(0,0,w,h); const el = t0 == null ? -1 : (now - t0)/1000; const lh = h/2; const tlx0 = w < 520 ? 74 : Math.max(150, w*0.28), tlx1 = w - 30, TT = 0.6; const sx = t => tlx0 + (tlx1 - tlx0) * t / TT;
+      lanes.forEach((L, i) => { const y0 = i*lh; const gy = y0 + lh - 34; const cx = Math.min(80, w*0.12);
+        const cxx = w < 520 ? 36 : cx; ctx.strokeStyle = C.lineS; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(12, gy); ctx.lineTo(tlx0 - 16, gy); ctx.stroke();
+        let jy = 0, squash = 1; if (el >= 0) { if (el < L.d) squash = 1 - 0.14 * Math.min(1, el / Math.max(L.d, 0.05)); else if (el < L.d + AIR) { const u = (el - L.d)/AIR; jy = 4*u*(1-u) * 46 * Hj; } }
+        const bw = 22, bh = 40 * squash; ctx.fillStyle = L.c(); ctx.beginPath(); const bx = cxx - bw/2, by = gy - bh - jy; ctx.roundRect ? ctx.roundRect(bx, by, bw, bh, 6) : ctx.rect(bx,by,bw,bh); ctx.fill();
+        ctx.fillStyle = C.ink; ctx.font = font(12.5); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(L.n, 16, y0 + 22);
+        const ty = gy - 14; ctx.strokeStyle = C.line; ctx.beginPath(); ctx.moveTo(sx(0), ty); ctx.lineTo(sx(TT), ty); ctx.stroke();
+        if (el >= 0) { ctx.strokeStyle = L.c(); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx(0), ty); ctx.lineTo(sx(Math.min(el, L.d)), ty); ctx.stroke(); ctx.lineWidth = 1; }
+        L.marks.forEach(([mt, mn], k) => { const x = sx(mt); ctx.fillStyle = (el >= mt) ? L.c() : C.surface; ctx.strokeStyle = L.c(); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, ty, 4.5, 0, Math.PI*2); ctx.fill(); ctx.stroke(); ctx.lineWidth = 1;
+          const below = k % 2 === 1; ctx.textAlign = 'center';
+          ctx.fillStyle = C.ink2; ctx.font = font(11); ctx.fillText(mn, x, below ? ty + 20 : ty - 22);
+          ctx.font = font(10.5, true); ctx.fillStyle = C.muted; ctx.fillText(Math.round(mt*1000)+'ms', x, below ? ty + 33 : ty - 9); });
+        if (i === 0) { ctx.strokeStyle = C.line; ctx.beginPath(); ctx.moveTo(0, lh); ctx.lineTo(w, lh); ctx.stroke(); }
+      });
+      if (el >= 0) { ctx.strokeStyle = C.ink; ctx.lineWidth = 1; ctx.setLineDash([3,3]); const x = sx(Math.min(el, TT)); ctx.beginPath(); ctx.moveTo(x, 6); ctx.lineTo(x, h - 6); ctx.stroke(); ctx.setLineDash([]); }
+    };
+    const loop = now => { draw(now); if (t0 != null && (now - t0)/1000 < DA + AIR + 0.4) requestAnimationFrame(loop); else { t0 = null; draw(now); } };
+    const go = () => { const start = t0 == null; t0 = performance.now(); if (start) requestAnimationFrame(loop); };
+    $('#jump-go').onclick = go; cv.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); go(); } });
+    draw(0); redrawers.push(() => draw(performance.now())); addEventListener('resize', () => { S = setupCanvas(cv); draw(performance.now()); });
+  })();
+
+  /* ---------- F6 interpolation ---------- */
+  (() => {
+    const cv = $('#cv-interp'); if (!cv) return; watch(cv);
+    let S = setupCanvas(cv); let v = 10, playing = !reduce; const L = 7.3, K = 10, LAT = 0.05, BUF = 0.1, RATE = 10, DT = 1/60;
+    const tp = t => { const P = 4*L, s = ((v*t) % P + P) % P, side = Math.floor(s / L), r = s - side*L; return [[r,0],[L,r],[L-r,L],[0,L-r]][side]; };
+    const ctd = (x,y) => { if (x>=0&&x<=L&&y>=0&&y<=L) return Math.min(x,L-x,y,L-y); const dx = Math.max(-x,0,x-L), dy = Math.max(-y,0,y-L); return Math.hypot(dx,dy); };
+    let st;
+    const reset = () => { const p = tp(0); st = {t:0, snaps:[], ns:0, lr:[p[0],p[1]], bf:[p[0],p[1]], hist:[], trailL:[], trailB:[]}; };
+    const tick = () => { const s = st; if (s.t >= s.ns - 1e-9) { s.snaps.push([s.t, tp(s.t), s.t + LAT]); s.ns += 1/RATE; if (s.snaps.length > 40) s.snaps.shift(); }
+      const av = s.snaps.filter(q => q[2] <= s.t);
+      if (av.length) { const tg = av[av.length-1][1]; const a = Math.min(1, DT*K); s.lr[0] += (tg[0]-s.lr[0])*a; s.lr[1] += (tg[1]-s.lr[1])*a;
+        const rt = s.t - LAT - BUF; let A=null,B=null; for (const q of av) { if (q[0] <= rt) A = q; else { B = q; break; } } if (A && B) { const u = (rt-A[0])/(B[0]-A[0]); s.bf = [A[1][0]+(B[1][0]-A[1][0])*u, A[1][1]+(B[1][1]-A[1][1])*u]; } }
+      const prev = s.hist[s.hist.length-1]; s.hist.push({t:s.t, l:[...s.lr], b:[...s.bf], vl: prev ? Math.hypot(s.lr[0]-prev.l[0], s.lr[1]-prev.l[1])/DT : null, vb: prev ? Math.hypot(s.bf[0]-prev.b[0], s.bf[1]-prev.b[1])/DT : null});
+      while (s.hist.length && s.hist[0].t < s.t - 4) s.hist.shift();
+      s.trailL.push([...s.lr]); s.trailB.push([...s.bf]); if (s.trailL.length > 70) { s.trailL.shift(); s.trailB.shift(); }
+      s.t += DT; };
+    const stats = () => { const h = st.hist.filter(x => x.vl != null && x.t > 1.5); if (h.length < 30) return null; const cv = arr => { const m = arr.reduce((a,b)=>a+b,0)/arr.length; const sd = Math.sqrt(arr.reduce((a,b)=>a+(b-m)*(b-m),0)/arr.length); return sd/m*100; };
+      return {cl: cv(h.map(x=>x.vl)), cb: cv(h.map(x=>x.vb)), ml: Math.max(...h.map(x=>ctd(x.l[0],x.l[1]))), mb: Math.max(...h.map(x=>ctd(x.b[0],x.b[1])))}; };
+    const draw = () => { const {ctx,w,h} = S; ctx.clearRect(0,0,w,h); const pad = 34; const sc = Math.min((w - pad*2)/L, (h - pad*2)/L); const ox = (w - L*sc)/2, oy = (h - L*sc)/2; const X = x => ox + x*sc, Y = y => oy + y*sc;
+      ctx.strokeStyle = C.line; ctx.lineWidth = 6; ctx.lineJoin = 'miter'; ctx.strokeRect(X(0), Y(0), L*sc, L*sc); ctx.lineWidth = 1;
+      ctx.fillStyle = C.muted; st.snaps.forEach(q => { if (q[2] <= st.t) { ctx.globalAlpha = 0.55; ctx.beginPath(); ctx.arc(X(q[1][0]), Y(q[1][1]), 2.6, 0, Math.PI*2); ctx.fill(); } }); ctx.globalAlpha = 1;
+      const trail = (arr, col) => { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); arr.forEach((p,i) => i ? ctx.lineTo(X(p[0]),Y(p[1])) : ctx.moveTo(X(p[0]),Y(p[1]))); ctx.stroke(); };
+      trail(st.trailL, C.s2); trail(st.trailB, C.s1);
+      const dot = (p, col) => { ctx.fillStyle = col; ctx.strokeStyle = C.surface; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 6, 0, Math.PI*2); ctx.fill(); ctx.stroke(); };
+      dot(st.lr, C.s2); dot(st.bf, C.s1);
+      const tr = tp(st.t); ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(tr[0]), Y(tr[1]), 8, 0, Math.PI*2); ctx.stroke(); ctx.lineWidth = 1;
+      ctx.fillStyle = C.muted; ctx.font = font(11, true); ctx.textAlign = 'left'; ctx.fillText(`${v} m/s · t = ${st.t.toFixed(1)}s`, 12, h - 12);
+      const s = stats(); if (s) { $('#ip-cv-l').textContent = s.cl.toFixed(1)+'%'; $('#ip-cv-b').textContent = s.cb.toFixed(1)+'%'; $('#ip-ct-l').textContent = s.ml.toFixed(2)+'m'; $('#ip-ct-b').textContent = s.mb.toFixed(2)+'m'; } };
+    const warm = sec => { reset(); for (let i = 0; i < sec*60; i++) tick(); };
+    const setV = nv => { v = nv; $('#sp-5').setAttribute('aria-pressed', nv===5); $('#sp-10').setAttribute('aria-pressed', nv===10); warm(6); draw(); };
+    $('#sp-5').onclick = () => setV(5); $('#sp-10').onclick = () => setV(10);
+    const pb = $('#interp-play'); pb.textContent = playing ? '일시정지' : '재생'; pb.onclick = () => { playing = !playing; pb.textContent = playing ? '일시정지' : '재생'; };
+    warm(6); draw();
+    let accT = 0, last = performance.now();
+    const loop = now => { const dt = Math.min(0.1, (now-last)/1000); last = now; if (playing && vis.get(cv)) { accT += dt; while (accT >= DT) { tick(); accT -= DT; } draw(); } requestAnimationFrame(loop); };
+    requestAnimationFrame(loop); redrawers.push(draw); addEventListener('resize', () => { S = setupCanvas(cv); draw(); });
+  })();
+
+  /* ---------- F7 state grid ---------- */
+  (() => {
+    const names = ['isAttack','isDodge','isJump','isDied','isStop','isGrounded'];
+    const tg = $('#tg'), cells = $('#cells'), msg = $('#state-msg'); if (!tg) return;
+    let cur = 1 << 5; // grounded only
+    const valid = m => { const acts = [0,1,2,3,4].filter(i => m & (1<<i)); const g = !!(m & 32); if (acts.length > 1) return [false, acts.map(i=>names[i]).join(' + ') + ' 동시에 참']; if ((m & 8) && !g) return [false, '공중에서 사망 (Die()는 isGrounded 필요)']; if ((m & 2) && !g) return [false, '공중에서 구르기']; return [true, '']; };
+    const describe = m => { const g = !!(m & 32); if (m & 8) return 'Dead'; if (m & 16) return '네트워크 정지'; if (m & 1) return g ? '지상 공격' : '공중 공격'; if (m & 2) return 'Dodge'; if (m & 4) return g ? '이륙 순간' : 'Jump'; return g ? 'Idle / Move' : 'Fall'; };
+    names.forEach((n, i) => { const b = document.createElement('button'); b.textContent = n; b.setAttribute('aria-pressed', !!(cur & (1<<i))); b.onclick = () => { cur ^= (1<<i); b.setAttribute('aria-pressed', !!(cur & (1<<i))); render(); }; tg.appendChild(b); });
+    let okCount = 0; for (let m = 0; m < 64; m++) { const s = document.createElement('span'); if (valid(m)[0]) { s.className = 'ok'; okCount++; } cells.appendChild(s); }
+    const render = () => { [...cells.children].forEach((c, i) => c.classList.toggle('cur', i === cur)); const [ok, why] = valid(cur);
+      msg.innerHTML = ok ? `<b class="okk">유효</b> · ${describe(cur)} <span class="muted">(${okCount}/64 중 하나)</span>` : `<b class="bad">무효 조합</b> · ${why}. 지금 코드에서는 이 조합을 막는 곳이 없습니다.`; };
+    render();
+  })();
+})();
+</script>

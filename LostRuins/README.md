@@ -39,4 +39,4 @@
 > - 이 프로젝트의 플레이어·멀티플레이 구조를 C++ 권위 서버 + Unity 클라이언트로 다시 설계한 프로토타입입니다.
 > - 전사·궁수·창술사·힐러 네 직업을 상속 대신 데이터 표와 공용 엔진으로 옮겼고, 원본에서 찾은 버그를 테스트로 고정했습니다.
 > - 소스, 테스트, 측정 결과: [Redesign/](Redesign/README.md)
-> - 설명 문서 바로 보기: [목차](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/) · [재설계서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/redesign.html) · [해설서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/guide.html) · [직업 재설계](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/classes.html)
+> - 설명 문서 바로 보기: [목차](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/) · [포스트모템](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/postmortem.html) · [재설계서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/redesign.html) · [해설서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/guide.html) · [직업 재설계](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/classes.html)

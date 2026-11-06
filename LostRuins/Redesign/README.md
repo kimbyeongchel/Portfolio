@@ -10,6 +10,7 @@
 
 | 문서 | 내용 |
 |---|---|
+| [1편 기술 포스트모템](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/postmortem.html) | 원본 진단. 2~3초 지연, 굼뜬 점프, 판정 불일치 등 문제 11가지의 증상·근거·원인·해결 |
 | [2편 재설계서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/redesign.html) | 재설계서. 무엇이 가장 크게 바뀌는지, 구조, 클래스 다이어그램, 전체 소스, 측정값, 8개월 로드맵 |
 | [3편 해설서](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/guide.html) | 해설서. 서버 개념을 비유·애니메이션·시뮬레이션으로 설명, 재검증 기록, 코드 한 줄씩 해설 |
 | [4편 직업 재설계](https://kimbyeongchel.github.io/Portfolio/LostRuins/Redesign/docs/classes.html) | 직업 재설계. 네 직업의 원본 동작·버그, 재설계 표와 코드, 스킬 타임라인, 테스트, 고민 노트 |
